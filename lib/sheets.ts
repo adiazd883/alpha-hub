@@ -18,16 +18,29 @@ async function getSheets() {
 export async function getTargetSheet() {
   const sheets = await getSheets();
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
-  const gid = Number(process.env.GOOGLE_SHEET_GID || "719601518");
-  if (!spreadsheetId) throw new Error("Missing GOOGLE_SPREADSHEET_ID");
+
+  if (!spreadsheetId) {
+    throw new Error("Missing GOOGLE_SPREADSHEET_ID");
+  }
+
   const meta = await sheets.spreadsheets.get({
     spreadsheetId,
     fields: "sheets(properties(sheetId,title,index))"
   });
-  const sheet = (meta.data.sheets || []).find(s => Number(s.properties?.sheetId) === gid)
-    || meta.data.sheets?.[0];
-  if (!sheet?.properties?.title) throw new Error("Could not find target sheet");
-  return { sheets, spreadsheetId, title: sheet.properties.title };
+
+  const sheet = (meta.data.sheets || []).find(
+    s => s.properties?.title === "ADMINs"
+  );
+
+  if (!sheet?.properties?.title) {
+    throw new Error('Could not find sheet "ADMINs"');
+  }
+
+  return {
+    sheets,
+    spreadsheetId,
+    title: sheet.properties.title
+  };
 }
 
 export async function readCases() {
