@@ -45,20 +45,42 @@ export async function getTargetSheet() {
 
 export async function readCases() {
   const { sheets, spreadsheetId, title } = await getTargetSheet();
-  const range = `'${title.replace(/'/g, "''")}'`;
+
+  const range = `'${title.replace(/'/g, "''")}'!2:1000`;
+
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
     range,
     valueRenderOption: "FORMATTED_VALUE"
   });
+
   const values = res.data.values || [];
-  if (!values.length) return { title, headers: [], rows: [] };
+
+  if (!values.length) {
+    return { title, headers: [], rows: [] };
+  }
+
+  // Fila 2 = encabezados
   const headers = values[0].map(v => String(v ?? ""));
-  const rows = values.slice(1).map((r, i) => {
-    const obj: Record<string,string> = { "__row": String(i + 2) };
-    headers.forEach((h, j) => { obj[h] = String(r[j] ?? ""); });
-    return obj;
-  }).filter(r => Object.values(r).some(v => v && v !== r.__row));
+
+  // Fila 3 en adelante = casos
+  const rows = values
+    .slice(1)
+    .map((r, i) => {
+      const obj: Record<string, string> = {
+        "__row": String(i + 3)
+      };
+
+      headers.forEach((h, j) => {
+        obj[h] = String(r[j] ?? "");
+      });
+
+      return obj;
+    })
+    .filter(r =>
+      Object.values(r).some(v => v && v !== r.__row)
+    );
+
   return { title, headers, rows };
 }
 
