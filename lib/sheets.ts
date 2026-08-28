@@ -2,17 +2,26 @@ import { google } from "googleapis";
 
 function client() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
+
+  if (!raw) {
+    throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
+  }
+
   const credentials = JSON.parse(raw);
+
   return new google.auth.GoogleAuth({
     credentials,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"]
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 }
 
 async function getSheets() {
   const auth = client();
-  return google.sheets({ version: "v4", auth });
+
+  return google.sheets({
+    version: "v4",
+    auth,
+  });
 }
 
 export async function getTargetSheet() {
@@ -25,11 +34,11 @@ export async function getTargetSheet() {
 
   const meta = await sheets.spreadsheets.get({
     spreadsheetId,
-    fields: "sheets(properties(sheetId,title,index))"
+    fields: "sheets(properties(sheetId,title,index))",
   });
 
   const sheet = (meta.data.sheets || []).find(
-    s => s.properties?.title === "ADMINs"
+    (s) => s.properties?.title === "ADMINs"
   );
 
   if (!sheet?.properties?.title) {
@@ -39,36 +48,42 @@ export async function getTargetSheet() {
   return {
     sheets,
     spreadsheetId,
-    title: sheet.properties.title
+    title: sheet.properties.title,
   };
 }
 
 export async function readCases() {
   const { sheets, spreadsheetId, title } = await getTargetSheet();
 
+  // La fila 2 contiene los encabezados.
+  // Los casos empiezan en la fila 3.
   const range = `'${title.replace(/'/g, "''")}'!2:1000`;
 
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
     range,
-    valueRenderOption: "FORMATTED_VALUE"
+    valueRenderOption: "FORMATTED_VALUE",
   });
 
   const values = res.data.values || [];
 
   if (!values.length) {
-    return { title, headers: [], rows: [] };
+    return {
+      title,
+      headers: [],
+      rows: [],
+    };
   }
 
   // Fila 2 = encabezados
-  const headers = values[0].map(v => String(v ?? ""));
+  const headers = values[0].map((v) => String(v ?? ""));
 
   // Fila 3 en adelante = casos
   const rows = values
     .slice(1)
     .map((r, i) => {
       const obj: Record<string, string> = {
-        "__row": String(i + 3)
+        "__row": String(i + 3),
       };
 
       headers.forEach((h, j) => {
@@ -77,48 +92,125 @@ export async function readCases() {
 
       return obj;
     })
-    .filter(r =>
-      Object.values(r).some(v => v && v !== r.__row)
+    .filter((r) =>
+      Object.values(r).some(
+        (v) => v && v !== r.__row
+      )
     );
 
-  return { title, headers, rows };
+  return {
+    title,
+    headers,
+    rows,
+  };
 }
 
-const normal = (s:string) => s.trim().toUpperCase().replace(/\s+/g," ");
+const normal = (s: string) =>
+  s.trim().toUpperCase().replace(/\s+/g, " ");
 
-function findHeader(headers:string[], candidates:string[]) {
+function findHeader(
+  headers: string[],
+  candidates: string[]
+) {
   const wanted = candidates.map(normal);
-  return headers.find(h => wanted.includes(normal(h)));
+
+  return headers.find((h) =>
+    wanted.includes(normal(h))
+  );
 }
 
-export async function updateCase(rowNumber:number, changes:Record<string,string>) {
-  const { sheets, spreadsheetId, title } = await getTargetSheet();
+export async function updateCase(
+  rowNumber: number,
+  changes: Record<string, string>
+) {
+  const {
+    sheets,
+    spreadsheetId,
+    title,
+  } = await getTargetSheet();
+
+  /*
+   * IMPORTANTE:
+   * Los encabezados están en la FILA 2.
+   * Antes aquí estaba 1:1 y por eso aparecía:
+   *
+   * Column not found: CS DONE ESTRATEGIA
+   */
   const current = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `'${title.replace(/'/g, "''")}'!1:1`
+    range: `'${title.replace(/'/g, "''")}'!2:2`,
+    valueRenderOption: "FORMATTED_VALUE",
   });
-  const headers = (current.data.values?.[0] || []).map(String);
-  const data = Object.entries(changes).map(([header,value]) => {
-    const idx = headers.findIndex(h => normal(h) === normal(header));
-    if (idx < 0) throw new Error(`Column not found: ${header}`);
-    const col = columnName(idx + 1);
-    return { range: `'${title.replace(/'/g, "''")}'!${col}${rowNumber}`, values: [[value]] };
-  });
-  if (!data.length) return;
+
+  const headers = (
+    current.data.values?.[0] || []
+  ).map(String);
+
+  const data = Object.entries(changes).map(
+    ([header, value]) => {
+      const idx = headers.findIndex(
+        (h) => normal(h) === normal(header)
+      );
+
+      if (idx < 0) {
+        throw new Error(
+          `Column not found: ${header}`
+        );
+      }
+
+      const col = columnName(idx + 1);
+
+      return {
+        range: `'${title.replace(
+          /'/g,
+          "''"
+        )}'!${col}${rowNumber}`,
+        values: [[value]],
+      };
+    }
+  );
+
+  if (!data.length) {
+    return;
+  }
+
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId,
-    requestBody: { valueInputOption: "USER_ENTERED", data }
+    requestBody: {
+      valueInputOption: "USER_ENTERED",
+      data,
+    },
   });
 }
 
-function columnName(n:number) {
-  let s="";
-  while(n){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26); }
+function columnName(n: number) {
+  let s = "";
+
+  while (n) {
+    const r = (n - 1) % 26;
+
+    s =
+      String.fromCharCode(65 + r) + s;
+
+    n = Math.floor((n - 1) / 26);
+  }
+
   return s;
 }
 
 export const FIELD_RULES = {
-  assignment: ["PARALEGAL ASIGNADO"],
-  delivery: ["FECHA DE ENTREGA","FECHA ENTREGA","DELIVERY DATE"],
-  status: ["STATUS","ESTATUS"]
+  assignment: [
+    "PARALEGAL ASIGNADO",
+  ],
+
+  delivery: [
+    "FECHA DE ENTREGA",
+    "FECHA ENTREGA",
+    "DELIVERY DATE",
+  ],
+
+  status: [
+    "STATUS",
+    "ESTATUS",
+  ],
 };
