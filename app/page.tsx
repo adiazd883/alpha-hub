@@ -91,7 +91,11 @@ const parseDateOnly = (
     const month = Number(isoMatch[2]);
     const day = Number(isoMatch[3]);
 
-    return new Date(year, month - 1, day);
+    return new Date(
+      year,
+      month - 1,
+      day
+    );
   }
 
   // MM/DD/YYYY
@@ -104,7 +108,11 @@ const parseDateOnly = (
     const day = Number(slashMatch[2]);
     const year = Number(slashMatch[3]);
 
-    return new Date(year, month - 1, day);
+    return new Date(
+      year,
+      month - 1,
+      day
+    );
   }
 
   const parsed = new Date(raw);
@@ -120,7 +128,9 @@ const parseDateOnly = (
   );
 };
 
-const startOfWeek = (date: Date) => {
+const startOfWeek = (
+  date: Date
+) => {
   const result = new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -129,10 +139,14 @@ const startOfWeek = (date: Date) => {
 
   const day = result.getDay();
 
-  // Semana lunes-domingo
-  const diff = day === 0 ? -6 : 1 - day;
+  const diff =
+    day === 0
+      ? -6
+      : 1 - day;
 
-  result.setDate(result.getDate() + diff);
+  result.setDate(
+    result.getDate() + diff
+  );
 
   return result;
 };
@@ -143,7 +157,9 @@ const addDays = (
 ) => {
   const result = new Date(date);
 
-  result.setDate(result.getDate() + days);
+  result.setDate(
+    result.getDate() + days
+  );
 
   return result;
 };
@@ -157,7 +173,10 @@ const classifyDate = (
     startOfWeek(today);
 
   const nextWeekStart =
-    addDays(currentWeekStart, 7);
+    addDays(
+      currentWeekStart,
+      7
+    );
 
   if (
     date.getTime() <
@@ -229,7 +248,9 @@ const getMgmKpi = (
   const status =
     row["STATUS"] || "";
 
-  if (isExcludedMgmStatus(status)) {
+  if (
+    isExcludedMgmStatus(status)
+  ) {
     return "none";
   }
 
@@ -243,7 +264,9 @@ const getMgmKpi = (
     return "none";
   }
 
-  return classifyDate(commitmentDate);
+  return classifyDate(
+    commitmentDate
+  );
 };
 
 /*
@@ -260,9 +283,12 @@ const isExcludedPsychStatus = (
   return [
     "SPECIAL CASE",
     "NA",
+    "N/A",
     "UNRESPONSIVE",
-    "CANCELLED",
     "ON HOLD",
+    "CANCELLED",
+    "CANCELED",
+    "CANCELLED/CLOSED",
   ].includes(value);
 };
 
@@ -273,13 +299,13 @@ const getPsychKpi = (
     row["DOE STATUS"] || "";
 
   /*
+   * NO CUENTAN:
    * SPECIAL CASE
    * NA
+   * N/A
    * UNRESPONSIVE
-   * CANCELLED
    * ON HOLD
-   *
-   * No cuentan.
+   * CANCELLED
    */
   if (
     isExcludedPsychStatus(status)
@@ -288,8 +314,8 @@ const getPsychKpi = (
   }
 
   /*
-   * Si DONE (doe) ya tiene fecha,
-   * Psych ya terminó ese trabajo.
+   * Si ya tiene DONE,
+   * ya se terminó.
    */
   const done =
     row["DONE (doe)"] || "";
@@ -299,7 +325,7 @@ const getPsychKpi = (
   }
 
   /*
-   * Sin EXPECTED DONE (doe)
+   * Sin EXPECTED DONE
    * no se mide.
    */
   const expected =
@@ -312,22 +338,27 @@ const getPsychKpi = (
     return "none";
   }
 
-  return classifyDate(expectedDate);
+  return classifyDate(
+    expectedDate
+  );
 };
 
 export default function Home() {
   const [user, setUser] =
-    useState<User | null>(null);
+    useState<User | null>(
+      null
+    );
 
-  const [data, setData] = useState<{
-    headers: string[];
-    rows: CaseRow[];
-    title: string;
-  }>({
-    headers: [],
-    rows: [],
-    title: "",
-  });
+  const [data, setData] =
+    useState<{
+      headers: string[];
+      rows: CaseRow[];
+      title: string;
+    }>({
+      headers: [],
+      rows: [],
+      title: "",
+    });
 
   const [q, setQ] =
     useState("");
@@ -351,11 +382,14 @@ export default function Home() {
   const [
     expandedKpi,
     setExpandedKpi,
-  ] = useState<ExpandedKpi>(null);
+  ] =
+    useState<ExpandedKpi>(
+      null
+    );
 
   /*
   ==================================================
-  OBTENER USUARIO
+  USUARIO
   ==================================================
   */
 
@@ -384,7 +418,7 @@ export default function Home() {
 
   /*
   ==================================================
-  CARGAR CASOS
+  CASOS
   ==================================================
   */
 
@@ -433,7 +467,7 @@ export default function Home() {
 
   /*
   ==================================================
-  LOGIN / LOGOUT
+  LOGIN
   ==================================================
   */
 
@@ -449,7 +483,7 @@ export default function Home() {
 
   /*
   ==================================================
-  PERMISOS ACTUALES
+  PERMISOS
   ==================================================
   */
 
@@ -460,11 +494,15 @@ export default function Home() {
       return false;
     }
 
-    if (user.role === "ADMIN") {
+    if (
+      user.role === "ADMIN"
+    ) {
       return true;
     }
 
-    if (user.role === "TL") {
+    if (
+      user.role === "TL"
+    ) {
       return (
         isAssignment(header) ||
         isDelivery(header) ||
@@ -477,7 +515,9 @@ export default function Home() {
         "PARALEGAL",
         "PSYCH",
         "ANALYST",
-      ].includes(user.role)
+      ].includes(
+        user.role
+      )
     ) {
       return (
         isDelivery(header) ||
@@ -491,97 +531,123 @@ export default function Home() {
 
   /*
   ==================================================
-  FILTRO GENERAL
+  BÚSQUEDA
   ==================================================
   */
 
-  const rows = useMemo(() => {
-    const search =
-      q.toLowerCase();
+  const rows =
+    useMemo(() => {
+      const search =
+        q.toLowerCase();
 
-    return data.rows.filter((r) => {
-      if (!search) {
-        return true;
-      }
+      return data.rows.filter(
+        (r) => {
+          if (!search) {
+            return true;
+          }
 
-      return Object.entries(r).some(
-        ([k, v]) =>
-          k !== "__row" &&
-          v
-            .toLowerCase()
-            .includes(search)
+          return Object.entries(
+            r
+          ).some(
+            ([k, v]) =>
+              k !== "__row" &&
+              v
+                .toLowerCase()
+                .includes(
+                  search
+                )
+          );
+        }
       );
-    });
-  }, [data.rows, q]);
+    }, [data.rows, q]);
 
   /*
   ==================================================
-  CONTADORES MGM
+  MGM STATS
   ==================================================
   */
 
-  const mgmStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
+  const mgmStats =
+    useMemo(() => {
+      let backlog = 0;
+      let pending = 0;
+      let future = 0;
 
-    data.rows.forEach((row) => {
-      const kpi = getMgmKpi(row);
+      data.rows.forEach(
+        (row) => {
+          const kpi =
+            getMgmKpi(row);
 
-      if (kpi === "backlog") {
-        backlog++;
-      }
+          if (
+            kpi === "backlog"
+          ) {
+            backlog++;
+          }
 
-      if (kpi === "pending") {
-        pending++;
-      }
+          if (
+            kpi === "pending"
+          ) {
+            pending++;
+          }
 
-      if (kpi === "future") {
-        future++;
-      }
-    });
+          if (
+            kpi === "future"
+          ) {
+            future++;
+          }
+        }
+      );
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
-  }, [data.rows]);
+      return {
+        backlog,
+        pending,
+        future,
+      };
+    }, [data.rows]);
 
   /*
   ==================================================
-  CONTADORES PSYCH
+  PSYCH STATS
   ==================================================
   */
 
-  const psychStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
+  const psychStats =
+    useMemo(() => {
+      let backlog = 0;
+      let pending = 0;
+      let future = 0;
 
-    data.rows.forEach((row) => {
-      const kpi =
-        getPsychKpi(row);
+      data.rows.forEach(
+        (row) => {
+          const kpi =
+            getPsychKpi(row);
 
-      if (kpi === "backlog") {
-        backlog++;
-      }
+          if (
+            kpi === "backlog"
+          ) {
+            backlog++;
+          }
 
-      if (kpi === "pending") {
-        pending++;
-      }
+          if (
+            kpi === "pending"
+          ) {
+            pending++;
+          }
 
-      if (kpi === "future") {
-        future++;
-      }
-    });
+          if (
+            kpi === "future"
+          ) {
+            future++;
+          }
+        }
+      );
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
-  }, [data.rows]);
+      return {
+        backlog,
+        pending,
+        future,
+      };
+    }, [data.rows]);
 
   /*
   ==================================================
@@ -592,69 +658,83 @@ export default function Home() {
   const mgmDetailType:
     | KpiType
     | null =
-    expandedKpi === "mgm-backlog"
+    expandedKpi ===
+    "mgm-backlog"
       ? "backlog"
-      : expandedKpi === "mgm-pending"
+      : expandedKpi ===
+        "mgm-pending"
       ? "pending"
-      : expandedKpi === "mgm-future"
+      : expandedKpi ===
+        "mgm-future"
       ? "future"
       : null;
 
-  const mgmCases = useMemo(() => {
-    if (!mgmDetailType) {
-      return [];
-    }
+  const mgmCases =
+    useMemo(() => {
+      if (!mgmDetailType) {
+        return [];
+      }
 
-    return data.rows
-      .filter(
-        (row) =>
-          getMgmKpi(row) ===
-          mgmDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-        client:
-          row["CLIENTE"] ||
-          "Sin cliente",
-        id:
-          row["ID"] || "",
-        caseType:
-          row[
-            "DUE DATE/NO DUE DATE"
-          ] || "",
-        commitment:
-          row["COMMITMENT"] || "",
-        status:
-          row["STATUS"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA =
-          parseDateOnly(a.commitment);
+      return data.rows
+        .filter(
+          (row) =>
+            getMgmKpi(row) ===
+            mgmDetailType
+        )
+        .map((row) => ({
+          row: row.__row,
 
-        const dateB =
-          parseDateOnly(b.commitment);
+          client:
+            row["CLIENTE"] ||
+            "Sin cliente",
 
-        if (!dateA && !dateB) {
-          return 0;
-        }
+          id:
+            row["ID"] || "",
 
-        if (!dateA) {
-          return 1;
-        }
+          caseType:
+            row[
+              "DUE DATE/NO DUE DATE"
+            ] || "",
 
-        if (!dateB) {
-          return -1;
-        }
+          commitment:
+            row["COMMITMENT"] ||
+            "",
 
-        return (
-          dateA.getTime() -
-          dateB.getTime()
-        );
-      });
-  }, [
-    data.rows,
-    mgmDetailType,
-  ]);
+          status:
+            row["STATUS"] || "",
+        }))
+        .sort((a, b) => {
+          const dateA =
+            parseDateOnly(
+              a.commitment
+            );
+
+          const dateB =
+            parseDateOnly(
+              b.commitment
+            );
+
+          if (!dateA && !dateB) {
+            return 0;
+          }
+
+          if (!dateA) {
+            return 1;
+          }
+
+          if (!dateB) {
+            return -1;
+          }
+
+          return (
+            dateA.getTime() -
+            dateB.getTime()
+          );
+        });
+    }, [
+      data.rows,
+      mgmDetailType,
+    ]);
 
   /*
   ==================================================
@@ -752,7 +832,7 @@ export default function Home() {
 
   /*
   ==================================================
-  GUARDAR CAMBIO
+  GUARDAR
   ==================================================
   */
 
@@ -778,6 +858,7 @@ export default function Home() {
           body: JSON.stringify({
             row,
             role: user?.role,
+
             changes: {
               [header]: value,
             },
@@ -797,13 +878,15 @@ export default function Home() {
       setData((prev) => ({
         ...prev,
 
-        rows: prev.rows.map((r) =>
-          Number(r.__row) === row
-            ? {
-                ...r,
-                [header]: value,
-              }
-            : r
+        rows: prev.rows.map(
+          (r) =>
+            Number(r.__row) ===
+            row
+              ? {
+                  ...r,
+                  [header]: value,
+                }
+              : r
         ),
       }));
 
@@ -859,8 +942,10 @@ export default function Home() {
             className="card"
             style={{
               maxWidth: 500,
-              margin: "80px auto",
-              textAlign: "center",
+              margin:
+                "80px auto",
+              textAlign:
+                "center",
               padding: 40,
             }}
           >
@@ -935,9 +1020,7 @@ export default function Home() {
 
       <main className="shell">
 
-        {/* =====================================
-            ENTREGAS MGM
-        ===================================== */}
+        {/* MGM */}
 
         <div
           style={{
@@ -1091,8 +1174,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* DETALLE MGM */}
-
         {mgmDetailType && (
           <div
             className="card"
@@ -1129,7 +1210,8 @@ export default function Home() {
                 <div className="muted">
                   {mgmCases.length}{" "}
                   caso
-                  {mgmCases.length === 1
+                  {mgmCases.length ===
+                  1
                     ? ""
                     : "s"}
                 </div>
@@ -1138,7 +1220,9 @@ export default function Home() {
               <button
                 className="btn btnGhost"
                 onClick={() =>
-                  setExpandedKpi(null)
+                  setExpandedKpi(
+                    null
+                  )
                 }
               >
                 Cerrar
@@ -1152,7 +1236,9 @@ export default function Home() {
                     <th>Cliente</th>
                     <th>ID</th>
                     <th>Tipo</th>
-                    <th>Commitment</th>
+                    <th>
+                      Commitment
+                    </th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -1160,23 +1246,30 @@ export default function Home() {
                 <tbody>
                   {mgmCases.map(
                     (item) => (
-                      <tr key={item.row}>
+                      <tr
+                        key={item.row}
+                      >
                         <td>
                           <strong>
                             {item.client}
                           </strong>
                         </td>
+
                         <td>
-                          {item.id || "—"}
+                          {item.id ||
+                            "—"}
                         </td>
+
                         <td>
                           {item.caseType ||
                             "—"}
                         </td>
+
                         <td>
                           {item.commitment ||
                             "—"}
                         </td>
+
                         <td>
                           {item.status ||
                             "—"}
@@ -1190,9 +1283,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* =====================================
-            PSYCH
-        ===================================== */}
+        {/* PSYCH */}
 
         <div
           style={{
@@ -1347,8 +1438,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* DETALLE PSYCH */}
-
         {psychDetailType && (
           <div
             className="card"
@@ -1395,7 +1484,9 @@ export default function Home() {
               <button
                 className="btn btnGhost"
                 onClick={() =>
-                  setExpandedKpi(null)
+                  setExpandedKpi(
+                    null
+                  )
                 }
               >
                 Cerrar
@@ -1409,8 +1500,12 @@ export default function Home() {
                     <th>Cliente</th>
                     <th>ID</th>
                     <th>Psych</th>
-                    <th>DOE Status</th>
-                    <th>Expected Done</th>
+                    <th>
+                      DOE Status
+                    </th>
+                    <th>
+                      Expected Done
+                    </th>
                     <th>Done</th>
                     <th>Class</th>
                   </tr>
@@ -1419,7 +1514,9 @@ export default function Home() {
                 <tbody>
                   {psychCases.map(
                     (item) => (
-                      <tr key={item.row}>
+                      <tr
+                        key={item.row}
+                      >
                         <td>
                           <strong>
                             {item.client}
@@ -1427,7 +1524,8 @@ export default function Home() {
                         </td>
 
                         <td>
-                          {item.id || "—"}
+                          {item.id ||
+                            "—"}
                         </td>
 
                         <td>
@@ -1463,9 +1561,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* =====================================
-            TABLA GENERAL
-        ===================================== */}
+        {/* TABLA GENERAL */}
 
         <div
           style={{
@@ -1484,7 +1580,9 @@ export default function Home() {
               placeholder="Buscar caso, nombre, ID..."
               value={q}
               onChange={(e) =>
-                setQ(e.target.value)
+                setQ(
+                  e.target.value
+                )
               }
             />
 
@@ -1520,8 +1618,8 @@ export default function Home() {
             </div>
           ) : !data.headers.length ? (
             <div className="empty">
-              No se encontraron columnas
-              en la Sheet.
+              No se encontraron
+              columnas en la Sheet.
             </div>
           ) : (
             <div className="tableWrap">
@@ -1552,7 +1650,8 @@ export default function Home() {
                               <input
                                 className="editable"
                                 value={
-                                  r[h] || ""
+                                  r[h] ||
+                                  ""
                                 }
                                 onChange={(e) => {
                                   const value =
@@ -1585,7 +1684,8 @@ export default function Home() {
                                       .value;
 
                                   const oldValue =
-                                    r[h] || "";
+                                    r[h] ||
+                                    "";
 
                                   if (
                                     newValue !==
