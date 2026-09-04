@@ -55,11 +55,9 @@ const isStatus = (h: string) =>
   ["STATUS", "ESTATUS"].includes(norm(h));
 
 const isDelivery = (h: string) =>
-  [
-    "FECHA DE ENTREGA",
-    "FECHA ENTREGA",
-    "DELIVERY DATE",
-  ].includes(norm(h));
+  ["FECHA DE ENTREGA", "FECHA ENTREGA", "DELIVERY DATE"].includes(
+    norm(h)
+  );
 
 const isAssignment = (h: string) =>
   norm(h) === "PARALEGAL ASIGNADO";
@@ -82,24 +80,62 @@ const parseDateOnly = (value: string): Date | null => {
   );
 
   if (isoMatch) {
-    return new Date(
-      Number(isoMatch[1]),
-      Number(isoMatch[2]) - 1,
-      Number(isoMatch[3])
-    );
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+
+    const date = new Date(year, month - 1, day);
+
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return date;
+    }
+
+    return null;
   }
 
-  // MM/DD/YYYY
+  // Fechas con /
   const slashMatch = raw.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
   );
 
   if (slashMatch) {
-    return new Date(
-      Number(slashMatch[3]),
-      Number(slashMatch[1]) - 1,
-      Number(slashMatch[2])
-    );
+    const first = Number(slashMatch[1]);
+    const second = Number(slashMatch[2]);
+    const year = Number(slashMatch[3]);
+
+    /*
+      La Sheet normalmente viene como MM/DD/YYYY.
+
+      Ejemplo:
+      08/10/2026 = August 10, 2026.
+
+      Si el primer número es mayor a 12,
+      asumimos DD/MM/YYYY.
+    */
+
+    let month = first;
+    let day = second;
+
+    if (first > 12 && second <= 12) {
+      day = first;
+      month = second;
+    }
+
+    const date = new Date(year, month - 1, day);
+
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return date;
+    }
+
+    return null;
   }
 
   const parsed = new Date(raw);
@@ -164,47 +200,31 @@ const classifyDate = (date: Date): KpiType => {
    MGM
 ==================================================== */
 
-const isMgmCaseType = (value: string) => {
-  const type = norm(value);
+const isMgmCaseType = (value: string) =>
+  ["DUE DATE", "NO DUE DATE", "NOID"].includes(norm(value));
 
-  return [
-    "DUE DATE",
-    "NO DUE DATE",
-    "NOID",
-  ].includes(type);
-};
-
-const isExcludedMgmStatus = (status: string) => {
-  const value = norm(status);
-
-  return [
+const isExcludedMgmStatus = (status: string) =>
+  [
     "MGM REVIEW",
     "SENT TO USCIS",
     "SPECIAL CASE",
     "CANCELLED/CLOSED",
-  ].includes(value);
-};
+  ].includes(norm(status));
 
 const getMgmKpi = (row: CaseRow): KpiType => {
-  const caseType =
-    row["DUE DATE/NO DUE DATE"] || "";
+  const caseType = row["DUE DATE/NO DUE DATE"] || "";
 
-  if (!isMgmCaseType(caseType)) {
-    return "none";
-  }
+  if (!isMgmCaseType(caseType)) return "none";
 
   const status = row["STATUS"] || "";
 
-  if (isExcludedMgmStatus(status)) {
-    return "none";
-  }
+  if (isExcludedMgmStatus(status)) return "none";
 
-  const commitment = row["COMMITMENT"] || "";
-  const commitmentDate = parseDateOnly(commitment);
+  const commitmentDate = parseDateOnly(
+    row["COMMITMENT"] || ""
+  );
 
-  if (!commitmentDate) {
-    return "none";
-  }
+  if (!commitmentDate) return "none";
 
   return classifyDate(commitmentDate);
 };
@@ -213,10 +233,8 @@ const getMgmKpi = (row: CaseRow): KpiType => {
    PSYCH
 ==================================================== */
 
-const isExcludedPsychStatus = (status: string) => {
-  const value = norm(status);
-
-  return [
+const isExcludedPsychStatus = (status: string) =>
+  [
     "SPECIAL CASE",
     "NA",
     "N/A",
@@ -225,28 +243,22 @@ const isExcludedPsychStatus = (status: string) => {
     "CANCELLED",
     "CANCELED",
     "CANCELLED/CLOSED",
-  ].includes(value);
-};
+  ].includes(norm(status));
 
 const getPsychKpi = (row: CaseRow): KpiType => {
   const status = row["DOE STATUS"] || "";
 
-  if (isExcludedPsychStatus(status)) {
-    return "none";
-  }
+  if (isExcludedPsychStatus(status)) return "none";
 
   const done = row["DONE (doe)"] || "";
 
-  if (done.trim()) {
-    return "none";
-  }
+  if (done.trim()) return "none";
 
-  const expected = row["EXPECTED DONE (doe)"] || "";
-  const expectedDate = parseDateOnly(expected);
+  const expectedDate = parseDateOnly(
+    row["EXPECTED DONE (doe)"] || ""
+  );
 
-  if (!expectedDate) {
-    return "none";
-  }
+  if (!expectedDate) return "none";
 
   return classifyDate(expectedDate);
 };
@@ -255,10 +267,8 @@ const getPsychKpi = (row: CaseRow): KpiType => {
    PARALEGAL / 1ST DRAFT
 ==================================================== */
 
-const isExcludedParalegalStatus = (status: string) => {
-  const value = norm(status);
-
-  return [
+const isExcludedParalegalStatus = (status: string) =>
+  [
     "NA",
     "N/A",
     "UNRESPONSIVE",
@@ -266,28 +276,22 @@ const isExcludedParalegalStatus = (status: string) => {
     "CANCELLED",
     "CANCELED",
     "SPECIAL CASE",
-  ].includes(value);
-};
+  ].includes(norm(status));
 
 const getParalegalKpi = (row: CaseRow): KpiType => {
   const status = row["STATUS 1ST DRAFT"] || "";
 
-  if (isExcludedParalegalStatus(status)) {
-    return "none";
-  }
+  if (isExcludedParalegalStatus(status)) return "none";
 
   const done = row["1ST DRAFT DONE"] || "";
 
-  if (done.trim()) {
-    return "none";
-  }
+  if (done.trim()) return "none";
 
-  const expected = row["1ST DRAFT EXP DONE"] || "";
-  const expectedDate = parseDateOnly(expected);
+  const expectedDate = parseDateOnly(
+    row["1ST DRAFT EXP DONE"] || ""
+  );
 
-  if (!expectedDate) {
-    return "none";
-  }
+  if (!expectedDate) return "none";
 
   return classifyDate(expectedDate);
 };
@@ -308,34 +312,24 @@ const isExcludedEaStatus = (status: string) => {
 };
 
 const getEaKpi = (row: CaseRow): KpiType => {
-  /*
-   * EA STATUS:
-   *
-   * NA
-   * N/A
-   * SPECIAL CASE
-   * WAITING GMC
-   *
-   * NO CUENTAN.
-   */
   const status = row["EA STATUS"] || "";
 
+  /*
+    NA / N/A / SPECIAL CASE / WAITING GMC
+    NO cuentan.
+  */
   if (isExcludedEaStatus(status)) {
     return "none";
   }
 
   /*
-   * EA DONE:
-   *
-   * Si tiene una fecha/valor,
-   * el trabajo ya está terminado
-   * y deja de contar.
-   *
-   * IMPORTANTE:
-   * EA STATUS puede decir DONE,
-   * pero si EA DONE está vacío,
-   * SE SIGUE CONTANDO.
-   */
+    EA DONE es lo que determina si
+    realmente terminó.
+
+    Aunque EA STATUS sea DONE,
+    si EA DONE está vacío,
+    EL CASO SIGUE CONTANDO.
+  */
   const done = row["EA DONE"] || "";
 
   if (done.trim()) {
@@ -343,22 +337,32 @@ const getEaKpi = (row: CaseRow): KpiType => {
   }
 
   /*
-   * EA EXPECTED DONE:
-   *
-   * Esta es la fecha que determina
-   * Backlog / Pendientes / Próximas.
-   *
-   * Si está vacía, no cuenta.
-   */
-  const expected = row["EA EXPECTED DONE"] || "";
-  const expectedDate = parseDateOnly(expected);
+    EA EXPECTED DONE determina
+    Backlog / Pendiente / Futuro.
+  */
+  const expectedDate = parseDateOnly(
+    row["EA EXPECTED DONE"] || ""
+  );
 
   if (!expectedDate) {
     return "none";
   }
 
+  /*
+    Ejemplo:
+
+    STATUS = WORKING
+    EXPECTED DONE = fecha de semanas atrás
+    DONE = vacío
+
+    => BACKLOG
+  */
   return classifyDate(expectedDate);
 };
+
+/* ====================================================
+   COMPONENTE PRINCIPAL
+==================================================== */
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -375,11 +379,8 @@ export default function Home() {
 
   const [q, setQ] = useState("");
 
-  const [loadingUser, setLoadingUser] =
-    useState(true);
-
-  const [loadingCases, setLoadingCases] =
-    useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingCases, setLoadingCases] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
@@ -388,7 +389,7 @@ export default function Home() {
     useState<ExpandedKpi>(null);
 
   /* ====================================================
-     USUARIO
+     CARGAR USUARIO
   ==================================================== */
 
   async function loadUser() {
@@ -412,7 +413,7 @@ export default function Home() {
   }
 
   /* ====================================================
-     CASOS
+     CARGAR CASOS
   ==================================================== */
 
   async function loadCases() {
@@ -452,10 +453,6 @@ export default function Home() {
     }
   }, [user]);
 
-  /* ====================================================
-     LOGIN
-  ==================================================== */
-
   function login() {
     window.location.href = "/api/auth/login";
   }
@@ -465,13 +462,11 @@ export default function Home() {
   }
 
   /* ====================================================
-     PERMISOS ACTUALES
+     PERMISOS
   ==================================================== */
 
   const canEdit = (header: string) => {
-    if (!user?.role) {
-      return false;
-    }
+    if (!user?.role) return false;
 
     if (user.role === "ADMIN") {
       return true;
@@ -501,16 +496,14 @@ export default function Home() {
   };
 
   /* ====================================================
-     BÚSQUEDA
+     BUSCADOR
   ==================================================== */
 
   const rows = useMemo(() => {
     const search = q.toLowerCase();
 
     return data.rows.filter((r) => {
-      if (!search) {
-        return true;
-      }
+      if (!search) return true;
 
       return Object.entries(r).some(
         ([k, v]) =>
@@ -537,11 +530,7 @@ export default function Home() {
       if (kpi === "future") future++;
     });
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
+    return { backlog, pending, future };
   }, [data.rows]);
 
   /* ====================================================
@@ -561,11 +550,7 @@ export default function Home() {
       if (kpi === "future") future++;
     });
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
+    return { backlog, pending, future };
   }, [data.rows]);
 
   /* ====================================================
@@ -585,11 +570,7 @@ export default function Home() {
       if (kpi === "future") future++;
     });
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
+    return { backlog, pending, future };
   }, [data.rows]);
 
   /* ====================================================
@@ -609,11 +590,7 @@ export default function Home() {
       if (kpi === "future") future++;
     });
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
+    return { backlog, pending, future };
   }, [data.rows]);
 
   /* ====================================================
@@ -630,42 +607,28 @@ export default function Home() {
       : null;
 
   const mgmCases = useMemo(() => {
-    if (!mgmDetailType) {
-      return [];
-    }
+    if (!mgmDetailType) return [];
 
     return data.rows
-      .filter(
-        (row) =>
-          getMgmKpi(row) === mgmDetailType
-      )
+      .filter((row) => getMgmKpi(row) === mgmDetailType)
       .map((row) => ({
         row: row.__row,
-        client:
-          row["CLIENTE"] || "Sin cliente",
+        client: row["CLIENTE"] || "Sin cliente",
         id: row["ID"] || "",
         caseType:
           row["DUE DATE/NO DUE DATE"] || "",
-        commitment:
-          row["COMMITMENT"] || "",
-        status:
-          row["STATUS"] || "",
+        commitment: row["COMMITMENT"] || "",
+        status: row["STATUS"] || "",
       }))
       .sort((a, b) => {
-        const dateA =
-          parseDateOnly(a.commitment);
-
-        const dateB =
-          parseDateOnly(b.commitment);
+        const dateA = parseDateOnly(a.commitment);
+        const dateB = parseDateOnly(b.commitment);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return (
-          dateA.getTime() -
-          dateB.getTime()
-        );
+        return dateA.getTime() - dateB.getTime();
       });
   }, [data.rows, mgmDetailType]);
 
@@ -683,47 +646,32 @@ export default function Home() {
       : null;
 
   const psychCases = useMemo(() => {
-    if (!psychDetailType) {
-      return [];
-    }
+    if (!psychDetailType) return [];
 
     return data.rows
       .filter(
-        (row) =>
-          getPsychKpi(row) === psychDetailType
+        (row) => getPsychKpi(row) === psychDetailType
       )
       .map((row) => ({
         row: row.__row,
-        client:
-          row["CLIENTE"] || "Sin cliente",
-        id:
-          row["ID"] || "",
-        psych:
-          row["PSYCH"] || "",
-        status:
-          row["DOE STATUS"] || "",
+        client: row["CLIENTE"] || "Sin cliente",
+        id: row["ID"] || "",
+        psych: row["PSYCH"] || "",
+        status: row["DOE STATUS"] || "",
         expected:
           row["EXPECTED DONE (doe)"] || "",
-        done:
-          row["DONE (doe)"] || "",
-        classValue:
-          row["CLASS"] || "",
+        done: row["DONE (doe)"] || "",
+        classValue: row["CLASS"] || "",
       }))
       .sort((a, b) => {
-        const dateA =
-          parseDateOnly(a.expected);
-
-        const dateB =
-          parseDateOnly(b.expected);
+        const dateA = parseDateOnly(a.expected);
+        const dateB = parseDateOnly(b.expected);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return (
-          dateA.getTime() -
-          dateB.getTime()
-        );
+        return dateA.getTime() - dateB.getTime();
       });
   }, [data.rows, psychDetailType]);
 
@@ -741,9 +689,7 @@ export default function Home() {
       : null;
 
   const paralegalCases = useMemo(() => {
-    if (!paralegalDetailType) {
-      return [];
-    }
+    if (!paralegalDetailType) return [];
 
     return data.rows
       .filter(
@@ -753,48 +699,32 @@ export default function Home() {
       )
       .map((row) => ({
         row: row.__row,
-
-        client:
-          row["CLIENTE"] || "Sin cliente",
-
-        id:
-          row["ID"] || "",
-
-        paralegal:
-          row["PARALEGAL"] || "",
-
+        client: row["CLIENTE"] || "Sin cliente",
+        id: row["ID"] || "",
+        paralegal: row["PARALEGAL"] || "",
         status:
           row["STATUS 1ST DRAFT"] || "",
-
         expected:
           row["1ST DRAFT EXP DONE"] || "",
-
         done:
           row["1ST DRAFT DONE"] || "",
-
         link:
           row["LINK INF AFFIDAVIT"] || "",
       }))
       .sort((a, b) => {
-        const dateA =
-          parseDateOnly(a.expected);
-
-        const dateB =
-          parseDateOnly(b.expected);
+        const dateA = parseDateOnly(a.expected);
+        const dateB = parseDateOnly(b.expected);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return (
-          dateA.getTime() -
-          dateB.getTime()
-        );
+        return dateA.getTime() - dateB.getTime();
       });
   }, [data.rows, paralegalDetailType]);
 
   /* ====================================================
-     DETALLE EA / ANALYST
+     DETALLE EA
   ==================================================== */
 
   const eaDetailType: KpiType | null =
@@ -807,15 +737,10 @@ export default function Home() {
       : null;
 
   const eaCases = useMemo(() => {
-    if (!eaDetailType) {
-      return [];
-    }
+    if (!eaDetailType) return [];
 
     return data.rows
-      .filter(
-        (row) =>
-          getEaKpi(row) === eaDetailType
-      )
+      .filter((row) => getEaKpi(row) === eaDetailType)
       .map((row) => ({
         row: row.__row,
 
@@ -825,11 +750,12 @@ export default function Home() {
         id:
           row["ID"] || "",
 
-        assigned:
-          row["EA ASSIGNED"] || "",
-
         member:
           row["EA MEMBER"] || "",
+
+        // Fecha en que fue asignado al analista
+        assigned:
+          row["EA ASSIGNED"] || "",
 
         status:
           row["EA STATUS"] || "",
@@ -839,9 +765,6 @@ export default function Home() {
 
         done:
           row["EA DONE"] || "",
-
-        link:
-          row["EA LINK DRIVE"] || "",
 
         pe:
           row["EA P.E."] || "",
@@ -860,22 +783,19 @@ export default function Home() {
 
         caratula:
           row["EA ACTUALIZACIÓN CARATULA"] || "",
+
+        link:
+          row["EA LINK DRIVE"] || "",
       }))
       .sort((a, b) => {
-        const dateA =
-          parseDateOnly(a.expected);
-
-        const dateB =
-          parseDateOnly(b.expected);
+        const dateA = parseDateOnly(a.expected);
+        const dateB = parseDateOnly(b.expected);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return (
-          dateA.getTime() -
-          dateB.getTime()
-        );
+        return dateA.getTime() - dateB.getTime();
       });
   }, [data.rows, eaDetailType]);
 
@@ -892,26 +812,21 @@ export default function Home() {
     setErr("");
 
     try {
-      const r = await fetch(
-        "/api/cases/update",
-        {
-          method: "POST",
+      const r = await fetch("/api/cases/update", {
+        method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          row,
+          role: user?.role,
+          changes: {
+            [header]: value,
           },
-
-          body: JSON.stringify({
-            row,
-            role: user?.role,
-
-            changes: {
-              [header]: value,
-            },
-          }),
-        }
-      );
+        }),
+      });
 
       const j = await r.json();
 
@@ -941,15 +856,13 @@ export default function Home() {
       );
     } catch (e) {
       setErr(
-        e instanceof Error
-          ? e.message
-          : "Error"
+        e instanceof Error ? e.message : "Error"
       );
     }
   }
 
   /* ====================================================
-     COMPONENTE KPI
+     KPI CARD
   ==================================================== */
 
   function KpiCard({
@@ -981,9 +894,7 @@ export default function Home() {
           userSelect: "none",
         }}
       >
-        <div className="muted">
-          {section}
-        </div>
+        <div className="muted">{section}</div>
 
         <div
           style={{
@@ -1050,9 +961,7 @@ export default function Home() {
               padding: 40,
             }}
           >
-            <h1>
-              Welcome to Alpha Hub
-            </h1>
+            <h1>Welcome to Alpha Hub</h1>
 
             <p
               className="muted"
@@ -1061,8 +970,8 @@ export default function Home() {
                 marginBottom: 30,
               }}
             >
-              Sign in with your institutional
-              Google account to continue.
+              Sign in with your institutional Google
+              account to continue.
             </p>
 
             <button
@@ -1114,9 +1023,7 @@ export default function Home() {
 
       <main className="shell">
 
-        {/* =================================================
-            MGM
-        ================================================= */}
+        {/* ================= MGM ================= */}
 
         <div
           style={{
@@ -1173,8 +1080,7 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent:
-                  "space-between",
+                justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -1195,17 +1101,13 @@ export default function Home() {
 
                 <div className="muted">
                   {mgmCases.length} caso
-                  {mgmCases.length === 1
-                    ? ""
-                    : "s"}
+                  {mgmCases.length === 1 ? "" : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() =>
-                  setExpandedKpi(null)
-                }
+                onClick={() => setExpandedKpi(null)}
               >
                 Cerrar
               </button>
@@ -1227,26 +1129,12 @@ export default function Home() {
                   {mgmCases.map((item) => (
                     <tr key={item.row}>
                       <td>
-                        <strong>
-                          {item.client}
-                        </strong>
+                        <strong>{item.client}</strong>
                       </td>
-
-                      <td>
-                        {item.id || "—"}
-                      </td>
-
-                      <td>
-                        {item.caseType || "—"}
-                      </td>
-
-                      <td>
-                        {item.commitment || "—"}
-                      </td>
-
-                      <td>
-                        {item.status || "—"}
-                      </td>
+                      <td>{item.id || "—"}</td>
+                      <td>{item.caseType || "—"}</td>
+                      <td>{item.commitment || "—"}</td>
+                      <td>{item.status || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1255,9 +1143,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* =================================================
-            PSYCH
-        ================================================= */}
+        {/* ================= PSYCH ================= */}
 
         <div
           style={{
@@ -1315,8 +1201,7 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent:
-                  "space-between",
+                justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -1337,17 +1222,13 @@ export default function Home() {
 
                 <div className="muted">
                   {psychCases.length} caso
-                  {psychCases.length === 1
-                    ? ""
-                    : "s"}
+                  {psychCases.length === 1 ? "" : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() =>
-                  setExpandedKpi(null)
-                }
+                onClick={() => setExpandedKpi(null)}
               >
                 Cerrar
               </button>
@@ -1371,34 +1252,14 @@ export default function Home() {
                   {psychCases.map((item) => (
                     <tr key={item.row}>
                       <td>
-                        <strong>
-                          {item.client}
-                        </strong>
+                        <strong>{item.client}</strong>
                       </td>
-
-                      <td>
-                        {item.id || "—"}
-                      </td>
-
-                      <td>
-                        {item.psych || "—"}
-                      </td>
-
-                      <td>
-                        {item.status || "—"}
-                      </td>
-
-                      <td>
-                        {item.expected || "—"}
-                      </td>
-
-                      <td>
-                        {item.done || "—"}
-                      </td>
-
-                      <td>
-                        {item.classValue || "—"}
-                      </td>
+                      <td>{item.id || "—"}</td>
+                      <td>{item.psych || "—"}</td>
+                      <td>{item.status || "—"}</td>
+                      <td>{item.expected || "—"}</td>
+                      <td>{item.done || "—"}</td>
+                      <td>{item.classValue || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1407,9 +1268,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* =================================================
-            PARALEGAL / 1ST DRAFT
-        ================================================= */}
+        {/* ================= PARALEGAL ================= */}
 
         <div
           style={{
@@ -1467,8 +1326,7 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent:
-                  "space-between",
+                justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -1480,28 +1338,22 @@ export default function Home() {
                     fontWeight: 800,
                   }}
                 >
-                  {paralegalDetailType ===
-                  "backlog"
+                  {paralegalDetailType === "backlog"
                     ? "Backlog Paralegal · 1st Draft"
-                    : paralegalDetailType ===
-                      "pending"
+                    : paralegalDetailType === "pending"
                     ? "Pendientes Paralegal · 1st Draft"
                     : "Próximas entregas Paralegal · 1st Draft"}
                 </div>
 
                 <div className="muted">
                   {paralegalCases.length} caso
-                  {paralegalCases.length === 1
-                    ? ""
-                    : "s"}
+                  {paralegalCases.length === 1 ? "" : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() =>
-                  setExpandedKpi(null)
-                }
+                onClick={() => setExpandedKpi(null)}
               >
                 Cerrar
               </button>
@@ -1517,67 +1369,43 @@ export default function Home() {
                     <th>Status 1st Draft</th>
                     <th>Expected Done</th>
                     <th>1st Draft Done</th>
-                    <th>
-                      Link Inf Affidavit
-                    </th>
+                    <th>Link Inf Affidavit</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {paralegalCases.map(
-                    (item) => (
-                      <tr key={item.row}>
-                        <td>
-                          <strong>
-                            {item.client}
-                          </strong>
-                        </td>
-
-                        <td>
-                          {item.id || "—"}
-                        </td>
-
-                        <td>
-                          {item.paralegal || "—"}
-                        </td>
-
-                        <td>
-                          {item.status || "—"}
-                        </td>
-
-                        <td>
-                          {item.expected || "—"}
-                        </td>
-
-                        <td>
-                          {item.done || "—"}
-                        </td>
-
-                        <td>
-                          {item.link ? (
-                            <a
-                              href={item.link}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Abrir link
-                            </a>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  )}
+                  {paralegalCases.map((item) => (
+                    <tr key={item.row}>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
+                      <td>{item.id || "—"}</td>
+                      <td>{item.paralegal || "—"}</td>
+                      <td>{item.status || "—"}</td>
+                      <td>{item.expected || "—"}</td>
+                      <td>{item.done || "—"}</td>
+                      <td>
+                        {item.link ? (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Abrir link
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* =================================================
-            EA / ANALYST
-        ================================================= */}
+        {/* ================= EA / ANALYST ================= */}
 
         <div
           style={{
@@ -1600,26 +1428,26 @@ export default function Home() {
           }}
         >
           <KpiCard
-            section="EA / ANALYST"
+            section="EA"
             title="Backlog"
             value={eaStats.backlog}
-            description="EA Expected Done anterior"
+            description="Expected Done anterior"
             expandedName="ea-backlog"
           />
 
           <KpiCard
-            section="EA / ANALYST"
+            section="EA"
             title="Pendientes"
             value={eaStats.pending}
-            description="EA Expected Done de esta semana"
+            description="Expected Done de esta semana"
             expandedName="ea-pending"
           />
 
           <KpiCard
-            section="EA / ANALYST"
+            section="EA"
             title="Próximas entregas"
             value={eaStats.future}
-            description="EA Expected Done futuro"
+            description="Expected Done futuro"
             expandedName="ea-future"
           />
         </div>
@@ -1635,8 +1463,7 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent:
-                  "space-between",
+                justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -1657,17 +1484,13 @@ export default function Home() {
 
                 <div className="muted">
                   {eaCases.length} caso
-                  {eaCases.length === 1
-                    ? ""
-                    : "s"}
+                  {eaCases.length === 1 ? "" : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() =>
-                  setExpandedKpi(null)
-                }
+                onClick={() => setExpandedKpi(null)}
               >
                 Cerrar
               </button>
@@ -1689,9 +1512,7 @@ export default function Home() {
                     <th>EA Stoppers</th>
                     <th>EA Hojas</th>
                     <th>EA WS</th>
-                    <th>
-                      Actualización Carátula
-                    </th>
+                    <th>Actualización Carátula</th>
                     <th>EA Link Drive</th>
                   </tr>
                 </thead>
@@ -1700,58 +1521,32 @@ export default function Home() {
                   {eaCases.map((item) => (
                     <tr key={item.row}>
                       <td>
-                        <strong>
-                          {item.client}
-                        </strong>
+                        <strong>{item.client}</strong>
                       </td>
 
-                      <td>
-                        {item.id || "—"}
-                      </td>
+                      <td>{item.id || "—"}</td>
 
-                      <td>
-                        {item.member || "—"}
-                      </td>
+                      <td>{item.member || "—"}</td>
 
-                      <td>
-                        {item.assigned || "—"}
-                      </td>
+                      <td>{item.assigned || "—"}</td>
 
-                      <td>
-                        {item.status || "—"}
-                      </td>
+                      <td>{item.status || "—"}</td>
 
-                      <td>
-                        {item.expected || "—"}
-                      </td>
+                      <td>{item.expected || "—"}</td>
 
-                      <td>
-                        {item.done || "—"}
-                      </td>
+                      <td>{item.done || "—"}</td>
 
-                      <td>
-                        {item.pe || "—"}
-                      </td>
+                      <td>{item.pe || "—"}</td>
 
-                      <td>
-                        {item.peApproved || "—"}
-                      </td>
+                      <td>{item.peApproved || "—"}</td>
 
-                      <td>
-                        {item.stoppers || "—"}
-                      </td>
+                      <td>{item.stoppers || "—"}</td>
 
-                      <td>
-                        {item.hojas || "—"}
-                      </td>
+                      <td>{item.hojas || "—"}</td>
 
-                      <td>
-                        {item.ws || "—"}
-                      </td>
+                      <td>{item.ws || "—"}</td>
 
-                      <td>
-                        {item.caratula || "—"}
-                      </td>
+                      <td>{item.caratula || "—"}</td>
 
                       <td>
                         {item.link ? (
@@ -1774,9 +1569,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* =================================================
-            TABLA GENERAL
-        ================================================= */}
+        {/* ================= CASOS ================= */}
 
         <div
           style={{
@@ -1794,9 +1587,7 @@ export default function Home() {
             <input
               placeholder="Buscar caso, nombre, ID..."
               value={q}
-              onChange={(e) =>
-                setQ(e.target.value)
-              }
+              onChange={(e) => setQ(e.target.value)}
             />
 
             <button
@@ -1831,93 +1622,74 @@ export default function Home() {
             </div>
           ) : !data.headers.length ? (
             <div className="empty">
-              No se encontraron columnas en la
-              Sheet.
+              No se encontraron columnas en la Sheet.
             </div>
           ) : (
             <div className="tableWrap">
               <table className="table">
                 <thead>
                   <tr>
-                    {data.headers.map(
-                      (h, index) => (
-                        <th
-                          key={`${h}-${index}`}
-                        >
-                          {h}
-                        </th>
-                      )
-                    )}
+                    {data.headers.map((h, index) => (
+                      <th key={`${h}-${index}`}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
 
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.__row}>
-                      {data.headers.map(
-                        (h, index) => (
-                          <td
-                            key={`${h}-${index}`}
-                          >
-                            {canEdit(h) ? (
-                              <input
-                                className="editable"
-                                value={
-                                  r[h] || ""
-                                }
-                                onChange={(e) => {
-                                  const value =
-                                    e.target.value;
+                      {data.headers.map((h, index) => (
+                        <td key={`${h}-${index}`}>
+                          {canEdit(h) ? (
+                            <input
+                              className="editable"
+                              value={r[h] || ""}
+                              onChange={(e) => {
+                                const value =
+                                  e.target.value;
 
-                                  setData(
-                                    (prev) => ({
-                                      ...prev,
+                                setData((prev) => ({
+                                  ...prev,
 
-                                      rows:
-                                        prev.rows.map(
-                                          (
-                                            rowData
-                                          ) =>
-                                            rowData.__row ===
-                                            r.__row
-                                              ? {
-                                                  ...rowData,
-                                                  [h]: value,
-                                                }
-                                              : rowData
-                                        ),
-                                    })
+                                  rows: prev.rows.map(
+                                    (rowData) =>
+                                      rowData.__row ===
+                                      r.__row
+                                        ? {
+                                            ...rowData,
+                                            [h]: value,
+                                          }
+                                        : rowData
+                                  ),
+                                }));
+                              }}
+                              onBlur={(e) => {
+                                const newValue =
+                                  e.target.value;
+
+                                const oldValue =
+                                  r[h] || "";
+
+                                if (
+                                  newValue !== oldValue
+                                ) {
+                                  save(
+                                    Number(r.__row),
+                                    h,
+                                    newValue
                                   );
-                                }}
-                                onBlur={(e) => {
-                                  const newValue =
-                                    e.target.value;
-
-                                  const oldValue =
-                                    r[h] || "";
-
-                                  if (
-                                    newValue !==
-                                    oldValue
-                                  ) {
-                                    save(
-                                      Number(
-                                        r.__row
-                                      ),
-                                      h,
-                                      newValue
-                                    );
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <span>
-                                {r[h] || "—"}
-                              </span>
-                            )}
-                          </td>
-                        )
-                      )}
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span>
+                              {r[h] || "—"}
+                            </span>
+                          )}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -1932,8 +1704,7 @@ export default function Home() {
             marginTop: 14,
           }}
         >
-          Usuario: {user.email} · Rol:{" "}
-          {user.role}
+          Usuario: {user.email} · Rol: {user.role}
         </p>
       </main>
     </>
