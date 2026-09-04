@@ -33,6 +33,9 @@ type ExpandedKpi =
   | "paralegal-backlog"
   | "paralegal-pending"
   | "paralegal-future"
+  | "ea-backlog"
+  | "ea-pending"
+  | "ea-future"
   | null;
 
 const roleLabels: Record<Role, string> = {
@@ -74,7 +77,9 @@ const parseDateOnly = (value: string): Date | null => {
   if (!raw) return null;
 
   // YYYY-MM-DD
-  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const isoMatch = raw.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})/
+  );
 
   if (isoMatch) {
     return new Date(
@@ -133,6 +138,7 @@ const addDays = (date: Date, days: number) => {
 
 const classifyDate = (date: Date): KpiType => {
   const today = new Date();
+
   const currentWeekStart = startOfWeek(today);
   const nextWeekStart = addDays(currentWeekStart, 7);
 
@@ -161,7 +167,11 @@ const classifyDate = (date: Date): KpiType => {
 const isMgmCaseType = (value: string) => {
   const type = norm(value);
 
-  return ["DUE DATE", "NO DUE DATE", "NOID"].includes(type);
+  return [
+    "DUE DATE",
+    "NO DUE DATE",
+    "NOID",
+  ].includes(type);
 };
 
 const isExcludedMgmStatus = (status: string) => {
@@ -176,7 +186,8 @@ const isExcludedMgmStatus = (status: string) => {
 };
 
 const getMgmKpi = (row: CaseRow): KpiType => {
-  const caseType = row["DUE DATE/NO DUE DATE"] || "";
+  const caseType =
+    row["DUE DATE/NO DUE DATE"] || "";
 
   if (!isMgmCaseType(caseType)) {
     return "none";
@@ -259,29 +270,87 @@ const isExcludedParalegalStatus = (status: string) => {
 };
 
 const getParalegalKpi = (row: CaseRow): KpiType => {
-  /*
-   * STATUS que no deben medirse.
-   */
   const status = row["STATUS 1ST DRAFT"] || "";
 
   if (isExcludedParalegalStatus(status)) {
     return "none";
   }
 
-  /*
-   * Si ya tiene fecha de DONE,
-   * el 1st Draft ya fue terminado.
-   */
   const done = row["1ST DRAFT DONE"] || "";
 
   if (done.trim()) {
     return "none";
   }
 
-  /*
-   * Sin fecha esperada no entra al KPI.
-   */
   const expected = row["1ST DRAFT EXP DONE"] || "";
+  const expectedDate = parseDateOnly(expected);
+
+  if (!expectedDate) {
+    return "none";
+  }
+
+  return classifyDate(expectedDate);
+};
+
+/* ====================================================
+   EA / ANALYST
+==================================================== */
+
+const isExcludedEaStatus = (status: string) => {
+  const value = norm(status);
+
+  return [
+    "NA",
+    "N/A",
+    "SPECIAL CASE",
+    "WAITING GMC",
+  ].includes(value);
+};
+
+const getEaKpi = (row: CaseRow): KpiType => {
+  /*
+   * EA STATUS:
+   *
+   * NA
+   * N/A
+   * SPECIAL CASE
+   * WAITING GMC
+   *
+   * NO CUENTAN.
+   */
+  const status = row["EA STATUS"] || "";
+
+  if (isExcludedEaStatus(status)) {
+    return "none";
+  }
+
+  /*
+   * EA DONE:
+   *
+   * Si tiene una fecha/valor,
+   * el trabajo ya está terminado
+   * y deja de contar.
+   *
+   * IMPORTANTE:
+   * EA STATUS puede decir DONE,
+   * pero si EA DONE está vacío,
+   * SE SIGUE CONTANDO.
+   */
+  const done = row["EA DONE"] || "";
+
+  if (done.trim()) {
+    return "none";
+  }
+
+  /*
+   * EA EXPECTED DONE:
+   *
+   * Esta es la fecha que determina
+   * Backlog / Pendientes / Próximas.
+   *
+   * Si está vacía, no cuenta.
+   */
+  const expected = row["EA EXPECTED DONE"] || "";
   const expectedDate = parseDateOnly(expected);
 
   if (!expectedDate) {
@@ -305,8 +374,13 @@ export default function Home() {
   });
 
   const [q, setQ] = useState("");
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [loadingCases, setLoadingCases] = useState(false);
+
+  const [loadingUser, setLoadingUser] =
+    useState(true);
+
+  const [loadingCases, setLoadingCases] =
+    useState(false);
+
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
@@ -353,12 +427,16 @@ export default function Home() {
       const j = await r.json();
 
       if (!r.ok) {
-        throw new Error(j.error || "Error loading cases");
+        throw new Error(
+          j.error || "Error loading cases"
+        );
       }
 
       setData(j);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error");
+      setErr(
+        e instanceof Error ? e.message : "Error"
+      );
     } finally {
       setLoadingCases(false);
     }
@@ -408,7 +486,9 @@ export default function Home() {
     }
 
     if (
-      ["PARALEGAL", "PSYCH", "ANALYST"].includes(user.role)
+      ["PARALEGAL", "PSYCH", "ANALYST"].includes(
+        user.role
+      )
     ) {
       return (
         isDelivery(header) ||
@@ -421,7 +501,7 @@ export default function Home() {
   };
 
   /* ====================================================
-     BÚSQUEDA GENERAL
+     BÚSQUEDA
   ==================================================== */
 
   const rows = useMemo(() => {
@@ -513,6 +593,30 @@ export default function Home() {
   }, [data.rows]);
 
   /* ====================================================
+     EA STATS
+  ==================================================== */
+
+  const eaStats = useMemo(() => {
+    let backlog = 0;
+    let pending = 0;
+    let future = 0;
+
+    data.rows.forEach((row) => {
+      const kpi = getEaKpi(row);
+
+      if (kpi === "backlog") backlog++;
+      if (kpi === "pending") pending++;
+      if (kpi === "future") future++;
+    });
+
+    return {
+      backlog,
+      pending,
+      future,
+    };
+  }, [data.rows]);
+
+  /* ====================================================
      DETALLE MGM
   ==================================================== */
 
@@ -531,24 +635,37 @@ export default function Home() {
     }
 
     return data.rows
-      .filter((row) => getMgmKpi(row) === mgmDetailType)
+      .filter(
+        (row) =>
+          getMgmKpi(row) === mgmDetailType
+      )
       .map((row) => ({
         row: row.__row,
-        client: row["CLIENTE"] || "Sin cliente",
+        client:
+          row["CLIENTE"] || "Sin cliente",
         id: row["ID"] || "",
-        caseType: row["DUE DATE/NO DUE DATE"] || "",
-        commitment: row["COMMITMENT"] || "",
-        status: row["STATUS"] || "",
+        caseType:
+          row["DUE DATE/NO DUE DATE"] || "",
+        commitment:
+          row["COMMITMENT"] || "",
+        status:
+          row["STATUS"] || "",
       }))
       .sort((a, b) => {
-        const dateA = parseDateOnly(a.commitment);
-        const dateB = parseDateOnly(b.commitment);
+        const dateA =
+          parseDateOnly(a.commitment);
+
+        const dateB =
+          parseDateOnly(b.commitment);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return dateA.getTime() - dateB.getTime();
+        return (
+          dateA.getTime() -
+          dateB.getTime()
+        );
       });
   }, [data.rows, mgmDetailType]);
 
@@ -571,26 +688,42 @@ export default function Home() {
     }
 
     return data.rows
-      .filter((row) => getPsychKpi(row) === psychDetailType)
+      .filter(
+        (row) =>
+          getPsychKpi(row) === psychDetailType
+      )
       .map((row) => ({
         row: row.__row,
-        client: row["CLIENTE"] || "Sin cliente",
-        id: row["ID"] || "",
-        psych: row["PSYCH"] || "",
-        status: row["DOE STATUS"] || "",
-        expected: row["EXPECTED DONE (doe)"] || "",
-        done: row["DONE (doe)"] || "",
-        classValue: row["CLASS"] || "",
+        client:
+          row["CLIENTE"] || "Sin cliente",
+        id:
+          row["ID"] || "",
+        psych:
+          row["PSYCH"] || "",
+        status:
+          row["DOE STATUS"] || "",
+        expected:
+          row["EXPECTED DONE (doe)"] || "",
+        done:
+          row["DONE (doe)"] || "",
+        classValue:
+          row["CLASS"] || "",
       }))
       .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
+        const dateA =
+          parseDateOnly(a.expected);
+
+        const dateB =
+          parseDateOnly(b.expected);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return dateA.getTime() - dateB.getTime();
+        return (
+          dateA.getTime() -
+          dateB.getTime()
+        );
       });
   }, [data.rows, psychDetailType]);
 
@@ -615,29 +748,136 @@ export default function Home() {
     return data.rows
       .filter(
         (row) =>
-          getParalegalKpi(row) === paralegalDetailType
+          getParalegalKpi(row) ===
+          paralegalDetailType
       )
       .map((row) => ({
         row: row.__row,
-        client: row["CLIENTE"] || "Sin cliente",
-        id: row["ID"] || "",
-        paralegal: row["PARALEGAL"] || "",
-        status: row["STATUS 1ST DRAFT"] || "",
-        expected: row["1ST DRAFT EXP DONE"] || "",
-        done: row["1ST DRAFT DONE"] || "",
-        link: row["LINK INF AFFIDAVIT"] || "",
+
+        client:
+          row["CLIENTE"] || "Sin cliente",
+
+        id:
+          row["ID"] || "",
+
+        paralegal:
+          row["PARALEGAL"] || "",
+
+        status:
+          row["STATUS 1ST DRAFT"] || "",
+
+        expected:
+          row["1ST DRAFT EXP DONE"] || "",
+
+        done:
+          row["1ST DRAFT DONE"] || "",
+
+        link:
+          row["LINK INF AFFIDAVIT"] || "",
       }))
       .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
+        const dateA =
+          parseDateOnly(a.expected);
+
+        const dateB =
+          parseDateOnly(b.expected);
 
         if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        return dateA.getTime() - dateB.getTime();
+        return (
+          dateA.getTime() -
+          dateB.getTime()
+        );
       });
   }, [data.rows, paralegalDetailType]);
+
+  /* ====================================================
+     DETALLE EA / ANALYST
+  ==================================================== */
+
+  const eaDetailType: KpiType | null =
+    expandedKpi === "ea-backlog"
+      ? "backlog"
+      : expandedKpi === "ea-pending"
+      ? "pending"
+      : expandedKpi === "ea-future"
+      ? "future"
+      : null;
+
+  const eaCases = useMemo(() => {
+    if (!eaDetailType) {
+      return [];
+    }
+
+    return data.rows
+      .filter(
+        (row) =>
+          getEaKpi(row) === eaDetailType
+      )
+      .map((row) => ({
+        row: row.__row,
+
+        client:
+          row["CLIENTE"] || "Sin cliente",
+
+        id:
+          row["ID"] || "",
+
+        assigned:
+          row["EA ASSIGNED"] || "",
+
+        member:
+          row["EA MEMBER"] || "",
+
+        status:
+          row["EA STATUS"] || "",
+
+        expected:
+          row["EA EXPECTED DONE"] || "",
+
+        done:
+          row["EA DONE"] || "",
+
+        link:
+          row["EA LINK DRIVE"] || "",
+
+        pe:
+          row["EA P.E."] || "",
+
+        peApproved:
+          row["FECHA P.E. APROBADA"] || "",
+
+        stoppers:
+          row["EA STOPPERS"] || "",
+
+        hojas:
+          row["EA HOJAS"] || "",
+
+        ws:
+          row["EA WS"] || "",
+
+        caratula:
+          row["EA ACTUALIZACIÓN CARATULA"] || "",
+      }))
+      .sort((a, b) => {
+        const dateA =
+          parseDateOnly(a.expected);
+
+        const dateB =
+          parseDateOnly(b.expected);
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+
+        return (
+          dateA.getTime() -
+          dateB.getTime()
+        );
+      });
+  }, [data.rows, eaDetailType]);
 
   /* ====================================================
      GUARDAR
@@ -652,26 +892,33 @@ export default function Home() {
     setErr("");
 
     try {
-      const r = await fetch("/api/cases/update", {
-        method: "POST",
+      const r = await fetch(
+        "/api/cases/update",
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          row,
-          role: user?.role,
-          changes: {
-            [header]: value,
+          headers: {
+            "Content-Type":
+              "application/json",
           },
-        }),
-      });
+
+          body: JSON.stringify({
+            row,
+            role: user?.role,
+
+            changes: {
+              [header]: value,
+            },
+          }),
+        }
+      );
 
       const j = await r.json();
 
       if (!r.ok) {
-        throw new Error(j.error || "Could not save");
+        throw new Error(
+          j.error || "Could not save"
+        );
       }
 
       setData((prev) => ({
@@ -693,12 +940,16 @@ export default function Home() {
           : "Cambio guardado en Google Sheets."
       );
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error");
+      setErr(
+        e instanceof Error
+          ? e.message
+          : "Error"
+      );
     }
   }
 
   /* ====================================================
-     COMPONENTE DE TARJETA KPI
+     COMPONENTE KPI
   ==================================================== */
 
   function KpiCard({
@@ -730,7 +981,9 @@ export default function Home() {
           userSelect: "none",
         }}
       >
-        <div className="muted">{section}</div>
+        <div className="muted">
+          {section}
+        </div>
 
         <div
           style={{
@@ -751,7 +1004,9 @@ export default function Home() {
           {value}
         </div>
 
-        <div className="muted">{description}</div>
+        <div className="muted">
+          {description}
+        </div>
       </div>
     );
   }
@@ -780,7 +1035,9 @@ export default function Home() {
     return (
       <>
         <header className="top">
-          <div className="brand">ALPHA HUB</div>
+          <div className="brand">
+            ALPHA HUB
+          </div>
         </header>
 
         <main className="shell">
@@ -793,7 +1050,9 @@ export default function Home() {
               padding: 40,
             }}
           >
-            <h1>Welcome to Alpha Hub</h1>
+            <h1>
+              Welcome to Alpha Hub
+            </h1>
 
             <p
               className="muted"
@@ -802,11 +1061,14 @@ export default function Home() {
                 marginBottom: 30,
               }}
             >
-              Sign in with your institutional Google
-              account to continue.
+              Sign in with your institutional
+              Google account to continue.
             </p>
 
-            <button className="btn" onClick={login}>
+            <button
+              className="btn"
+              onClick={login}
+            >
               Continue with Google
             </button>
           </div>
@@ -822,7 +1084,9 @@ export default function Home() {
   return (
     <>
       <header className="top">
-        <div className="brand">ALPHA HUB</div>
+        <div className="brand">
+          ALPHA HUB
+        </div>
 
         <div
           style={{
@@ -835,7 +1099,9 @@ export default function Home() {
             {roleLabels[user.role as Role]}
           </div>
 
-          <span className="muted">{user.email}</span>
+          <span className="muted">
+            {user.email}
+          </span>
 
           <button
             className="btn btnGhost"
@@ -847,6 +1113,7 @@ export default function Home() {
       </header>
 
       <main className="shell">
+
         {/* =================================================
             MGM
         ================================================= */}
@@ -906,7 +1173,8 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent:
+                  "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -927,13 +1195,17 @@ export default function Home() {
 
                 <div className="muted">
                   {mgmCases.length} caso
-                  {mgmCases.length === 1 ? "" : "s"}
+                  {mgmCases.length === 1
+                    ? ""
+                    : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
+                onClick={() =>
+                  setExpandedKpi(null)
+                }
               >
                 Cerrar
               </button>
@@ -955,12 +1227,26 @@ export default function Home() {
                   {mgmCases.map((item) => (
                     <tr key={item.row}>
                       <td>
-                        <strong>{item.client}</strong>
+                        <strong>
+                          {item.client}
+                        </strong>
                       </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.caseType || "—"}</td>
-                      <td>{item.commitment || "—"}</td>
-                      <td>{item.status || "—"}</td>
+
+                      <td>
+                        {item.id || "—"}
+                      </td>
+
+                      <td>
+                        {item.caseType || "—"}
+                      </td>
+
+                      <td>
+                        {item.commitment || "—"}
+                      </td>
+
+                      <td>
+                        {item.status || "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1029,7 +1315,8 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent:
+                  "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -1050,13 +1337,17 @@ export default function Home() {
 
                 <div className="muted">
                   {psychCases.length} caso
-                  {psychCases.length === 1 ? "" : "s"}
+                  {psychCases.length === 1
+                    ? ""
+                    : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
+                onClick={() =>
+                  setExpandedKpi(null)
+                }
               >
                 Cerrar
               </button>
@@ -1080,14 +1371,34 @@ export default function Home() {
                   {psychCases.map((item) => (
                     <tr key={item.row}>
                       <td>
-                        <strong>{item.client}</strong>
+                        <strong>
+                          {item.client}
+                        </strong>
                       </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.psych || "—"}</td>
-                      <td>{item.status || "—"}</td>
-                      <td>{item.expected || "—"}</td>
-                      <td>{item.done || "—"}</td>
-                      <td>{item.classValue || "—"}</td>
+
+                      <td>
+                        {item.id || "—"}
+                      </td>
+
+                      <td>
+                        {item.psych || "—"}
+                      </td>
+
+                      <td>
+                        {item.status || "—"}
+                      </td>
+
+                      <td>
+                        {item.expected || "—"}
+                      </td>
+
+                      <td>
+                        {item.done || "—"}
+                      </td>
+
+                      <td>
+                        {item.classValue || "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1156,7 +1467,8 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent:
+                  "space-between",
                 alignItems: "center",
                 marginBottom: 14,
               }}
@@ -1168,22 +1480,28 @@ export default function Home() {
                     fontWeight: 800,
                   }}
                 >
-                  {paralegalDetailType === "backlog"
+                  {paralegalDetailType ===
+                  "backlog"
                     ? "Backlog Paralegal · 1st Draft"
-                    : paralegalDetailType === "pending"
+                    : paralegalDetailType ===
+                      "pending"
                     ? "Pendientes Paralegal · 1st Draft"
                     : "Próximas entregas Paralegal · 1st Draft"}
                 </div>
 
                 <div className="muted">
                   {paralegalCases.length} caso
-                  {paralegalCases.length === 1 ? "" : "s"}
+                  {paralegalCases.length === 1
+                    ? ""
+                    : "s"}
                 </div>
               </div>
 
               <button
                 className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
+                onClick={() =>
+                  setExpandedKpi(null)
+                }
               >
                 Cerrar
               </button>
@@ -1199,26 +1517,241 @@ export default function Home() {
                     <th>Status 1st Draft</th>
                     <th>Expected Done</th>
                     <th>1st Draft Done</th>
-                    <th>Link Inf Affidavit</th>
+                    <th>
+                      Link Inf Affidavit
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {paralegalCases.map((item) => (
+                  {paralegalCases.map(
+                    (item) => (
+                      <tr key={item.row}>
+                        <td>
+                          <strong>
+                            {item.client}
+                          </strong>
+                        </td>
+
+                        <td>
+                          {item.id || "—"}
+                        </td>
+
+                        <td>
+                          {item.paralegal || "—"}
+                        </td>
+
+                        <td>
+                          {item.status || "—"}
+                        </td>
+
+                        <td>
+                          {item.expected || "—"}
+                        </td>
+
+                        <td>
+                          {item.done || "—"}
+                        </td>
+
+                        <td>
+                          {item.link ? (
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Abrir link
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================
+            EA / ANALYST
+        ================================================= */}
+
+        <div
+          style={{
+            marginTop: 28,
+            marginBottom: 10,
+            fontWeight: 800,
+            fontSize: 18,
+          }}
+        >
+          EA · Analyst
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(3, minmax(0, 1fr))",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          <KpiCard
+            section="EA / ANALYST"
+            title="Backlog"
+            value={eaStats.backlog}
+            description="EA Expected Done anterior"
+            expandedName="ea-backlog"
+          />
+
+          <KpiCard
+            section="EA / ANALYST"
+            title="Pendientes"
+            value={eaStats.pending}
+            description="EA Expected Done de esta semana"
+            expandedName="ea-pending"
+          />
+
+          <KpiCard
+            section="EA / ANALYST"
+            title="Próximas entregas"
+            value={eaStats.future}
+            description="EA Expected Done futuro"
+            expandedName="ea-future"
+          />
+        </div>
+
+        {eaDetailType && (
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "space-between",
+                alignItems: "center",
+                marginBottom: 14,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
+                  {eaDetailType === "backlog"
+                    ? "Backlog EA · Analyst"
+                    : eaDetailType === "pending"
+                    ? "Pendientes EA · Analyst"
+                    : "Próximas entregas EA · Analyst"}
+                </div>
+
+                <div className="muted">
+                  {eaCases.length} caso
+                  {eaCases.length === 1
+                    ? ""
+                    : "s"}
+                </div>
+              </div>
+
+              <button
+                className="btn btnGhost"
+                onClick={() =>
+                  setExpandedKpi(null)
+                }
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="tableWrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>ID</th>
+                    <th>EA Member</th>
+                    <th>EA Assigned</th>
+                    <th>EA Status</th>
+                    <th>EA Expected Done</th>
+                    <th>EA Done</th>
+                    <th>EA P.E.</th>
+                    <th>Fecha P.E. Aprobada</th>
+                    <th>EA Stoppers</th>
+                    <th>EA Hojas</th>
+                    <th>EA WS</th>
+                    <th>
+                      Actualización Carátula
+                    </th>
+                    <th>EA Link Drive</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {eaCases.map((item) => (
                     <tr key={item.row}>
                       <td>
-                        <strong>{item.client}</strong>
+                        <strong>
+                          {item.client}
+                        </strong>
                       </td>
 
-                      <td>{item.id || "—"}</td>
+                      <td>
+                        {item.id || "—"}
+                      </td>
 
-                      <td>{item.paralegal || "—"}</td>
+                      <td>
+                        {item.member || "—"}
+                      </td>
 
-                      <td>{item.status || "—"}</td>
+                      <td>
+                        {item.assigned || "—"}
+                      </td>
 
-                      <td>{item.expected || "—"}</td>
+                      <td>
+                        {item.status || "—"}
+                      </td>
 
-                      <td>{item.done || "—"}</td>
+                      <td>
+                        {item.expected || "—"}
+                      </td>
+
+                      <td>
+                        {item.done || "—"}
+                      </td>
+
+                      <td>
+                        {item.pe || "—"}
+                      </td>
+
+                      <td>
+                        {item.peApproved || "—"}
+                      </td>
+
+                      <td>
+                        {item.stoppers || "—"}
+                      </td>
+
+                      <td>
+                        {item.hojas || "—"}
+                      </td>
+
+                      <td>
+                        {item.ws || "—"}
+                      </td>
+
+                      <td>
+                        {item.caratula || "—"}
+                      </td>
 
                       <td>
                         {item.link ? (
@@ -1227,7 +1760,7 @@ export default function Home() {
                             target="_blank"
                             rel="noreferrer"
                           >
-                            Abrir link
+                            Abrir Drive
                           </a>
                         ) : (
                           "—"
@@ -1261,7 +1794,9 @@ export default function Home() {
             <input
               placeholder="Buscar caso, nombre, ID..."
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) =>
+                setQ(e.target.value)
+              }
             />
 
             <button
@@ -1278,9 +1813,17 @@ export default function Home() {
             </span>
           </div>
 
-          {err && <div className="error">{err}</div>}
+          {err && (
+            <div className="error">
+              {err}
+            </div>
+          )}
 
-          {msg && <div className="ok">{msg}</div>}
+          {msg && (
+            <div className="ok">
+              {msg}
+            </div>
+          )}
 
           {loadingCases ? (
             <div className="empty">
@@ -1288,63 +1831,93 @@ export default function Home() {
             </div>
           ) : !data.headers.length ? (
             <div className="empty">
-              No se encontraron columnas en la Sheet.
+              No se encontraron columnas en la
+              Sheet.
             </div>
           ) : (
             <div className="tableWrap">
               <table className="table">
                 <thead>
                   <tr>
-                    {data.headers.map((h, index) => (
-                      <th key={`${h}-${index}`}>{h}</th>
-                    ))}
+                    {data.headers.map(
+                      (h, index) => (
+                        <th
+                          key={`${h}-${index}`}
+                        >
+                          {h}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
 
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.__row}>
-                      {data.headers.map((h, index) => (
-                        <td key={`${h}-${index}`}>
-                          {canEdit(h) ? (
-                            <input
-                              className="editable"
-                              value={r[h] || ""}
-                              onChange={(e) => {
-                                const value = e.target.value;
-
-                                setData((prev) => ({
-                                  ...prev,
-
-                                  rows: prev.rows.map(
-                                    (rowData) =>
-                                      rowData.__row === r.__row
-                                        ? {
-                                            ...rowData,
-                                            [h]: value,
-                                          }
-                                        : rowData
-                                  ),
-                                }));
-                              }}
-                              onBlur={(e) => {
-                                const newValue = e.target.value;
-                                const oldValue = r[h] || "";
-
-                                if (newValue !== oldValue) {
-                                  save(
-                                    Number(r.__row),
-                                    h,
-                                    newValue
-                                  );
+                      {data.headers.map(
+                        (h, index) => (
+                          <td
+                            key={`${h}-${index}`}
+                          >
+                            {canEdit(h) ? (
+                              <input
+                                className="editable"
+                                value={
+                                  r[h] || ""
                                 }
-                              }}
-                            />
-                          ) : (
-                            <span>{r[h] || "—"}</span>
-                          )}
-                        </td>
-                      ))}
+                                onChange={(e) => {
+                                  const value =
+                                    e.target.value;
+
+                                  setData(
+                                    (prev) => ({
+                                      ...prev,
+
+                                      rows:
+                                        prev.rows.map(
+                                          (
+                                            rowData
+                                          ) =>
+                                            rowData.__row ===
+                                            r.__row
+                                              ? {
+                                                  ...rowData,
+                                                  [h]: value,
+                                                }
+                                              : rowData
+                                        ),
+                                    })
+                                  );
+                                }}
+                                onBlur={(e) => {
+                                  const newValue =
+                                    e.target.value;
+
+                                  const oldValue =
+                                    r[h] || "";
+
+                                  if (
+                                    newValue !==
+                                    oldValue
+                                  ) {
+                                    save(
+                                      Number(
+                                        r.__row
+                                      ),
+                                      h,
+                                      newValue
+                                    );
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span>
+                                {r[h] || "—"}
+                              </span>
+                            )}
+                          </td>
+                        )
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -1359,7 +1932,8 @@ export default function Home() {
             marginTop: 14,
           }}
         >
-          Usuario: {user.email} · Rol: {user.role}
+          Usuario: {user.email} · Rol:{" "}
+          {user.role}
         </p>
       </main>
     </>
