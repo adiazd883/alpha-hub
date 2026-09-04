@@ -73,12 +73,16 @@ const isMgmCaseType = (value: string) => {
   ].includes(type);
 };
 
-const isMgmDelivered = (status: string) => {
+const isExcludedMgmStatus = (
+  status: string
+) => {
   const value = norm(status);
 
   return [
     "MGM REVIEW",
     "SENT TO USCIS",
+    "SPECIAL CASE",
+    "CANCELLED/CLOSED",
   ].includes(value);
 };
 
@@ -205,15 +209,14 @@ const getMgmKpi = (
   }
 
   /*
-   * Si ya está MGM REVIEW
-   * o SENT TO USCIS,
-   * ya fue entregado.
+   * Estos status no cuentan
+   * para backlog / pending / future.
    */
   const status =
     row["STATUS"] || "";
 
   if (
-    isMgmDelivered(
+    isExcludedMgmStatus(
       status
     )
   ) {
@@ -768,8 +771,7 @@ export default function Home() {
       <main className="shell">
         <div className="card">
           <div className="empty">
-            Verificando
-            acceso…
+            Verificando acceso…
           </div>
         </div>
       </main>
@@ -807,8 +809,7 @@ export default function Home() {
             }}
           >
             <h1>
-              Welcome to
-              Alpha Hub
+              Welcome to Alpha Hub
             </h1>
 
             <p
@@ -820,11 +821,8 @@ export default function Home() {
                   30,
               }}
             >
-              Sign in with
-              your
-              institutional
-              Google account
-              to continue.
+              Sign in with your institutional
+              Google account to continue.
             </p>
 
             <button
@@ -833,8 +831,7 @@ export default function Home() {
                 login
               }
             >
-              Continue with
-              Google
+              Continue with Google
             </button>
           </div>
         </main>
@@ -889,10 +886,6 @@ export default function Home() {
 
       <main className="shell">
 
-        {/* =====================================
-            ENTREGAS MGM
-        ===================================== */}
-
         <div
           style={{
             marginBottom:
@@ -916,8 +909,6 @@ export default function Home() {
               20,
           }}
         >
-
-          {/* BACKLOG */}
 
           <div
             className="card"
@@ -988,8 +979,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* PENDIENTES */}
-
           <div
             className="card"
             onDoubleClick={() =>
@@ -1055,12 +1044,9 @@ export default function Home() {
                 marginTop: 8,
               }}
             >
-              Commitment de
-              esta semana
+              Commitment de esta semana
             </div>
           </div>
-
-          {/* PRÓXIMAS */}
 
           <div
             className="card"
@@ -1104,8 +1090,7 @@ export default function Home() {
                   700,
               }}
             >
-              Próximas
-              entregas
+              Próximas entregas
             </div>
 
             <div
@@ -1133,10 +1118,6 @@ export default function Home() {
           </div>
 
         </div>
-
-        {/* =====================================
-            DETALLE KPI
-        ===================================== */}
 
         {expandedKpi && (
           <div
@@ -1211,8 +1192,7 @@ export default function Home() {
             {mgmCases.length ===
             0 ? (
               <div className="empty">
-                No hay casos en
-                esta categoría.
+                No hay casos en esta categoría.
               </div>
             ) : (
               <div
@@ -1230,21 +1210,11 @@ export default function Home() {
                 >
                   <thead>
                     <tr>
-                      <th>
-                        Cliente
-                      </th>
-                      <th>
-                        ID
-                      </th>
-                      <th>
-                        Tipo
-                      </th>
-                      <th>
-                        Commitment
-                      </th>
-                      <th>
-                        Status
-                      </th>
+                      <th>Cliente</th>
+                      <th>ID</th>
+                      <th>Tipo</th>
+                      <th>Commitment</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
 
@@ -1297,10 +1267,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* =====================================
-            TABLA GENERAL
-        ===================================== */}
-
         <div className="card">
 
           <div className="toolbar">
@@ -1310,8 +1276,7 @@ export default function Home() {
               value={q}
               onChange={(e) =>
                 setQ(
-                  e.target
-                    .value
+                  e.target.value
                 )
               }
             />
@@ -1347,16 +1312,12 @@ export default function Home() {
 
           {loadingCases ? (
             <div className="empty">
-              Cargando
-              casos…
+              Cargando casos…
             </div>
           ) : !data.headers
               .length ? (
             <div className="empty">
-              No se
-              encontraron
-              columnas en la
-              Sheet.
+              No se encontraron columnas en la Sheet.
             </div>
           ) : (
             <div className="tableWrap">
@@ -1463,10 +1424,7 @@ export default function Home() {
                                 />
                               ) : (
                                 <span>
-                                  {r[
-                                    h
-                                  ] ||
-                                    "—"}
+                                  {r[h] || "—"}
                                 </span>
                               )}
                             </td>
@@ -1491,9 +1449,7 @@ export default function Home() {
               14,
           }}
         >
-          Usuario:{" "}
-          {user.email} · Rol:{" "}
-          {user.role}
+          Usuario: {user.email} · Rol: {user.role}
         </p>
 
       </main>
