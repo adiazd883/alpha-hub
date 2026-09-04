@@ -21,6 +21,12 @@ type User = {
   role: Role | null;
 };
 
+type MgmKpiType =
+  | "backlog"
+  | "pending"
+  | "future"
+  | "none";
+
 const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
   TL: "Team Leader",
@@ -76,17 +82,16 @@ const isMgmDelivered = (status: string) => {
   ].includes(value);
 };
 
-const parseDateOnly = (value: string): Date | null => {
+const parseDateOnly = (
+  value: string
+): Date | null => {
   const raw = value.trim();
 
   if (!raw) {
     return null;
   }
 
-  /*
-   * Google Sheets puede devolver fechas en diferentes formatos.
-   * Primero intentamos YYYY-MM-DD.
-   */
+  // YYYY-MM-DD
   const isoMatch = raw.match(
     /^(\d{4})-(\d{1,2})-(\d{1,2})/
   );
@@ -103,32 +108,30 @@ const parseDateOnly = (value: string): Date | null => {
     );
   }
 
-  /*
-   * También soportamos MM/DD/YYYY
-   */
+  // MM/DD/YYYY
   const slashMatch = raw.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
   );
 
   if (slashMatch) {
-    const first = Number(slashMatch[1]);
-    const second = Number(slashMatch[2]);
+    const month = Number(slashMatch[1]);
+    const day = Number(slashMatch[2]);
     const year = Number(slashMatch[3]);
 
-    /*
-     * En este HUB tratamos las fechas con slash
-     * como MM/DD/YYYY cuando vienen así de Google Sheets.
-     */
     return new Date(
       year,
-      first - 1,
-      second
+      month - 1,
+      day
     );
   }
 
   const parsed = new Date(raw);
 
-  if (Number.isNaN(parsed.getTime())) {
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
     return null;
   }
 
@@ -139,24 +142,23 @@ const parseDateOnly = (value: string): Date | null => {
   );
 };
 
-const startOfWeek = (date: Date) => {
+const startOfWeek = (
+  date: Date
+) => {
   const result = new Date(
     date.getFullYear(),
     date.getMonth(),
     date.getDate()
   );
 
-  const day = result.getDay();
+  const day =
+    result.getDay();
 
-  /*
-   * JavaScript:
-   * domingo = 0
-   * lunes = 1
-   *
-   * Convertimos la semana a lunes-domingo.
-   */
+  // Semana lunes-domingo
   const diff =
-    day === 0 ? -6 : 1 - day;
+    day === 0
+      ? -6
+      : 1 - day;
 
   result.setDate(
     result.getDate() + diff
@@ -169,105 +171,115 @@ const addDays = (
   date: Date,
   days: number
 ) => {
-  const result = new Date(date);
+  const result =
+    new Date(date);
+
   result.setDate(
     result.getDate() + days
   );
+
   return result;
 };
 
-const isBefore = (
-  a: Date,
-  b: Date
-) => a.getTime() < b.getTime();
-
-const isOnOrAfter = (
-  a: Date,
-  b: Date
-) => a.getTime() >= b.getTime();
-
 const getMgmKpi = (
   row: CaseRow
-) => {
+): MgmKpiType => {
   const caseType =
     row["DUE DATE/NO DUE DATE"] || "";
 
   /*
-   * WAIVER / MTR / DECISION quedan fuera.
+   * Solo entran:
+   * DUE DATE
+   * NO DUE DATE
+   * NOID
+   *
+   * WAIVER / MTR / DECISION
+   * quedan fuera.
    */
-  if (!isMgmCaseType(caseType)) {
+  if (
+    !isMgmCaseType(
+      caseType
+    )
+  ) {
     return "none";
   }
 
   /*
-   * Si ya fue entregado a MGM o USCIS,
-   * no cuenta como backlog/pending/future.
+   * Si ya está MGM REVIEW
+   * o SENT TO USCIS,
+   * ya fue entregado.
    */
   const status =
     row["STATUS"] || "";
 
-  if (isMgmDelivered(status)) {
+  if (
+    isMgmDelivered(
+      status
+    )
+  ) {
     return "none";
   }
 
   /*
-   * Sin commitment no podemos medirlo.
+   * Sin commitment
+   * no se mide.
    */
   const commitment =
     row["COMMITMENT"] || "";
 
   const commitmentDate =
-    parseDateOnly(commitment);
+    parseDateOnly(
+      commitment
+    );
 
   if (!commitmentDate) {
     return "none";
   }
 
-  const today = new Date();
+  const today =
+    new Date();
 
   const currentWeekStart =
     startOfWeek(today);
 
   const nextWeekStart =
-    addDays(currentWeekStart, 7);
+    addDays(
+      currentWeekStart,
+      7
+    );
 
   /*
-   * Semana anterior o cualquier fecha
-   * anterior al lunes de esta semana.
+   * Cualquier fecha anterior
+   * al lunes de esta semana
+   * es BACKLOG.
    */
   if (
-    isBefore(
-      commitmentDate,
-      currentWeekStart
-    )
+    commitmentDate.getTime() <
+    currentWeekStart.getTime()
   ) {
     return "backlog";
   }
 
   /*
-   * Lunes-domingo de la semana actual.
+   * Esta semana
+   * lunes-domingo.
    */
   if (
-    isOnOrAfter(
-      commitmentDate,
-      currentWeekStart
-    ) &&
-    isBefore(
-      commitmentDate,
-      nextWeekStart
-    )
+    commitmentDate.getTime() >=
+      currentWeekStart.getTime() &&
+    commitmentDate.getTime() <
+      nextWeekStart.getTime()
   ) {
     return "pending";
   }
 
   /*
-   * Próximas semanas.
+   * Desde el próximo lunes
+   * hacia adelante.
    */
   if (
-    isOnOrAfter(
-      commitmentDate,
-      nextWeekStart
-    )
+    commitmentDate.getTime() >=
+    nextWeekStart.getTime()
   ) {
     return "future";
   }
@@ -277,29 +289,49 @@ const getMgmKpi = (
 
 export default function Home() {
   const [user, setUser] =
-    useState<User | null>(null);
+    useState<User | null>(
+      null
+    );
 
-  const [data, setData] = useState<{
-    headers: string[];
-    rows: CaseRow[];
-    title: string;
-  }>({
-    headers: [],
-    rows: [],
-    title: "",
-  });
+  const [data, setData] =
+    useState<{
+      headers: string[];
+      rows: CaseRow[];
+      title: string;
+    }>({
+      headers: [],
+      rows: [],
+      title: "",
+    });
 
-  const [q, setQ] = useState("");
+  const [q, setQ] =
+    useState("");
 
-  const [loadingUser, setLoadingUser] =
-    useState(true);
+  const [
+    loadingUser,
+    setLoadingUser,
+  ] = useState(true);
 
-  const [loadingCases, setLoadingCases] =
-    useState(false);
+  const [
+    loadingCases,
+    setLoadingCases,
+  ] = useState(false);
 
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] =
+    useState("");
 
-  const [err, setErr] = useState("");
+  const [err, setErr] =
+    useState("");
+
+  const [
+    expandedKpi,
+    setExpandedKpi,
+  ] = useState<
+    | "backlog"
+    | "pending"
+    | "future"
+    | null
+  >(null);
 
   /*
   ==================================================
@@ -309,24 +341,30 @@ export default function Home() {
 
   async function loadUser() {
     try {
-      const r = await fetch(
-        "/api/auth/me",
-        {
-          cache: "no-store",
-        }
-      );
+      const r =
+        await fetch(
+          "/api/auth/me",
+          {
+            cache:
+              "no-store",
+          }
+        );
 
-      const j = await r.json();
+      const j =
+        await r.json();
 
       setUser(j);
     } catch {
       setUser({
-        authenticated: false,
+        authenticated:
+          false,
         email: null,
         role: null,
       });
     } finally {
-      setLoadingUser(false);
+      setLoadingUser(
+        false
+      );
     }
   }
 
@@ -337,18 +375,24 @@ export default function Home() {
   */
 
   async function loadCases() {
-    setLoadingCases(true);
+    setLoadingCases(
+      true
+    );
+
     setErr("");
 
     try {
-      const r = await fetch(
-        "/api/cases",
-        {
-          cache: "no-store",
-        }
-      );
+      const r =
+        await fetch(
+          "/api/cases",
+          {
+            cache:
+              "no-store",
+          }
+        );
 
-      const j = await r.json();
+      const j =
+        await r.json();
 
       if (!r.ok) {
         throw new Error(
@@ -365,7 +409,9 @@ export default function Home() {
           : "Error"
       );
     } finally {
-      setLoadingCases(false);
+      setLoadingCases(
+        false
+      );
     }
   }
 
@@ -374,14 +420,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (user?.authenticated) {
+    if (
+      user?.authenticated
+    ) {
       loadCases();
     }
   }, [user]);
 
   /*
   ==================================================
-  LOGIN
+  LOGIN / LOGOUT
   ==================================================
   */
 
@@ -408,14 +456,24 @@ export default function Home() {
       return false;
     }
 
-    if (user.role === "ADMIN") {
+    if (
+      user.role ===
+      "ADMIN"
+    ) {
       return true;
     }
 
-    if (user.role === "TL") {
+    if (
+      user.role ===
+      "TL"
+    ) {
       return (
-        isAssignment(header) ||
-        isDelivery(header) ||
+        isAssignment(
+          header
+        ) ||
+        isDelivery(
+          header
+        ) ||
         isStatus(header)
       );
     }
@@ -425,11 +483,17 @@ export default function Home() {
         "PARALEGAL",
         "PSYCH",
         "ANALYST",
-      ].includes(user.role)
+      ].includes(
+        user.role
+      )
     ) {
       return (
-        isDelivery(header) ||
-        isStatus(header) ||
+        isDelivery(
+          header
+        ) ||
+        isStatus(
+          header
+        ) ||
         isLink(header)
       );
     }
@@ -443,63 +507,168 @@ export default function Home() {
   ==================================================
   */
 
-  const rows = useMemo(() => {
-    const search =
-      q.toLowerCase();
+  const rows =
+    useMemo(() => {
+      const search =
+        q.toLowerCase();
 
-    return data.rows.filter(
-      (r) => {
-        if (!search) {
-          return true;
+      return data.rows.filter(
+        (r) => {
+          if (!search) {
+            return true;
+          }
+
+          return Object.entries(
+            r
+          ).some(
+            ([k, v]) =>
+              k !==
+                "__row" &&
+              v
+                .toLowerCase()
+                .includes(
+                  search
+                )
+          );
         }
-
-        return Object.entries(
-          r
-        ).some(
-          ([k, v]) =>
-            k !== "__row" &&
-            v
-              .toLowerCase()
-              .includes(search)
-        );
-      }
-    );
-  }, [data.rows, q]);
+      );
+    }, [data.rows, q]);
 
   /*
   ==================================================
-  KPIs MGM
+  KPI MGM - CONTADORES
   ==================================================
   */
 
-  const mgmStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
+  const mgmStats =
+    useMemo(() => {
+      let backlog = 0;
+      let pending = 0;
+      let future = 0;
 
-    data.rows.forEach((row) => {
-      const kpi =
-        getMgmKpi(row);
+      data.rows.forEach(
+        (row) => {
+          const kpi =
+            getMgmKpi(
+              row
+            );
 
-      if (kpi === "backlog") {
-        backlog++;
+          if (
+            kpi ===
+            "backlog"
+          ) {
+            backlog++;
+          }
+
+          if (
+            kpi ===
+            "pending"
+          ) {
+            pending++;
+          }
+
+          if (
+            kpi ===
+            "future"
+          ) {
+            future++;
+          }
+        }
+      );
+
+      return {
+        backlog,
+        pending,
+        future,
+      };
+    }, [data.rows]);
+
+  /*
+  ==================================================
+  KPI MGM - CASOS DEL DETALLE
+  ==================================================
+  */
+
+  const mgmCases =
+    useMemo(() => {
+      if (
+        !expandedKpi
+      ) {
+        return [];
       }
 
-      if (kpi === "pending") {
-        pending++;
-      }
+      return data.rows
+        .filter(
+          (row) =>
+            getMgmKpi(
+              row
+            ) ===
+            expandedKpi
+        )
+        .map((row) => ({
+          row:
+            row.__row,
+          client:
+            row[
+              "CLIENTE"
+            ] ||
+            "Sin cliente",
+          id:
+            row["ID"] ||
+            "",
+          commitment:
+            row[
+              "COMMITMENT"
+            ] ||
+            "Sin fecha",
+          status:
+            row[
+              "STATUS"
+            ] ||
+            "",
+          caseType:
+            row[
+              "DUE DATE/NO DUE DATE"
+            ] ||
+            "",
+        }))
+        .sort(
+          (a, b) => {
+            const dateA =
+              parseDateOnly(
+                a.commitment
+              );
 
-      if (kpi === "future") {
-        future++;
-      }
-    });
+            const dateB =
+              parseDateOnly(
+                b.commitment
+              );
 
-    return {
-      backlog,
-      pending,
-      future,
-    };
-  }, [data.rows]);
+            if (
+              !dateA &&
+              !dateB
+            ) {
+              return 0;
+            }
+
+            if (!dateA) {
+              return 1;
+            }
+
+            if (!dateB) {
+              return -1;
+            }
+
+            return (
+              dateA.getTime() -
+              dateB.getTime()
+            );
+          }
+        );
+    }, [
+      data.rows,
+      expandedKpi,
+    ]);
 
   /*
   ==================================================
@@ -516,25 +685,34 @@ export default function Home() {
     setErr("");
 
     try {
-      const r = await fetch(
-        "/api/cases/update",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            row,
-            role: user?.role,
-            changes: {
-              [header]: value,
+      const r =
+        await fetch(
+          "/api/cases/update",
+          {
+            method:
+              "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
             },
-          }),
-        }
-      );
+            body:
+              JSON.stringify(
+                {
+                  row,
+                  role:
+                    user?.role,
+                  changes:
+                    {
+                      [header]:
+                        value,
+                    },
+                }
+              ),
+          }
+        );
 
-      const j = await r.json();
+      const j =
+        await r.json();
 
       if (!r.ok) {
         throw new Error(
@@ -543,18 +721,25 @@ export default function Home() {
         );
       }
 
-      setData((prev) => ({
-        ...prev,
-        rows: prev.rows.map(
-          (r) =>
-            Number(r.__row) === row
-              ? {
-                  ...r,
-                  [header]: value,
-                }
-              : r
-        ),
-      }));
+      setData(
+        (prev) => ({
+          ...prev,
+          rows:
+            prev.rows.map(
+              (r) =>
+                Number(
+                  r.__row
+                ) ===
+                row
+                  ? {
+                      ...r,
+                      [header]:
+                        value,
+                    }
+                  : r
+            ),
+        })
+      );
 
       setMsg(
         value === ""
@@ -572,16 +757,19 @@ export default function Home() {
 
   /*
   ==================================================
-  PANTALLA DE CARGA
+  CARGANDO USUARIO
   ==================================================
   */
 
-  if (loadingUser) {
+  if (
+    loadingUser
+  ) {
     return (
       <main className="shell">
         <div className="card">
           <div className="empty">
-            Verificando acceso…
+            Verificando
+            acceso…
           </div>
         </div>
       </main>
@@ -594,7 +782,9 @@ export default function Home() {
   ==================================================
   */
 
-  if (!user?.authenticated) {
+  if (
+    !user?.authenticated
+  ) {
     return (
       <>
         <header className="top">
@@ -607,7 +797,8 @@ export default function Home() {
           <div
             className="card"
             style={{
-              maxWidth: 500,
+              maxWidth:
+                500,
               margin:
                 "80px auto",
               textAlign:
@@ -616,17 +807,21 @@ export default function Home() {
             }}
           >
             <h1>
-              Welcome to Alpha Hub
+              Welcome to
+              Alpha Hub
             </h1>
 
             <p
               className="muted"
               style={{
-                marginTop: 10,
-                marginBottom: 30,
+                marginTop:
+                  10,
+                marginBottom:
+                  30,
               }}
             >
-              Sign in with your
+              Sign in with
+              your
               institutional
               Google account
               to continue.
@@ -634,9 +829,12 @@ export default function Home() {
 
             <button
               className="btn"
-              onClick={login}
+              onClick={
+                login
+              }
             >
-              Continue with Google
+              Continue with
+              Google
             </button>
           </div>
         </main>
@@ -680,7 +878,9 @@ export default function Home() {
 
           <button
             className="btn btnGhost"
-            onClick={logout}
+            onClick={
+              logout
+            }
           >
             Log out
           </button>
@@ -689,9 +889,21 @@ export default function Home() {
 
       <main className="shell">
 
-        {/* =========================================
-            KPI DASHBOARD
-        ========================================= */}
+        {/* =====================================
+            ENTREGAS MGM
+        ===================================== */}
+
+        <div
+          style={{
+            marginBottom:
+              10,
+            fontWeight:
+              800,
+            fontSize: 18,
+          }}
+        >
+          Entregas MGM
+        </div>
 
         <div
           style={{
@@ -700,7 +912,8 @@ export default function Home() {
             gridTemplateColumns:
               "repeat(3, minmax(0, 1fr))",
             gap: 16,
-            marginBottom: 20,
+            marginBottom:
+              20,
           }}
         >
 
@@ -708,15 +921,29 @@ export default function Home() {
 
           <div
             className="card"
+            onDoubleClick={() =>
+              setExpandedKpi(
+                expandedKpi ===
+                  "backlog"
+                  ? null
+                  : "backlog"
+              )
+            }
             style={{
               padding: 22,
+              cursor:
+                "pointer",
+              userSelect:
+                "none",
             }}
           >
             <div
               className="muted"
               style={{
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize:
+                  12,
+                fontWeight:
+                  700,
                 textTransform:
                   "uppercase",
                 letterSpacing:
@@ -730,7 +957,8 @@ export default function Home() {
               style={{
                 marginTop: 8,
                 fontSize: 14,
-                fontWeight: 700,
+                fontWeight:
+                  700,
               }}
             >
               Backlog
@@ -740,7 +968,8 @@ export default function Home() {
               style={{
                 marginTop: 4,
                 fontSize: 34,
-                fontWeight: 800,
+                fontWeight:
+                  800,
                 lineHeight: 1,
               }}
             >
@@ -763,15 +992,29 @@ export default function Home() {
 
           <div
             className="card"
+            onDoubleClick={() =>
+              setExpandedKpi(
+                expandedKpi ===
+                  "pending"
+                  ? null
+                  : "pending"
+              )
+            }
             style={{
               padding: 22,
+              cursor:
+                "pointer",
+              userSelect:
+                "none",
             }}
           >
             <div
               className="muted"
               style={{
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize:
+                  12,
+                fontWeight:
+                  700,
                 textTransform:
                   "uppercase",
                 letterSpacing:
@@ -785,7 +1028,8 @@ export default function Home() {
               style={{
                 marginTop: 8,
                 fontSize: 14,
-                fontWeight: 700,
+                fontWeight:
+                  700,
               }}
             >
               Pendientes
@@ -795,7 +1039,8 @@ export default function Home() {
               style={{
                 marginTop: 4,
                 fontSize: 34,
-                fontWeight: 800,
+                fontWeight:
+                  800,
                 lineHeight: 1,
               }}
             >
@@ -810,7 +1055,8 @@ export default function Home() {
                 marginTop: 8,
               }}
             >
-              Commitment de esta semana
+              Commitment de
+              esta semana
             </div>
           </div>
 
@@ -818,15 +1064,29 @@ export default function Home() {
 
           <div
             className="card"
+            onDoubleClick={() =>
+              setExpandedKpi(
+                expandedKpi ===
+                  "future"
+                  ? null
+                  : "future"
+              )
+            }
             style={{
               padding: 22,
+              cursor:
+                "pointer",
+              userSelect:
+                "none",
             }}
           >
             <div
               className="muted"
               style={{
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize:
+                  12,
+                fontWeight:
+                  700,
                 textTransform:
                   "uppercase",
                 letterSpacing:
@@ -840,17 +1100,20 @@ export default function Home() {
               style={{
                 marginTop: 8,
                 fontSize: 14,
-                fontWeight: 700,
+                fontWeight:
+                  700,
               }}
             >
-              Próximas entregas
+              Próximas
+              entregas
             </div>
 
             <div
               style={{
                 marginTop: 4,
                 fontSize: 34,
-                fontWeight: 800,
+                fontWeight:
+                  800,
                 lineHeight: 1,
               }}
             >
@@ -871,9 +1134,172 @@ export default function Home() {
 
         </div>
 
-        {/* =========================================
-            TABLA
-        ========================================= */}
+        {/* =====================================
+            DETALLE KPI
+        ===================================== */}
+
+        {expandedKpi && (
+          <div
+            className="card"
+            style={{
+              marginBottom:
+                20,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display:
+                  "flex",
+                justifyContent:
+                  "space-between",
+                alignItems:
+                  "center",
+                gap: 12,
+                marginBottom:
+                  14,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize:
+                      18,
+                    fontWeight:
+                      800,
+                  }}
+                >
+                  {expandedKpi ===
+                  "backlog"
+                    ? "Backlog MGM"
+                    : expandedKpi ===
+                      "pending"
+                    ? "Pendientes MGM"
+                    : "Próximas entregas MGM"}
+                </div>
+
+                <div
+                  className="muted"
+                  style={{
+                    marginTop:
+                      4,
+                  }}
+                >
+                  {
+                    mgmCases.length
+                  }{" "}
+                  caso
+                  {mgmCases.length ===
+                  1
+                    ? ""
+                    : "s"}
+                </div>
+              </div>
+
+              <button
+                className="btn btnGhost"
+                onClick={() =>
+                  setExpandedKpi(
+                    null
+                  )
+                }
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {mgmCases.length ===
+            0 ? (
+              <div className="empty">
+                No hay casos en
+                esta categoría.
+              </div>
+            ) : (
+              <div
+                style={{
+                  overflowX:
+                    "auto",
+                }}
+              >
+                <table
+                  className="table"
+                  style={{
+                    minWidth:
+                      700,
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th>
+                        Cliente
+                      </th>
+                      <th>
+                        ID
+                      </th>
+                      <th>
+                        Tipo
+                      </th>
+                      <th>
+                        Commitment
+                      </th>
+                      <th>
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {mgmCases.map(
+                      (item) => (
+                        <tr
+                          key={
+                            item.row
+                          }
+                        >
+                          <td
+                            style={{
+                              fontWeight:
+                                700,
+                            }}
+                          >
+                            {
+                              item.client
+                            }
+                          </td>
+
+                          <td>
+                            {item.id ||
+                              "—"}
+                          </td>
+
+                          <td>
+                            {item.caseType ||
+                              "—"}
+                          </td>
+
+                          <td>
+                            {
+                              item.commitment
+                            }
+                          </td>
+
+                          <td>
+                            {item.status ||
+                              "—"}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =====================================
+            TABLA GENERAL
+        ===================================== */}
 
         <div className="card">
 
@@ -884,7 +1310,8 @@ export default function Home() {
               value={q}
               onChange={(e) =>
                 setQ(
-                  e.target.value
+                  e.target
+                    .value
                 )
               }
             />
@@ -920,13 +1347,14 @@ export default function Home() {
 
           {loadingCases ? (
             <div className="empty">
-              Cargando casos…
+              Cargando
+              casos…
             </div>
-          ) : !data
-              .headers
+          ) : !data.headers
               .length ? (
             <div className="empty">
-              No se encontraron
+              No se
+              encontraron
               columnas en la
               Sheet.
             </div>
@@ -950,7 +1378,6 @@ export default function Home() {
                 </thead>
 
                 <tbody>
-
                   {rows.map(
                     (r) => (
                       <tr
@@ -958,7 +1385,6 @@ export default function Home() {
                           r.__row
                         }
                       >
-
                         {data.headers.map(
                           (h) => (
                             <td
@@ -966,7 +1392,6 @@ export default function Home() {
                                 h
                               }
                             >
-
                               {canEdit(
                                 h
                               ) ? (
@@ -1044,15 +1469,12 @@ export default function Home() {
                                     "—"}
                                 </span>
                               )}
-
                             </td>
                           )
                         )}
-
                       </tr>
                     )
                   )}
-
                 </tbody>
 
               </table>
@@ -1065,7 +1487,8 @@ export default function Home() {
         <p
           className="muted"
           style={{
-            marginTop: 14,
+            marginTop:
+              14,
           }}
         >
           Usuario:{" "}
