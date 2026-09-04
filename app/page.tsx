@@ -2,16 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type CaseRow = Record<string, string> & {
-  __row: string;
-};
-
 type Role =
   | "ADMIN"
   | "TL"
   | "PARALEGAL"
   | "PSYCH"
-  | "ANALYST";
+  | "ANALYST"
+  | "MANAGER"
+  | "COORDINATOR";
+
+type CaseRow = Record<string, string> & {
+  __row: string;
+};
+
+type User = {
+  authenticated: boolean;
+  email: string | null;
+  role: Role | null;
+};
 
 const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
@@ -19,6 +27,8 @@ const roleLabels: Record<Role, string> = {
   PARALEGAL: "Paralegal",
   PSYCH: "Psych",
   ANALYST: "Analyst",
+  MANAGER: "Manager",
+  COORDINATOR: "Coordinator",
 };
 
 const norm = (s: string) =>
@@ -37,7 +47,13 @@ const isDelivery = (h: string) =>
 const isAssignment = (h: string) =>
   norm(h) === "PARALEGAL ASIGNADO";
 
+const isLink = (h: string) =>
+  norm(h).includes("LINK") ||
+  norm(h).includes("URL");
+
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+
   const [data, setData] = useState<{
     headers: string[];
     rows: CaseRow[];
@@ -48,31 +64,67 @@ export default function Home() {
     title: "",
   });
 
-  const [role, setRole] =
-    useState<Role>("ADMIN");
-
   const [q, setQ] = useState("");
 
-  const [loading, setLoading] =
+  const [loadingUser, setLoadingUser] =
     useState(true);
+
+  const [loadingCases, setLoadingCases] =
+    useState(false);
 
   const [msg, setMsg] = useState("");
 
   const [err, setErr] = useState("");
 
-  async function load() {
-    setLoading(true);
+  // --------------------------------------------------
+  // OBTENER USUARIO
+  // --------------------------------------------------
+
+  async function loadUser() {
+    try {
+      const r = await fetch(
+        "/api/auth/me",
+        {
+          cache: "no-store",
+        }
+      );
+
+      const j = await r.json();
+
+      setUser(j);
+    } catch {
+      setUser({
+        authenticated: false,
+        email: null,
+        role: null,
+      });
+    } finally {
+      setLoadingUser(false);
+    }
+  }
+
+  // --------------------------------------------------
+  // CARGAR CASOS
+  // --------------------------------------------------
+
+  async function loadCases() {
+    setLoadingCases(true);
     setErr("");
 
     try {
-      const r = await fetch("/api/cases", {
-        cache: "no-store",
-      });
+      const r = await fetch(
+        "/api/cases",
+        {
+          cache: "no-store",
+        }
+      );
 
       const j = await r.json();
 
       if (!r.ok) {
-        throw new Error(j.error);
+        throw new Error(
+          j.error || "Error loading cases"
+        );
       }
 
       setData(j);
@@ -83,48 +135,101 @@ export default function Home() {
           : "Error"
       );
     } finally {
-      setLoading(false);
+      setLoadingCases(false);
     }
   }
 
   useEffect(() => {
-    load();
+    loadUser();
   }, []);
 
-  const rows = useMemo(
-    () =>
-      data.rows.filter(
-        (r) =>
-          !q ||
-          Object.entries(r).some(
-            ([k, v]) =>
-              k !== "__row" &&
-              v
-                .toLowerCase()
-                .includes(q.toLowerCase())
-          )
-      ),
-    [data.rows, q]
-  );
+  useEffect(() => {
+    if (user?.authenticated) {
+      loadCases();
+    }
+  }, [user]);
 
-  const canEdit = (h: string) => {
-    if (role === "ADMIN") {
+  // --------------------------------------------------
+  // LOGIN
+  // --------------------------------------------------
+
+  function login() {
+    window.location.href =
+      "/api/auth/login";
+  }
+
+  function logout() {
+    window.location.href =
+      "/api/auth/logout";
+  }
+
+  // --------------------------------------------------
+  // PERMISOS
+  // --------------------------------------------------
+
+  const canEdit = (header: string) => {
+    if (!user?.role) {
+      return false;
+    }
+
+    // ADMIN puede editar absolutamente todo
+    if (user.role === "ADMIN") {
       return true;
     }
 
-    if (role === "TL") {
+    // TL puede asignar, cambiar fecha y status
+    if (user.role === "TL") {
       return (
-        isDelivery(h) ||
-        isStatus(h) ||
-        isAssignment(h)
+        isAssignment(header) ||
+        isDelivery(header) ||
+        isStatus(header)
       );
     }
 
-    return (
-      isDelivery(h) ||
-      isStatus(h)
-    );
+    // Paralegal / Psych / Analyst
+    // pueden modificar fecha, status y links
+    if (
+      ["PARALEGAL", "PSYCH", "ANALYST"].includes(
+        user.role
+      )
+    ) {
+      return (
+        isDelivery(header) ||
+        isStatus(header) ||
+        isLink(header)
+      );
+    }
+
+    // Manager y Coordinator:
+    // solo lectura
+    return false;
   };
+
+  // --------------------------------------------------
+  // FILTRO
+  // --------------------------------------------------
+
+  const rows = useMemo(() => {
+    const search = q.toLowerCase();
+
+    return data.rows.filter((r) => {
+      if (!search) {
+        return true;
+      }
+
+      return Object.entries(r).some(
+        ([k, v]) =>
+          k !== "__row" &&
+          v
+            .toLowerCase()
+            .includes(search)
+      );
+    });
+  }, [data.rows, q]);
+
+  // --------------------------------------------------
+  // GUARDAR CAMBIO
+  // --------------------------------------------------
 
   async function save(
     row: number,
@@ -145,7 +250,7 @@ export default function Home() {
           },
           body: JSON.stringify({
             row,
-            role,
+            role: user?.role,
             changes: {
               [header]: value,
             },
@@ -156,16 +261,11 @@ export default function Home() {
       const j = await r.json();
 
       if (!r.ok) {
-        throw new Error(j.error);
+        throw new Error(
+          j.error || "Could not save"
+        );
       }
 
-      /*
-       * Actualizamos inmediatamente el HUB
-       * con el nuevo valor.
-       *
-       * Esto también funciona cuando value === ""
-       * porque estamos permitiendo borrar el contenido.
-       */
       setData((prev) => ({
         ...prev,
         rows: prev.rows.map((r) =>
@@ -180,8 +280,8 @@ export default function Home() {
 
       setMsg(
         value === ""
-          ? "Cambio guardado. El campo fue borrado también de la Sheet."
-          : "Guardado en la Sheet original."
+          ? "Cambio guardado y campo borrado."
+          : "Cambio guardado en Google Sheets."
       );
     } catch (e) {
       setErr(
@@ -192,6 +292,77 @@ export default function Home() {
     }
   }
 
+  // --------------------------------------------------
+  // PANTALLA DE CARGA
+  // --------------------------------------------------
+
+  if (loadingUser) {
+    return (
+      <main className="shell">
+        <div className="card">
+          <div className="empty">
+            Verificando acceso…
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // --------------------------------------------------
+  // LOGIN
+  // --------------------------------------------------
+
+  if (!user?.authenticated) {
+    return (
+      <>
+        <header className="top">
+          <div className="brand">
+            ALPHA HUB
+          </div>
+        </header>
+
+        <main className="shell">
+          <div
+            className="card"
+            style={{
+              maxWidth: 500,
+              margin: "80px auto",
+              textAlign: "center",
+              padding: 40,
+            }}
+          >
+            <h1>
+              Welcome to Alpha Hub
+            </h1>
+
+            <p
+              className="muted"
+              style={{
+                marginTop: 10,
+                marginBottom: 30,
+              }}
+            >
+              Sign in with your
+              institutional Google account
+              to continue.
+            </p>
+
+            <button
+              className="btn"
+              onClick={login}
+            >
+              Continue with Google
+            </button>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  // --------------------------------------------------
+  // HUB
+  // --------------------------------------------------
+
   return (
     <>
       <header className="top">
@@ -199,33 +370,36 @@ export default function Home() {
           ALPHA HUB
         </div>
 
-        <div className="pill">
-          SOURCE: GOOGLE SHEETS
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div className="pill">
+            {roleLabels[
+              user.role as Role
+            ]}
+          </div>
+
+          <span className="muted">
+            {user.email}
+          </span>
+
+          <button
+            className="btn btnGhost"
+            onClick={logout}
+          >
+            Log out
+          </button>
         </div>
       </header>
 
       <main className="shell">
         <div className="card">
+
           <div className="toolbar">
-            <select
-              value={role}
-              onChange={(e) =>
-                setRole(
-                  e.target.value as Role
-                )
-              }
-            >
-              {Object.entries(
-                roleLabels
-              ).map(([v, l]) => (
-                <option
-                  key={v}
-                  value={v}
-                >
-                  {l}
-                </option>
-              ))}
-            </select>
 
             <input
               placeholder="Buscar caso, nombre, ID..."
@@ -237,7 +411,7 @@ export default function Home() {
 
             <button
               className="btn btnGhost"
-              onClick={load}
+              onClick={loadCases}
             >
               Actualizar
             </button>
@@ -247,6 +421,7 @@ export default function Home() {
                 ? `Hoja: ${data.title} · ${rows.length} casos`
                 : ""}
             </span>
+
           </div>
 
           {err && (
@@ -261,7 +436,7 @@ export default function Home() {
             </div>
           )}
 
-          {loading ? (
+          {loadingCases ? (
             <div className="empty">
               Cargando casos…
             </div>
@@ -273,6 +448,7 @@ export default function Home() {
           ) : (
             <div className="tableWrap">
               <table className="table">
+
                 <thead>
                   <tr>
                     {data.headers.map(
@@ -293,6 +469,7 @@ export default function Home() {
                       {data.headers.map(
                         (h) => (
                           <td key={h}>
+
                             {canEdit(h) ? (
                               <input
                                 className="editable"
@@ -324,7 +501,9 @@ export default function Home() {
                                     })
                                   );
                                 }}
-                                onBlur={(e) => {
+                                onBlur={(
+                                  e
+                                ) => {
                                   const newValue =
                                     e.target
                                       .value;
@@ -332,11 +511,6 @@ export default function Home() {
                                   const oldValue =
                                     r[h] || "";
 
-                                  /*
-                                   * Guardamos si:
-                                   * - el valor cambió
-                                   * - o el usuario borró el campo
-                                   */
                                   if (
                                     newValue !==
                                     oldValue
@@ -357,15 +531,18 @@ export default function Home() {
                                   "—"}
                               </span>
                             )}
+
                           </td>
                         )
                       )}
                     </tr>
                   ))}
                 </tbody>
+
               </table>
             </div>
           )}
+
         </div>
 
         <p
@@ -374,12 +551,8 @@ export default function Home() {
             marginTop: 14,
           }}
         >
-          Los cambios permitidos se
-          escriben directamente en la
-          Sheet original. El selector de
-          rol de esta primera versión es de
-          prueba; la autenticación real se
-          configura después.
+          Usuario: {user.email} · Rol:{" "}
+          {user.role}
         </p>
       </main>
     </>
