@@ -23,29 +23,19 @@ type User = {
 
 type KpiType = "backlog" | "pending" | "future" | "none";
 
-type ExpandedKpi =
-  | "mgm-backlog"
-  | "mgm-pending"
-  | "mgm-future"
-  | "psych-backlog"
-  | "psych-pending"
-  | "psych-future"
-  | "caratula-backlog"
-  | "caratula-pending"
-  | "caratula-future"
-  | "paralegal-backlog"
-  | "paralegal-pending"
-  | "paralegal-future"
-  | "pl-cvl-backlog"
-  | "pl-cvl-pending"
-  | "pl-cvl-future"
-  | "ea-backlog"
-  | "ea-pending"
-  | "ea-future"
-  | "cvl-backlog"
-  | "cvl-pending"
-  | "cvl-future"
-  | null;
+type KpiSection =
+  | "mgm"
+  | "psych"
+  | "caratula"
+  | "draft"
+  | "plcvl"
+  | "ea"
+  | "cvl";
+
+type KpiSelection = {
+  section: KpiSection;
+  type: Exclude<KpiType, "none">;
+} | null;
 
 const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
@@ -57,62 +47,34 @@ const roleLabels: Record<Role, string> = {
   COORDINATOR: "Coordinator",
 };
 
-const norm = (s: string) =>
-  s.trim().toUpperCase().replace(/\s+/g, " ");
-
-const isStatus = (h: string) =>
-  ["STATUS", "ESTATUS"].includes(norm(h));
-
-const isDelivery = (h: string) =>
-  ["FECHA DE ENTREGA", "FECHA ENTREGA", "DELIVERY DATE"].includes(
-    norm(h)
-  );
-
-const isAssignment = (h: string) =>
-  norm(h) === "PARALEGAL ASIGNADO";
-
-const isLink = (h: string) =>
-  norm(h).includes("LINK") || norm(h).includes("URL");
-
-/* ====================================================
-   FECHAS
-==================================================== */
+const norm = (value: string) =>
+  value.trim().toUpperCase().replace(/\s+/g, " ");
 
 const parseDateOnly = (value: string): Date | null => {
-  const raw = value.trim();
+  const raw = value?.trim();
 
   if (!raw) return null;
 
-  const isoMatch = raw.match(
-    /^(\d{4})-(\d{1,2})-(\d{1,2})/
-  );
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
 
-  if (isoMatch) {
-    const year = Number(isoMatch[1]);
-    const month = Number(isoMatch[2]);
-    const day = Number(isoMatch[3]);
+  if (iso) {
+    const year = Number(iso[1]);
+    const month = Number(iso[2]);
+    const day = Number(iso[3]);
 
     const date = new Date(year, month - 1, day);
 
-    if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
-    ) {
-      return date;
-    }
-
-    return null;
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
-  const slashMatch = raw.match(
+  const slash = raw.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
   );
 
-  if (slashMatch) {
-    const first = Number(slashMatch[1]);
-    const second = Number(slashMatch[2]);
-    const year = Number(slashMatch[3]);
+  if (slash) {
+    const first = Number(slash[1]);
+    const second = Number(slash[2]);
+    const year = Number(slash[3]);
 
     let month = first;
     let day = second;
@@ -124,28 +86,30 @@ const parseDateOnly = (value: string): Date | null => {
 
     const date = new Date(year, month - 1, day);
 
-    if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
-    ) {
-      return date;
-    }
-
-    return null;
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
   const parsed = new Date(raw);
 
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
+  if (Number.isNaN(parsed.getTime())) return null;
 
   return new Date(
     parsed.getFullYear(),
     parsed.getMonth(),
     parsed.getDate()
   );
+};
+
+const toInputDate = (value: string) => {
+  const parsed = parseDateOnly(value);
+
+  if (!parsed) return "";
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 };
 
 const startOfWeek = (date: Date) => {
@@ -165,295 +129,244 @@ const startOfWeek = (date: Date) => {
 
 const addDays = (date: Date, days: number) => {
   const result = new Date(date);
-
   result.setDate(result.getDate() + days);
-
   return result;
 };
 
 const classifyDate = (date: Date): KpiType => {
-  const today = new Date();
-
-  const currentWeekStart = startOfWeek(today);
+  const currentWeekStart = startOfWeek(new Date());
   const nextWeekStart = addDays(currentWeekStart, 7);
 
-  if (date.getTime() < currentWeekStart.getTime()) {
+  if (date < currentWeekStart) {
     return "backlog";
   }
 
-  if (
-    date.getTime() >= currentWeekStart.getTime() &&
-    date.getTime() < nextWeekStart.getTime()
-  ) {
+  if (date >= currentWeekStart && date < nextWeekStart) {
     return "pending";
   }
 
-  if (date.getTime() >= nextWeekStart.getTime()) {
-    return "future";
-  }
-
-  return "none";
+  return "future";
 };
 
-/* ====================================================
-   MGM
-==================================================== */
-
-const isMgmCaseType = (value: string) =>
-  ["DUE DATE", "NO DUE DATE", "NOID"].includes(norm(value));
-
-const isExcludedMgmStatus = (status: string) =>
-  [
-    "MGM REVIEW",
-    "SENT TO USCIS",
-    "SPECIAL CASE",
-    "CANCELLED/CLOSED",
-  ].includes(norm(status));
+/* =========================================================
+   KPI LOGIC
+========================================================= */
 
 const getMgmKpi = (row: CaseRow): KpiType => {
-  const caseType = row["DUE DATE/NO DUE DATE"] || "";
+  const type = norm(row["DUE DATE/NO DUE DATE"] || "");
 
-  if (!isMgmCaseType(caseType)) return "none";
+  if (!["DUE DATE", "NO DUE DATE", "NOID"].includes(type)) {
+    return "none";
+  }
 
-  const status = row["STATUS"] || "";
+  const status = norm(row["STATUS"] || "");
 
-  if (isExcludedMgmStatus(status)) return "none";
+  if (
+    [
+      "MGM REVIEW",
+      "SENT TO USCIS",
+      "SPECIAL CASE",
+      "CANCELLED/CLOSED",
+    ].includes(status)
+  ) {
+    return "none";
+  }
 
-  const commitmentDate = parseDateOnly(
-    row["COMMITMENT"] || ""
-  );
+  const date = parseDateOnly(row["COMMITMENT"] || "");
 
-  if (!commitmentDate) return "none";
+  if (!date) return "none";
 
-  return classifyDate(commitmentDate);
+  return classifyDate(date);
 };
 
-/* ====================================================
-   PSYCH
-==================================================== */
-
-const isExcludedPsychStatus = (status: string) =>
-  [
-    "SPECIAL CASE",
-    "NA",
-    "N/A",
-    "UNRESPONSIVE",
-    "ON HOLD",
-    "CANCELLED",
-    "CANCELED",
-    "CANCELLED/CLOSED",
-  ].includes(norm(status));
-
 const getPsychKpi = (row: CaseRow): KpiType => {
-  const status = row["DOE STATUS"] || "";
+  const status = norm(row["DOE STATUS"] || "");
 
-  if (isExcludedPsychStatus(status)) return "none";
+  if (
+    [
+      "SPECIAL CASE",
+      "NA",
+      "N/A",
+      "UNRESPONSIVE",
+      "ON HOLD",
+      "CANCELLED",
+      "CANCELED",
+      "CANCELLED/CLOSED",
+    ].includes(status)
+  ) {
+    return "none";
+  }
 
-  const done = row["DONE (doe)"] || "";
+  if ((row["DONE (doe)"] || "").trim()) {
+    return "none";
+  }
 
-  if (done.trim()) return "none";
-
-  const expectedDate = parseDateOnly(
+  const date = parseDateOnly(
     row["EXPECTED DONE (doe)"] || ""
   );
 
-  if (!expectedDate) return "none";
+  if (!date) return "none";
 
-  return classifyDate(expectedDate);
+  return classifyDate(date);
 };
 
-/* ====================================================
-   PARALEGAL / LLENADO DE CARÁTULA
-==================================================== */
-
 const getCaratulaKpi = (row: CaseRow): KpiType => {
-  const done = row["CARATULA DONE"] || "";
-
-  if (done.trim()) {
+  if ((row["CARATULA DONE"] || "").trim()) {
     return "none";
   }
 
-  const expectedDate = parseDateOnly(
+  const date = parseDateOnly(
     row["CARÁTULA EXPECTED DONE"] || ""
   );
 
-  if (!expectedDate) {
+  if (!date) return "none";
+
+  return classifyDate(date);
+};
+
+const getDraftKpi = (row: CaseRow): KpiType => {
+  const status = norm(row["STATUS 1ST DRAFT"] || "");
+
+  if (
+    [
+      "NA",
+      "N/A",
+      "UNRESPONSIVE",
+      "CANCELLED/CLOSED",
+      "CANCELLED",
+      "CANCELED",
+      "SPECIAL CASE",
+    ].includes(status)
+  ) {
     return "none";
   }
 
-  return classifyDate(expectedDate);
-};
+  if ((row["1ST DRAFT DONE"] || "").trim()) {
+    return "none";
+  }
 
-/* ====================================================
-   PARALEGAL / 1ST DRAFT
-==================================================== */
-
-const isExcludedParalegalStatus = (status: string) =>
-  [
-    "NA",
-    "N/A",
-    "UNRESPONSIVE",
-    "CANCELLED/CLOSED",
-    "CANCELLED",
-    "CANCELED",
-    "SPECIAL CASE",
-  ].includes(norm(status));
-
-const getParalegalKpi = (row: CaseRow): KpiType => {
-  const status = row["STATUS 1ST DRAFT"] || "";
-
-  if (isExcludedParalegalStatus(status)) return "none";
-
-  const done = row["1ST DRAFT DONE"] || "";
-
-  if (done.trim()) return "none";
-
-  const expectedDate = parseDateOnly(
+  const date = parseDateOnly(
     row["1ST DRAFT EXP DONE"] || ""
   );
 
-  if (!expectedDate) return "none";
+  if (!date) return "none";
 
-  return classifyDate(expectedDate);
+  return classifyDate(date);
 };
 
-/* ====================================================
-   PARALEGAL / ESCALACIÓN A CVL
-==================================================== */
-
 const getPlCvlKpi = (row: CaseRow): KpiType => {
-  const done = row["PL CVL DONE"] || "";
-
-  if (done.trim()) {
+  if ((row["PL CVL DONE"] || "").trim()) {
     return "none";
   }
 
-  const expectedDate = parseDateOnly(
+  const date = parseDateOnly(
     row["PL CVL EXPECTED DONE"] || ""
   );
 
-  if (!expectedDate) {
-    return "none";
-  }
+  if (!date) return "none";
 
-  return classifyDate(expectedDate);
-};
-
-/* ====================================================
-   EA / ANALYST
-==================================================== */
-
-const isExcludedEaStatus = (status: string) => {
-  const value = norm(status);
-
-  return [
-    "NA",
-    "N/A",
-    "SPECIAL CASE",
-    "WAITING GMC",
-  ].includes(value);
+  return classifyDate(date);
 };
 
 const getEaKpi = (row: CaseRow): KpiType => {
-  const status = row["EA STATUS"] || "";
+  const status = norm(row["EA STATUS"] || "");
 
-  if (isExcludedEaStatus(status)) {
+  if (
+    ["NA", "N/A", "SPECIAL CASE", "WAITING GMC"].includes(
+      status
+    )
+  ) {
     return "none";
   }
 
-  const done = row["EA DONE"] || "";
-
-  if (done.trim()) {
+  if ((row["EA DONE"] || "").trim()) {
     return "none";
   }
 
-  const expectedDate = parseDateOnly(
+  const date = parseDateOnly(
     row["EA EXPECTED DONE"] || ""
   );
 
-  if (!expectedDate) {
-    return "none";
-  }
+  if (!date) return "none";
 
-  return classifyDate(expectedDate);
-};
-
-/* ====================================================
-   CVL
-==================================================== */
-
-const isExcludedCvlStatus = (status: string) => {
-  const value = norm(status);
-
-  return [
-    "NA",
-    "N/A",
-    "CANCELLED",
-    "CANCELED",
-  ].includes(value);
+  return classifyDate(date);
 };
 
 const getCvlKpi = (row: CaseRow): KpiType => {
-  const status = row["CVL STATUS"] || "";
+  const status = norm(row["CVL STATUS"] || "");
 
-  if (isExcludedCvlStatus(status)) {
+  if (
+    ["NA", "N/A", "CANCELLED", "CANCELED"].includes(status)
+  ) {
     return "none";
   }
 
-  const done = row["DONE CVL"] || "";
-
-  if (done.trim()) {
+  if ((row["DONE CVL"] || "").trim()) {
     return "none";
   }
 
-  const expectedDate = parseDateOnly(
+  const date = parseDateOnly(
     row["CVL EXPECTED DONE"] || ""
   );
 
-  if (!expectedDate) {
-    return "none";
-  }
+  if (!date) return "none";
 
-  return classifyDate(expectedDate);
+  return classifyDate(date);
 };
 
-/* ====================================================
-   COMPONENTE PRINCIPAL
-==================================================== */
+const kpiGetter = (section: KpiSection) => {
+  if (section === "mgm") return getMgmKpi;
+  if (section === "psych") return getPsychKpi;
+  if (section === "caratula") return getCaratulaKpi;
+  if (section === "draft") return getDraftKpi;
+  if (section === "plcvl") return getPlCvlKpi;
+  if (section === "ea") return getEaKpi;
+
+  return getCvlKpi;
+};
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
 
   const [data, setData] = useState<{
+    title: string;
     headers: string[];
     rows: CaseRow[];
-    title: string;
   }>({
+    title: "",
     headers: [],
     rows: [],
-    title: "",
   });
-
-  const [q, setQ] = useState("");
 
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingCases, setLoadingCases] = useState(false);
 
-  const [msg, setMsg] = useState("");
-  const [err, setErr] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-  const [expandedKpi, setExpandedKpi] =
-    useState<ExpandedKpi>(null);
+  const [selectedCase, setSelectedCase] =
+    useState<CaseRow | null>(null);
+
+  const [selectedKpi, setSelectedKpi] =
+    useState<KpiSelection>(null);
+
+  const [savingField, setSavingField] =
+    useState<string | null>(null);
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   async function loadUser() {
     try {
-      const r = await fetch("/api/auth/me", {
+      const response = await fetch("/api/auth/me", {
         cache: "no-store",
       });
 
-      const j = await r.json();
-
-      setUser(j);
+      setUser(await response.json());
     } catch {
       setUser({
         authenticated: false,
@@ -467,24 +380,24 @@ export default function Home() {
 
   async function loadCases() {
     setLoadingCases(true);
-    setErr("");
+    setError("");
 
     try {
-      const r = await fetch("/api/cases", {
+      const response = await fetch("/api/cases", {
         cache: "no-store",
       });
 
-      const j = await r.json();
+      const json = await response.json();
 
-      if (!r.ok) {
+      if (!response.ok) {
         throw new Error(
-          j.error || "Error loading cases"
+          json.error || "No se pudieron cargar los casos"
         );
       }
 
-      setData(j);
+      setData(json);
     } catch (e) {
-      setErr(
+      setError(
         e instanceof Error ? e.message : "Error"
       );
     } finally {
@@ -502,1929 +415,1062 @@ export default function Home() {
     }
   }, [user]);
 
-  function login() {
-    window.location.href = "/api/auth/login";
-  }
-
-  function logout() {
-    window.location.href = "/api/auth/logout";
-  }
-
-  /* ====================================================
-     PERMISOS
-  ==================================================== */
-
-  const canEdit = (header: string) => {
-    if (!user?.role) return false;
-
-    if (user.role === "ADMIN") {
-      return true;
-    }
-
-    if (user.role === "TL") {
-      return (
-        isAssignment(header) ||
-        isDelivery(header) ||
-        isStatus(header)
-      );
-    }
-
-    if (
-      ["PARALEGAL", "PSYCH", "ANALYST"].includes(
-        user.role
-      )
-    ) {
-      return (
-        isDelivery(header) ||
-        isStatus(header) ||
-        isLink(header)
-      );
-    }
-
-    return false;
-  };
-
-  /* ====================================================
-     BUSCADOR
-  ==================================================== */
-
-  const rows = useMemo(() => {
-    const search = q.toLowerCase();
-
-    return data.rows.filter((r) => {
-      if (!search) return true;
-
-      return Object.entries(r).some(
-        ([k, v]) =>
-          k !== "__row" &&
-          v.toLowerCase().includes(search)
-      );
-    });
-  }, [data.rows, q]);
-
-  /* ====================================================
-     STATS MGM
-  ==================================================== */
-
-  const mgmStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getMgmKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     STATS PSYCH
-  ==================================================== */
-
-  const psychStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getPsychKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     STATS CARÁTULA
-  ==================================================== */
-
-  const caratulaStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getCaratulaKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     STATS 1ST DRAFT
-  ==================================================== */
-
-  const paralegalStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getParalegalKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     STATS PL CVL
-  ==================================================== */
-
-  const plCvlStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getPlCvlKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     STATS EA
-  ==================================================== */
-
-  const eaStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getEaKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     STATS CVL
-  ==================================================== */
-
-  const cvlStats = useMemo(() => {
-    let backlog = 0;
-    let pending = 0;
-    let future = 0;
-
-    data.rows.forEach((row) => {
-      const kpi = getCvlKpi(row);
-
-      if (kpi === "backlog") backlog++;
-      if (kpi === "pending") pending++;
-      if (kpi === "future") future++;
-    });
-
-    return { backlog, pending, future };
-  }, [data.rows]);
-
-  /* ====================================================
-     DETALLE MGM
-  ==================================================== */
-
-  const mgmDetailType: KpiType | null =
-    expandedKpi === "mgm-backlog"
-      ? "backlog"
-      : expandedKpi === "mgm-pending"
-      ? "pending"
-      : expandedKpi === "mgm-future"
-      ? "future"
-      : null;
-
-  const mgmCases = useMemo(() => {
-    if (!mgmDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getMgmKpi(row) === mgmDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-        client:
-          row["CLIENTE"] || "Sin cliente",
-        id:
-          row["ID"] || "",
-        caseType:
-          row["DUE DATE/NO DUE DATE"] || "",
-        commitment:
-          row["COMMITMENT"] || "",
-        status:
-          row["STATUS"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.commitment);
-        const dateB = parseDateOnly(b.commitment);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, mgmDetailType]);
-
-  /* ====================================================
-     DETALLE PSYCH
-  ==================================================== */
-
-  const psychDetailType: KpiType | null =
-    expandedKpi === "psych-backlog"
-      ? "backlog"
-      : expandedKpi === "psych-pending"
-      ? "pending"
-      : expandedKpi === "psych-future"
-      ? "future"
-      : null;
-
-  const psychCases = useMemo(() => {
-    if (!psychDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getPsychKpi(row) === psychDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-        client:
-          row["CLIENTE"] || "Sin cliente",
-        id:
-          row["ID"] || "",
-        psych:
-          row["PSYCH"] || "",
-        status:
-          row["DOE STATUS"] || "",
-        expected:
-          row["EXPECTED DONE (doe)"] || "",
-        done:
-          row["DONE (doe)"] || "",
-        classValue:
-          row["CLASS"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, psychDetailType]);
-
-  /* ====================================================
-     DETALLE CARÁTULA
-  ==================================================== */
-
-  const caratulaDetailType: KpiType | null =
-    expandedKpi === "caratula-backlog"
-      ? "backlog"
-      : expandedKpi === "caratula-pending"
-      ? "pending"
-      : expandedKpi === "caratula-future"
-      ? "future"
-      : null;
-
-  const caratulaCases = useMemo(() => {
-    if (!caratulaDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getCaratulaKpi(row) ===
-          caratulaDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-
-        client:
-          row["CLIENTE"] || "Sin cliente",
-
-        id:
-          row["ID"] || "",
-
-        assigned:
-          row["PL ASSIGNED"] || "",
-
-        paralegal:
-          row["PARALEGAL"] || "",
-
-        expected:
-          row["CARÁTULA EXPECTED DONE"] || "",
-
-        done:
-          row["CARATULA DONE"] || "",
-
-        link:
-          row["LINK CARÁTULA"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, caratulaDetailType]);
-
-  /* ====================================================
-     DETALLE 1ST DRAFT
-  ==================================================== */
-
-  const paralegalDetailType: KpiType | null =
-    expandedKpi === "paralegal-backlog"
-      ? "backlog"
-      : expandedKpi === "paralegal-pending"
-      ? "pending"
-      : expandedKpi === "paralegal-future"
-      ? "future"
-      : null;
-
-  const paralegalCases = useMemo(() => {
-    if (!paralegalDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getParalegalKpi(row) ===
-          paralegalDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-
-        client:
-          row["CLIENTE"] || "Sin cliente",
-
-        id:
-          row["ID"] || "",
-
-        paralegal:
-          row["PARALEGAL"] || "",
-
-        status:
-          row["STATUS 1ST DRAFT"] || "",
-
-        expected:
-          row["1ST DRAFT EXP DONE"] || "",
-
-        done:
-          row["1ST DRAFT DONE"] || "",
-
-        link:
-          row["LINK INF AFFIDAVIT"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, paralegalDetailType]);
-
-  /* ====================================================
-     DETALLE PL CVL
-  ==================================================== */
-
-  const plCvlDetailType: KpiType | null =
-    expandedKpi === "pl-cvl-backlog"
-      ? "backlog"
-      : expandedKpi === "pl-cvl-pending"
-      ? "pending"
-      : expandedKpi === "pl-cvl-future"
-      ? "future"
-      : null;
-
-  const plCvlCases = useMemo(() => {
-    if (!plCvlDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getPlCvlKpi(row) ===
-          plCvlDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-
-        client:
-          row["CLIENTE"] || "Sin cliente",
-
-        id:
-          row["ID"] || "",
-
-        paralegal:
-          row["PARALEGAL"] || "",
-
-        expected:
-          row["PL CVL EXPECTED DONE"] || "",
-
-        done:
-          row["PL CVL DONE"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, plCvlDetailType]);
-
-  /* ====================================================
-     DETALLE EA
-  ==================================================== */
-
-  const eaDetailType: KpiType | null =
-    expandedKpi === "ea-backlog"
-      ? "backlog"
-      : expandedKpi === "ea-pending"
-      ? "pending"
-      : expandedKpi === "ea-future"
-      ? "future"
-      : null;
-
-  const eaCases = useMemo(() => {
-    if (!eaDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getEaKpi(row) === eaDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-
-        client:
-          row["CLIENTE"] || "Sin cliente",
-
-        id:
-          row["ID"] || "",
-
-        member:
-          row["EA MEMBER"] || "",
-
-        assigned:
-          row["EA ASSIGNED"] || "",
-
-        status:
-          row["EA STATUS"] || "",
-
-        expected:
-          row["EA EXPECTED DONE"] || "",
-
-        done:
-          row["EA DONE"] || "",
-
-        pe:
-          row["EA P.E."] || "",
-
-        peApproved:
-          row["FECHA P.E. APROBADA"] || "",
-
-        stoppers:
-          row["EA STOPPERS"] || "",
-
-        hojas:
-          row["EA HOJAS"] || "",
-
-        ws:
-          row["EA WS"] || "",
-
-        caratula:
-          row["EA ACTUALIZACIÓN CARATULA"] || "",
-
-        link:
-          row["EA LINK DRIVE"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, eaDetailType]);
-
-  /* ====================================================
-     DETALLE CVL
-  ==================================================== */
-
-  const cvlDetailType: KpiType | null =
-    expandedKpi === "cvl-backlog"
-      ? "backlog"
-      : expandedKpi === "cvl-pending"
-      ? "pending"
-      : expandedKpi === "cvl-future"
-      ? "future"
-      : null;
-
-  const cvlCases = useMemo(() => {
-    if (!cvlDetailType) return [];
-
-    return data.rows
-      .filter(
-        (row) =>
-          getCvlKpi(row) === cvlDetailType
-      )
-      .map((row) => ({
-        row: row.__row,
-
-        client:
-          row["CLIENTE"] || "Sin cliente",
-
-        id:
-          row["ID"] || "",
-
-        member:
-          row["CVL MEMBER"] || "",
-
-        expected:
-          row["CVL EXPECTED DONE"] || "",
-
-        status:
-          row["CVL STATUS"] || "",
-
-        done:
-          row["DONE CVL"] || "",
-
-        link:
-          row["LINK CVL"] || "",
-      }))
-      .sort((a, b) => {
-        const dateA = parseDateOnly(a.expected);
-        const dateB = parseDateOnly(b.expected);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.getTime() - dateB.getTime();
-      });
-  }, [data.rows, cvlDetailType]);
-
-  /* ====================================================
-     GUARDAR
-  ==================================================== */
-
-  async function save(
-    row: number,
+  async function saveField(
+    rowNumber: number,
     header: string,
     value: string
   ) {
-    setMsg("");
-    setErr("");
+    setSavingField(header);
+    setMessage("");
+    setError("");
 
     try {
-      const r = await fetch("/api/cases/update", {
+      const response = await fetch("/api/cases/update", {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
-          row,
-          role: user?.role,
+          row: rowNumber,
           changes: {
             [header]: value,
           },
         }),
       });
 
-      const j = await r.json();
+      const json = await response.json();
 
-      if (!r.ok) {
-        throw new Error(
-          j.error || "Could not save"
-        );
+      if (!response.ok) {
+        throw new Error(json.error || "No se pudo guardar");
       }
 
       setData((prev) => ({
         ...prev,
-
-        rows: prev.rows.map((r) =>
-          Number(r.__row) === row
+        rows: prev.rows.map((row) =>
+          row.__row === String(rowNumber)
             ? {
-                ...r,
+                ...row,
                 [header]: value,
               }
-            : r
+            : row
         ),
       }));
 
-      setMsg(
-        value === ""
-          ? "Cambio guardado y campo borrado."
-          : "Cambio guardado en Google Sheets."
+      setSelectedCase((prev) =>
+        prev?.__row === String(rowNumber)
+          ? {
+              ...prev,
+              [header]: value,
+            }
+          : prev
       );
+
+      setMessage("Cambio guardado");
     } catch (e) {
-      setErr(
+      setError(
         e instanceof Error ? e.message : "Error"
       );
+    } finally {
+      setSavingField(null);
     }
   }
 
-  /* ====================================================
-     KPI CARD
-  ==================================================== */
+  const statsFor = (section: KpiSection) => {
+    const getter = kpiGetter(section);
+
+    let backlog = 0;
+    let pending = 0;
+    let future = 0;
+
+    data.rows.forEach((row) => {
+      const result = getter(row);
+
+      if (result === "backlog") backlog++;
+      if (result === "pending") pending++;
+      if (result === "future") future++;
+    });
+
+    return {
+      backlog,
+      pending,
+      future,
+    };
+  };
+
+  const mgm = useMemo(() => statsFor("mgm"), [data.rows]);
+  const psych = useMemo(() => statsFor("psych"), [data.rows]);
+  const caratula = useMemo(
+    () => statsFor("caratula"),
+    [data.rows]
+  );
+  const draft = useMemo(
+    () => statsFor("draft"),
+    [data.rows]
+  );
+  const plcvl = useMemo(
+    () => statsFor("plcvl"),
+    [data.rows]
+  );
+  const ea = useMemo(() => statsFor("ea"), [data.rows]);
+  const cvl = useMemo(() => statsFor("cvl"), [data.rows]);
+
+  const filteredCases = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return data.rows.filter((row) => {
+      const matchesSearch =
+        !q ||
+        (row["CLIENTE"] || "").toLowerCase().includes(q) ||
+        (row["ID"] || "").toLowerCase().includes(q) ||
+        (row["RECEIPT NUMBER"] || "")
+          .toLowerCase()
+          .includes(q);
+
+      const matchesStatus =
+        !statusFilter ||
+        norm(row["STATUS"] || "") === norm(statusFilter);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [data.rows, search, statusFilter]);
+
+  const kpiCases = useMemo(() => {
+    if (!selectedKpi) return [];
+
+    const getter = kpiGetter(selectedKpi.section);
+
+    return data.rows.filter(
+      (row) => getter(row) === selectedKpi.type
+    );
+  }, [data.rows, selectedKpi]);
+
+  const sectionLabel = (section: KpiSection) => {
+    if (section === "mgm") return "Entregas MGM";
+    if (section === "psych") return "Psych";
+    if (section === "caratula") return "Llenado de Carátula";
+    if (section === "draft") return "1st Draft";
+    if (section === "plcvl") return "Escalación a CVL";
+    if (section === "ea") return "EA · Analyst";
+
+    return "CVL";
+  };
+
+  const statusClass = (status: string) => {
+    const value = norm(status);
+
+    if (
+      value === "DONE" ||
+      value === "SENT TO USCIS"
+    ) {
+      return "status statusGreen";
+    }
+
+    if (
+      value.includes("REVIEW") ||
+      value.includes("CORRECTION")
+    ) {
+      return "status statusPurple";
+    }
+
+    if (
+      value.includes("CANCEL") ||
+      value === "SPECIAL CASE"
+    ) {
+      return "status statusRed";
+    }
+
+    return "status statusBlue";
+  };
 
   function KpiCard({
-    section,
     title,
     value,
-    description,
-    expandedName,
+    type,
+    section,
   }: {
-    section: string;
     title: string;
     value: number;
-    description: string;
-    expandedName: ExpandedKpi;
+    type: Exclude<KpiType, "none">;
+    section: KpiSection;
   }) {
     return (
-      <div
-        className="card"
+      <button
+        className={`metricCard metric-${type}`}
         onDoubleClick={() =>
-          setExpandedKpi(
-            expandedKpi === expandedName
-              ? null
-              : expandedName
-          )
+          setSelectedKpi({
+            section,
+            type,
+          })
         }
-        style={{
-          padding: 22,
-          cursor: "pointer",
-          userSelect: "none",
-        }}
       >
-        <div className="muted">
-          {section}
-        </div>
-
-        <div
-          style={{
-            marginTop: 8,
-            fontWeight: 700,
-          }}
-        >
+        <span className="metricTitle">
           {title}
+        </span>
+
+        <strong>{value}</strong>
+
+        <span className="metricHint">
+          Doble clic para ver
+        </span>
+      </button>
+    );
+  }
+
+  function KpiRow({
+    title,
+    section,
+    stats,
+  }: {
+    title: string;
+    section: KpiSection;
+    stats: {
+      backlog: number;
+      pending: number;
+      future: number;
+    };
+  }) {
+    return (
+      <section className="workflowSection">
+        <div className="sectionTitleRow">
+          <div>
+            <h2>{title}</h2>
+          </div>
         </div>
 
-        <div
-          style={{
-            marginTop: 4,
-            fontSize: 34,
-            fontWeight: 800,
-          }}
-        >
-          {value}
-        </div>
+        <div className="metricGrid">
+          <KpiCard
+            title="Backlog"
+            value={stats.backlog}
+            section={section}
+            type="backlog"
+          />
 
-        <div className="muted">
-          {description}
+          <KpiCard
+            title="Pendientes"
+            value={stats.pending}
+            section={section}
+            type="pending"
+          />
+
+          <KpiCard
+            title="Próximas entregas"
+            value={stats.future}
+            section={section}
+            type="future"
+          />
+        </div>
+      </section>
+    );
+  }
+
+  function Field({
+    label,
+    header,
+    type = "text",
+    readOnly = false,
+  }: {
+    label: string;
+    header: string;
+    type?: "text" | "date" | "textarea";
+    readOnly?: boolean;
+  }) {
+    if (!selectedCase) return null;
+
+    const value = selectedCase[header] || "";
+
+    return (
+      <div className="field">
+        <label>{label}</label>
+
+        {readOnly ? (
+          <div className="readValue">
+            {value || "—"}
+          </div>
+        ) : type === "textarea" ? (
+          <textarea
+            value={value}
+            onChange={(e) =>
+              setSelectedCase({
+                ...selectedCase,
+                [header]: e.target.value,
+              })
+            }
+            onBlur={(e) =>
+              saveField(
+                Number(selectedCase.__row),
+                header,
+                e.target.value
+              )
+            }
+          />
+        ) : (
+          <input
+            type={type}
+            value={
+              type === "date"
+                ? toInputDate(value)
+                : value
+            }
+            onChange={(e) =>
+              setSelectedCase({
+                ...selectedCase,
+                [header]: e.target.value,
+              })
+            }
+            onBlur={(e) =>
+              saveField(
+                Number(selectedCase.__row),
+                header,
+                e.target.value
+              )
+            }
+          />
+        )}
+
+        {savingField === header && (
+          <span className="savingText">
+            Guardando…
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  if (loadingUser) {
+    return (
+      <div className="centerScreen">
+        Cargando Alpha Hub…
+      </div>
+    );
+  }
+
+  if (!user?.authenticated) {
+    return (
+      <div className="loginScreen">
+        <div className="loginCard">
+          <div className="logoMark">A</div>
+
+          <h1>Alpha Hub</h1>
+
+          <p>
+            Case operations workspace
+          </p>
+
+          <button
+            className="primaryButton"
+            onClick={() =>
+              (window.location.href =
+                "/api/auth/login")
+            }
+          >
+            Continue with Google
+          </button>
         </div>
       </div>
     );
   }
 
-  /* ====================================================
-     LOADING
-  ==================================================== */
-
-  if (loadingUser) {
-    return (
-      <main className="shell">
-        <div className="card">
-          <div className="empty">
-            Verificando acceso…
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  /* ====================================================
-     LOGIN
-  ==================================================== */
-
-  if (!user?.authenticated) {
-    return (
-      <>
-        <header className="top">
-          <div className="brand">
-            ALPHA HUB
-          </div>
-        </header>
-
-        <main className="shell">
-          <div
-            className="card"
-            style={{
-              maxWidth: 500,
-              margin: "80px auto",
-              textAlign: "center",
-              padding: 40,
-            }}
-          >
-            <h1>Welcome to Alpha Hub</h1>
-
-            <p
-              className="muted"
-              style={{
-                marginTop: 10,
-                marginBottom: 30,
-              }}
-            >
-              Sign in with your institutional Google
-              account to continue.
-            </p>
-
-            <button
-              className="btn"
-              onClick={login}
-            >
-              Continue with Google
-            </button>
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  /* ====================================================
-     HUB
-  ==================================================== */
-
   return (
-    <>
-      <header className="top">
-        <div className="brand">
-          ALPHA HUB
-        </div>
+    <div className="appLayout">
+      {/* SIDEBAR */}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div className="pill">
-            {roleLabels[user.role as Role]}
+      <aside className="sidebar">
+        <div className="sidebarBrand">
+          <div className="logoMark small">
+            A
           </div>
 
-          <span className="muted">
-            {user.email}
-          </span>
+          <div>
+            <strong>ALPHA</strong>
+            <span>HUB</span>
+          </div>
+        </div>
+
+        <nav>
+          <button className="navItem active">
+            <span>⌂</span>
+            Dashboard
+          </button>
+
+          <button className="navItem">
+            <span>▦</span>
+            Cases
+          </button>
+
+          <button className="navItem">
+            <span>◎</span>
+            Team
+          </button>
+        </nav>
+
+        <div className="sidebarBottom">
+          <div className="userAvatar">
+            {(user.email || "A")
+              .charAt(0)
+              .toUpperCase()}
+          </div>
+
+          <div className="sidebarUser">
+            <strong>
+              {roleLabels[user.role as Role]}
+            </strong>
+
+            <span>{user.email}</span>
+          </div>
 
           <button
-            className="btn btnGhost"
-            onClick={logout}
+            className="logoutButton"
+            onClick={() =>
+              (window.location.href =
+                "/api/auth/logout")
+            }
           >
-            Log out
+            ↗
           </button>
         </div>
-      </header>
+      </aside>
 
-      <main className="shell">
+      {/* MAIN */}
 
-        {/* ================= MGM ================= */}
+      <main className="mainContent">
+        <header className="pageHeader">
+          <div>
+            <p className="eyebrow">
+              CASE OPERATIONS
+            </p>
 
-        <div
-          style={{
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          Entregas MGM
-        </div>
+            <h1>Dashboard</h1>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="ENTREGAS MGM"
-            title="Backlog"
-            value={mgmStats.backlog}
-            description="Commitment anterior"
-            expandedName="mgm-backlog"
-          />
+            <p>
+              Overview of current workflow and case
+              activity.
+            </p>
+          </div>
 
-          <KpiCard
-            section="ENTREGAS MGM"
-            title="Pendientes"
-            value={mgmStats.pending}
-            description="Commitment de esta semana"
-            expandedName="mgm-pending"
-          />
-
-          <KpiCard
-            section="ENTREGAS MGM"
-            title="Próximas entregas"
-            value={mgmStats.future}
-            description="Commitment futuro"
-            expandedName="mgm-future"
-          />
-        </div>
-
-        {mgmDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
+          <button
+            className="refreshButton"
+            onClick={loadCases}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {mgmDetailType === "backlog"
-                    ? "Backlog MGM"
-                    : mgmDetailType === "pending"
-                    ? "Pendientes MGM"
-                    : "Próximas entregas MGM"}
-                </div>
+            ↻ Refresh
+          </button>
+        </header>
 
-                <div className="muted">
-                  {mgmCases.length} caso
-                  {mgmCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>Tipo</th>
-                    <th>Commitment</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {mgmCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.caseType || "—"}</td>
-                      <td>{item.commitment || "—"}</td>
-                      <td>{item.status || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {error && (
+          <div className="alert errorAlert">
+            {error}
           </div>
         )}
 
-        {/* ================= PSYCH ================= */}
-
-        <div
-          style={{
-            marginTop: 28,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          Psych
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="PSYCH"
-            title="Backlog"
-            value={psychStats.backlog}
-            description="Expected Done anterior"
-            expandedName="psych-backlog"
-          />
-
-          <KpiCard
-            section="PSYCH"
-            title="Pendientes"
-            value={psychStats.pending}
-            description="Expected Done de esta semana"
-            expandedName="psych-pending"
-          />
-
-          <KpiCard
-            section="PSYCH"
-            title="Próximas entregas"
-            value={psychStats.future}
-            description="Expected Done futuro"
-            expandedName="psych-future"
-          />
-        </div>
-
-        {psychDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {psychDetailType === "backlog"
-                    ? "Backlog Psych"
-                    : psychDetailType === "pending"
-                    ? "Pendientes Psych"
-                    : "Próximas entregas Psych"}
-                </div>
-
-                <div className="muted">
-                  {psychCases.length} caso
-                  {psychCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>Psych</th>
-                    <th>DOE Status</th>
-                    <th>Expected Done</th>
-                    <th>Done</th>
-                    <th>Class</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {psychCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.psych || "—"}</td>
-                      <td>{item.status || "—"}</td>
-                      <td>{item.expected || "—"}</td>
-                      <td>{item.done || "—"}</td>
-                      <td>{item.classValue || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {message && (
+          <div className="alert successAlert">
+            {message}
           </div>
         )}
 
-        {/* ================= LLENADO CARÁTULA ================= */}
-
-        <div
-          style={{
-            marginTop: 28,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          Paralegal · Llenado de Carátula
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="LLENADO DE CARÁTULA"
-            title="Backlog"
-            value={caratulaStats.backlog}
-            description="Carátula Expected Done anterior"
-            expandedName="caratula-backlog"
-          />
-
-          <KpiCard
-            section="LLENADO DE CARÁTULA"
-            title="Pendientes"
-            value={caratulaStats.pending}
-            description="Carátula Expected Done de esta semana"
-            expandedName="caratula-pending"
-          />
-
-          <KpiCard
-            section="LLENADO DE CARÁTULA"
-            title="Próximas entregas"
-            value={caratulaStats.future}
-            description="Carátula Expected Done futuro"
-            expandedName="caratula-future"
-          />
-        </div>
-
-        {caratulaDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {caratulaDetailType === "backlog"
-                    ? "Backlog · Llenado de Carátula"
-                    : caratulaDetailType === "pending"
-                    ? "Pendientes · Llenado de Carátula"
-                    : "Próximas entregas · Llenado de Carátula"}
-                </div>
-
-                <div className="muted">
-                  {caratulaCases.length} caso
-                  {caratulaCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>PL Assigned</th>
-                    <th>Paralegal</th>
-                    <th>Carátula Expected Done</th>
-                    <th>Carátula Done</th>
-                    <th>Link Carátula</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {caratulaCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-
-                      <td>
-                        {item.id || "—"}
-                      </td>
-
-                      <td>
-                        {item.assigned || "—"}
-                      </td>
-
-                      <td>
-                        {item.paralegal || "—"}
-                      </td>
-
-                      <td>
-                        {item.expected || "—"}
-                      </td>
-
-                      <td>
-                        {item.done || "—"}
-                      </td>
-
-                      <td>
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Abrir carátula
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {loadingCases ? (
+          <div className="loadingCard">
+            Loading cases…
           </div>
-        )}
-
-        {/* ================= 1ST DRAFT ================= */}
-
-        <div
-          style={{
-            marginTop: 28,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          Paralegal · 1st Draft
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="1ST DRAFT"
-            title="Backlog"
-            value={paralegalStats.backlog}
-            description="Expected Done anterior"
-            expandedName="paralegal-backlog"
-          />
-
-          <KpiCard
-            section="1ST DRAFT"
-            title="Pendientes"
-            value={paralegalStats.pending}
-            description="Expected Done de esta semana"
-            expandedName="paralegal-pending"
-          />
-
-          <KpiCard
-            section="1ST DRAFT"
-            title="Próximas entregas"
-            value={paralegalStats.future}
-            description="Expected Done futuro"
-            expandedName="paralegal-future"
-          />
-        </div>
-
-        {paralegalDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {paralegalDetailType === "backlog"
-                    ? "Backlog Paralegal · 1st Draft"
-                    : paralegalDetailType === "pending"
-                    ? "Pendientes Paralegal · 1st Draft"
-                    : "Próximas entregas Paralegal · 1st Draft"}
-                </div>
-
-                <div className="muted">
-                  {paralegalCases.length} caso
-                  {paralegalCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>Paralegal</th>
-                    <th>Status 1st Draft</th>
-                    <th>Expected Done</th>
-                    <th>1st Draft Done</th>
-                    <th>Link Inf Affidavit</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {paralegalCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-
-                      <td>
-                        {item.id || "—"}
-                      </td>
-
-                      <td>
-                        {item.paralegal || "—"}
-                      </td>
-
-                      <td>
-                        {item.status || "—"}
-                      </td>
-
-                      <td>
-                        {item.expected || "—"}
-                      </td>
-
-                      <td>
-                        {item.done || "—"}
-                      </td>
-
-                      <td>
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Abrir link
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ================= ESCALACIÓN CVL ================= */}
-
-        <div
-          style={{
-            marginTop: 28,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          Paralegal · Escalación a CVL
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="ESCALACIÓN CVL"
-            title="Backlog"
-            value={plCvlStats.backlog}
-            description="PL CVL Expected Done anterior"
-            expandedName="pl-cvl-backlog"
-          />
-
-          <KpiCard
-            section="ESCALACIÓN CVL"
-            title="Pendientes"
-            value={plCvlStats.pending}
-            description="PL CVL Expected Done de esta semana"
-            expandedName="pl-cvl-pending"
-          />
-
-          <KpiCard
-            section="ESCALACIÓN CVL"
-            title="Próximas entregas"
-            value={plCvlStats.future}
-            description="PL CVL Expected Done futuro"
-            expandedName="pl-cvl-future"
-          />
-        </div>
-
-        {plCvlDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {plCvlDetailType === "backlog"
-                    ? "Backlog · Escalación a CVL"
-                    : plCvlDetailType === "pending"
-                    ? "Pendientes · Escalación a CVL"
-                    : "Próximas entregas · Escalación a CVL"}
-                </div>
-
-                <div className="muted">
-                  {plCvlCases.length} caso
-                  {plCvlCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>Paralegal</th>
-                    <th>PL CVL Expected Done</th>
-                    <th>PL CVL Done</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {plCvlCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.paralegal || "—"}</td>
-                      <td>{item.expected || "—"}</td>
-                      <td>{item.done || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ================= EA ================= */}
-
-        <div
-          style={{
-            marginTop: 28,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          EA · Analyst
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="EA"
-            title="Backlog"
-            value={eaStats.backlog}
-            description="Expected Done anterior"
-            expandedName="ea-backlog"
-          />
-
-          <KpiCard
-            section="EA"
-            title="Pendientes"
-            value={eaStats.pending}
-            description="Expected Done de esta semana"
-            expandedName="ea-pending"
-          />
-
-          <KpiCard
-            section="EA"
-            title="Próximas entregas"
-            value={eaStats.future}
-            description="Expected Done futuro"
-            expandedName="ea-future"
-          />
-        </div>
-
-        {eaDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {eaDetailType === "backlog"
-                    ? "Backlog EA · Analyst"
-                    : eaDetailType === "pending"
-                    ? "Pendientes EA · Analyst"
-                    : "Próximas entregas EA · Analyst"}
-                </div>
-
-                <div className="muted">
-                  {eaCases.length} caso
-                  {eaCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>EA Member</th>
-                    <th>EA Assigned</th>
-                    <th>EA Status</th>
-                    <th>EA Expected Done</th>
-                    <th>EA Done</th>
-                    <th>EA P.E.</th>
-                    <th>Fecha P.E. Aprobada</th>
-                    <th>EA Stoppers</th>
-                    <th>EA Hojas</th>
-                    <th>EA WS</th>
-                    <th>Actualización Carátula</th>
-                    <th>EA Link Drive</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {eaCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.member || "—"}</td>
-                      <td>{item.assigned || "—"}</td>
-                      <td>{item.status || "—"}</td>
-                      <td>{item.expected || "—"}</td>
-                      <td>{item.done || "—"}</td>
-                      <td>{item.pe || "—"}</td>
-                      <td>{item.peApproved || "—"}</td>
-                      <td>{item.stoppers || "—"}</td>
-                      <td>{item.hojas || "—"}</td>
-                      <td>{item.ws || "—"}</td>
-                      <td>{item.caratula || "—"}</td>
-                      <td>
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Abrir Drive
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ================= CVL ================= */}
-
-        <div
-          style={{
-            marginTop: 28,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          CVL
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          <KpiCard
-            section="CVL"
-            title="Backlog"
-            value={cvlStats.backlog}
-            description="CVL Expected Done anterior"
-            expandedName="cvl-backlog"
-          />
-
-          <KpiCard
-            section="CVL"
-            title="Pendientes"
-            value={cvlStats.pending}
-            description="CVL Expected Done de esta semana"
-            expandedName="cvl-pending"
-          />
-
-          <KpiCard
-            section="CVL"
-            title="Próximas entregas"
-            value={cvlStats.future}
-            description="CVL Expected Done futuro"
-            expandedName="cvl-future"
-          />
-        </div>
-
-        {cvlDetailType && (
-          <div
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                  }}
-                >
-                  {cvlDetailType === "backlog"
-                    ? "Backlog CVL"
-                    : cvlDetailType === "pending"
-                    ? "Pendientes CVL"
-                    : "Próximas entregas CVL"}
-                </div>
-
-                <div className="muted">
-                  {cvlCases.length} caso
-                  {cvlCases.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              <button
-                className="btn btnGhost"
-                onClick={() => setExpandedKpi(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>ID</th>
-                    <th>CVL Member</th>
-                    <th>CVL Expected Done</th>
-                    <th>CVL Status</th>
-                    <th>Done CVL</th>
-                    <th>Link CVL</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {cvlCases.map((item) => (
-                    <tr key={item.row}>
-                      <td>
-                        <strong>{item.client}</strong>
-                      </td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.member || "—"}</td>
-                      <td>{item.expected || "—"}</td>
-                      <td>{item.status || "—"}</td>
-                      <td>{item.done || "—"}</td>
-                      <td>
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Abrir CVL
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ================= CASOS ================= */}
-
-        <div
-          style={{
-            marginTop: 30,
-            marginBottom: 10,
-            fontWeight: 800,
-            fontSize: 18,
-          }}
-        >
-          Casos
-        </div>
-
-        <div className="card">
-          <div className="toolbar">
-            <input
-              placeholder="Buscar caso, nombre, ID..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
+        ) : (
+          <>
+            <KpiRow
+              title="Entregas MGM"
+              section="mgm"
+              stats={mgm}
             />
 
-            <button
-              className="btn btnGhost"
-              onClick={loadCases}
-            >
-              Actualizar
-            </button>
+            <KpiRow
+              title="Psych"
+              section="psych"
+              stats={psych}
+            />
 
-            <span className="muted">
-              {data.title
-                ? `Hoja: ${data.title} · ${rows.length} casos`
-                : ""}
-            </span>
-          </div>
+            <KpiRow
+              title="Paralegal · Llenado de Carátula"
+              section="caratula"
+              stats={caratula}
+            />
 
-          {err && (
-            <div className="error">
-              {err}
-            </div>
-          )}
+            <KpiRow
+              title="Paralegal · 1st Draft"
+              section="draft"
+              stats={draft}
+            />
 
-          {msg && (
-            <div className="ok">
-              {msg}
-            </div>
-          )}
+            <KpiRow
+              title="Paralegal · Escalación a CVL"
+              section="plcvl"
+              stats={plcvl}
+            />
 
-          {loadingCases ? (
-            <div className="empty">
-              Cargando casos…
-            </div>
-          ) : !data.headers.length ? (
-            <div className="empty">
-              No se encontraron columnas en la Sheet.
-            </div>
-          ) : (
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    {data.headers.map((h, index) => (
-                      <th key={`${h}-${index}`}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
+            <KpiRow
+              title="EA · Analyst"
+              section="ea"
+              stats={ea}
+            />
 
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.__row}>
-                      {data.headers.map((h, index) => (
-                        <td key={`${h}-${index}`}>
-                          {canEdit(h) ? (
-                            <input
-                              className="editable"
-                              value={r[h] || ""}
-                              onChange={(e) => {
-                                const value =
-                                  e.target.value;
+            <KpiRow
+              title="CVL"
+              section="cvl"
+              stats={cvl}
+            />
 
-                                setData((prev) => ({
-                                  ...prev,
+            {/* CASES */}
 
-                                  rows: prev.rows.map(
-                                    (rowData) =>
-                                      rowData.__row ===
-                                      r.__row
-                                        ? {
-                                            ...rowData,
-                                            [h]: value,
-                                          }
-                                        : rowData
-                                  ),
-                                }));
-                              }}
-                              onBlur={(e) => {
-                                const newValue =
-                                  e.target.value;
+            <section className="casesSection">
+              <div className="casesHeader">
+                <div>
+                  <p className="eyebrow">
+                    CASE MANAGEMENT
+                  </p>
 
-                                const oldValue =
-                                  r[h] || "";
+                  <h2>Cases</h2>
 
-                                if (
-                                  newValue !== oldValue
-                                ) {
-                                  save(
-                                    Number(r.__row),
-                                    h,
-                                    newValue
-                                  );
-                                }
-                              }}
-                            />
-                          ) : (
-                            <span>
-                              {r[h] || "—"}
-                            </span>
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                  <p>
+                    {filteredCases.length} cases
+                  </p>
+                </div>
 
-        <p
-          className="muted"
-          style={{
-            marginTop: 14,
-          }}
-        >
-          Usuario: {user.email} · Rol: {user.role}
-        </p>
+                <div className="caseFilters">
+                  <div className="searchBox">
+                    <span>⌕</span>
+
+                    <input
+                      value={search}
+                      onChange={(e) =>
+                        setSearch(e.target.value)
+                      }
+                      placeholder="Search client, ID or receipt..."
+                    />
+                  </div>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) =>
+                      setStatusFilter(
+                        e.target.value
+                      )
+                    }
+                  >
+                    <option value="">
+                      All statuses
+                    </option>
+                    <option value="WORKING">
+                      Working
+                    </option>
+                    <option value="MGM REVIEW">
+                      MGM Review
+                    </option>
+                    <option value="SENT TO USCIS">
+                      Sent to USCIS
+                    </option>
+                    <option value="SPECIAL CASE">
+                      Special Case
+                    </option>
+                    <option value="CANCELLED/CLOSED">
+                      Cancelled / Closed
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="casesTable">
+                <div className="caseTableHeader">
+                  <span>CLIENT</span>
+                  <span>TYPE</span>
+                  <span>COMMITMENT</span>
+                  <span>STATUS</span>
+                  <span></span>
+                </div>
+
+                {filteredCases.map((row) => (
+                  <button
+                    key={row.__row}
+                    className="caseRow"
+                    onClick={() =>
+                      setSelectedCase(row)
+                    }
+                  >
+                    <div className="clientCell">
+                      <div className="clientAvatar">
+                        {(row["CLIENTE"] || "?")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+
+                      <div>
+                        <strong>
+                          {row["CLIENTE"] ||
+                            "Sin cliente"}
+                        </strong>
+
+                        <span>
+                          ID {row["ID"] || "—"} ·{" "}
+                          {row["RECEIPT NUMBER"] ||
+                            "No receipt"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span>
+                      {row[
+                        "DUE DATE/NO DUE DATE"
+                      ] || "—"}
+                    </span>
+
+                    <span>
+                      {row["COMMITMENT"] || "—"}
+                    </span>
+
+                    <span>
+                      <span
+                        className={statusClass(
+                          row["STATUS"] || ""
+                        )}
+                      >
+                        {row["STATUS"] || "NO STATUS"}
+                      </span>
+                    </span>
+
+                    <span className="openArrow">
+                      ›
+                    </span>
+                  </button>
+                ))}
+
+                {!filteredCases.length && (
+                  <div className="emptyCases">
+                    No cases found.
+                  </div>
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </main>
-    </>
+
+      {/* KPI DRAWER */}
+
+      {selectedKpi && (
+        <div className="drawerOverlay">
+          <div className="drawer">
+            <div className="drawerHeader">
+              <div>
+                <p className="eyebrow">
+                  {sectionLabel(
+                    selectedKpi.section
+                  )}
+                </p>
+
+                <h2>
+                  {selectedKpi.type === "backlog"
+                    ? "Backlog"
+                    : selectedKpi.type ===
+                      "pending"
+                    ? "Pendientes"
+                    : "Próximas entregas"}
+                </h2>
+
+                <p>
+                  {kpiCases.length} cases
+                </p>
+              </div>
+
+              <button
+                className="closeButton"
+                onClick={() =>
+                  setSelectedKpi(null)
+                }
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="drawerCases">
+              {kpiCases.map((row) => (
+                <button
+                  key={row.__row}
+                  className="drawerCase"
+                  onClick={() => {
+                    setSelectedKpi(null);
+                    setSelectedCase(row);
+                  }}
+                >
+                  <div>
+                    <strong>
+                      {row["CLIENTE"] ||
+                        "Sin cliente"}
+                    </strong>
+
+                    <span>
+                      ID {row["ID"] || "—"}
+                    </span>
+                  </div>
+
+                  <span>
+                    {row["STATUS"] || "—"}
+                  </span>
+
+                  <b>›</b>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CASE DETAIL */}
+
+      {selectedCase && (
+        <div className="modalOverlay">
+          <div className="caseModal">
+            <div className="modalHeader">
+              <div>
+                <p className="eyebrow">
+                  CASE DETAILS
+                </p>
+
+                <h2>
+                  {selectedCase["CLIENTE"] ||
+                    "Sin cliente"}
+                </h2>
+
+                <div className="caseMeta">
+                  <span>
+                    ID{" "}
+                    {selectedCase["ID"] || "—"}
+                  </span>
+
+                  <span>
+                    {selectedCase[
+                      "DUE DATE/NO DUE DATE"
+                    ] || "—"}
+                  </span>
+
+                  <span
+                    className={statusClass(
+                      selectedCase["STATUS"] || ""
+                    )}
+                  >
+                    {selectedCase["STATUS"] ||
+                      "NO STATUS"}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                className="closeButton"
+                onClick={() =>
+                  setSelectedCase(null)
+                }
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modalBody">
+              {/* GENERAL */}
+
+              <section className="detailSection">
+                <div className="detailSectionHeader">
+                  <div className="stageIcon">
+                    01
+                  </div>
+
+                  <div>
+                    <h3>General</h3>
+                    <p>
+                      Main case information
+                    </p>
+                  </div>
+                </div>
+
+                <div className="fieldGrid">
+                  <Field
+                    label="Receipt Number"
+                    header="RECEIPT NUMBER"
+                    readOnly
+                  />
+
+                  <Field
+                    label="Receipt Date"
+                    header="RECEIPT DATE"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Deadline"
+                    header="DEADLINE"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Commitment"
+                    header="COMMITMENT"
+                    type="date"
+                  />
+
+                  <Field
+                    label="General Status"
+                    header="STATUS"
+                  />
+                </div>
+
+                <Field
+                  label="Nota"
+                  header="NOTA"
+                  type="textarea"
+                />
+              </section>
+
+              {/* PSYCH */}
+
+              <section className="detailSection">
+                <div className="detailSectionHeader">
+                  <div className="stageIcon">
+                    02
+                  </div>
+
+                  <div>
+                    <h3>Psych</h3>
+                    <p>
+                      Psychological documentation
+                    </p>
+                  </div>
+                </div>
+
+                <div className="fieldGrid">
+                  <Field
+                    label="Psych"
+                    header="PSYCH"
+                    readOnly
+                  />
+
+                  <Field
+                    label="DOE Status"
+                    header="DOE STATUS"
+                  />
+
+                  <Field
+                    label="Expected Done"
+                    header="EXPECTED DONE (doe)"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Done"
+                    header="DONE (doe)"
+                    type="date"
+                  />
+                </div>
+              </section>
+
+              {/* PARALEGAL */}
+
+              <section className="detailSection">
+                <div className="detailSectionHeader">
+                  <div className="stageIcon">
+                    03
+                  </div>
+
+                  <div>
+                    <h3>Paralegal</h3>
+                    <p>
+                      Carátula and first draft
+                    </p>
+                  </div>
+                </div>
+
+                <div className="subStage">
+                  <h4>Llenado de Carátula</h4>
+
+                  <div className="fieldGrid">
+                    <Field
+                      label="PL Assigned"
+                      header="PL ASSIGNED"
+                      type="date"
+                    />
+
+                    <Field
+                      label="Expected Done"
+                      header="CARÁTULA EXPECTED DONE"
+                      type="date"
+                    />
+
+                    <Field
+                      label="Done"
+                      header="CARATULA DONE"
+                      type="date"
+                    />
+
+                    <Field
+                      label="Link"
+                      header="LINK CARÁTULA"
+                    />
+                  </div>
+                </div>
+
+                <div className="subStage">
+                  <h4>1st Draft</h4>
+
+                  <div className="fieldGrid">
+                    <Field
+                      label="Status"
+                      header="STATUS 1ST DRAFT"
+                    />
+
+                    <Field
+                      label="Expected Done"
+                      header="1ST DRAFT EXP DONE"
+                      type="date"
+                    />
+
+                    <Field
+                      label="Done"
+                      header="1ST DRAFT DONE"
+                      type="date"
+                    />
+
+                    <Field
+                      label="Affidavit"
+                      header="LINK INF AFFIDAVIT"
+                    />
+                  </div>
+                </div>
+
+                <div className="subStage">
+                  <h4>Escalación a CVL</h4>
+
+                  <div className="fieldGrid">
+                    <Field
+                      label="Expected Done"
+                      header="PL CVL EXPECTED DONE"
+                      type="date"
+                    />
+
+                    <Field
+                      label="Done"
+                      header="PL CVL DONE"
+                      type="date"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* EA */}
+
+              <section className="detailSection">
+                <div className="detailSectionHeader">
+                  <div className="stageIcon">
+                    04
+                  </div>
+
+                  <div>
+                    <h3>EA · Analyst</h3>
+                    <p>
+                      Evidence analysis
+                    </p>
+                  </div>
+                </div>
+
+                <div className="fieldGrid">
+                  <Field
+                    label="EA Member"
+                    header="EA MEMBER"
+                    readOnly
+                  />
+
+                  <Field
+                    label="Assigned"
+                    header="EA ASSIGNED"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Status"
+                    header="EA STATUS"
+                  />
+
+                  <Field
+                    label="Expected Done"
+                    header="EA EXPECTED DONE"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Done"
+                    header="EA DONE"
+                    type="date"
+                  />
+
+                  <Field
+                    label="EA P.E."
+                    header="EA P.E."
+                  />
+
+                  <Field
+                    label="P.E. Approved"
+                    header="FECHA P.E. APROBADA"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Stoppers"
+                    header="EA STOPPERS"
+                  />
+                </div>
+              </section>
+
+              {/* CVL */}
+
+              <section className="detailSection">
+                <div className="detailSectionHeader">
+                  <div className="stageIcon">
+                    05
+                  </div>
+
+                  <div>
+                    <h3>CVL</h3>
+                    <p>
+                      CVL workflow
+                    </p>
+                  </div>
+                </div>
+
+                <div className="fieldGrid">
+                  <Field
+                    label="CVL Member"
+                    header="CVL MEMBER"
+                    readOnly
+                  />
+
+                  <Field
+                    label="Status"
+                    header="CVL STATUS"
+                  />
+
+                  <Field
+                    label="Expected Done"
+                    header="CVL EXPECTED DONE"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Done"
+                    header="DONE CVL"
+                    type="date"
+                  />
+
+                  <Field
+                    label="Link CVL"
+                    header="LINK CVL"
+                  />
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
