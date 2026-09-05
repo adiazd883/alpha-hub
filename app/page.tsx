@@ -33,6 +33,9 @@ type ExpandedKpi =
   | "paralegal-backlog"
   | "paralegal-pending"
   | "paralegal-future"
+  | "pl-cvl-backlog"
+  | "pl-cvl-pending"
+  | "pl-cvl-future"
   | "ea-backlog"
   | "ea-pending"
   | "ea-future"
@@ -97,7 +100,7 @@ const parseDateOnly = (value: string): Date | null => {
     return null;
   }
 
-  // Fechas con /
+  // MM/DD/YYYY o DD/MM/YYYY
   const slashMatch = raw.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
   );
@@ -106,16 +109,6 @@ const parseDateOnly = (value: string): Date | null => {
     const first = Number(slashMatch[1]);
     const second = Number(slashMatch[2]);
     const year = Number(slashMatch[3]);
-
-    /*
-      La Sheet normalmente viene como MM/DD/YYYY.
-
-      Ejemplo:
-      08/10/2026 = August 10, 2026.
-
-      Si el primer número es mayor a 12,
-      asumimos DD/MM/YYYY.
-    */
 
     let month = first;
     let day = second;
@@ -297,6 +290,51 @@ const getParalegalKpi = (row: CaseRow): KpiType => {
 };
 
 /* ====================================================
+   PARALEGAL / ESCALACIÓN A CVL
+==================================================== */
+
+const getPlCvlKpi = (row: CaseRow): KpiType => {
+  /*
+    NO HAY STATUS EN ESTA ETAPA.
+
+    La única forma de considerar terminado
+    el trabajo es que PL CVL DONE tenga valor.
+  */
+  const done = row["PL CVL DONE"] || "";
+
+  if (done.trim()) {
+    return "none";
+  }
+
+  /*
+    La fecha que manda para el KPI es:
+    PL CVL EXPECTED DONE
+  */
+  const expectedDate = parseDateOnly(
+    row["PL CVL EXPECTED DONE"] || ""
+  );
+
+  /*
+    Si no existe Expected Done,
+    no podemos clasificar el caso.
+  */
+  if (!expectedDate) {
+    return "none";
+  }
+
+  /*
+    IMPORTANTE:
+
+    PARALEGAL puede estar vacío.
+
+    El caso sigue contando porque esta etapa
+    NO depende de que haya tenido 1st Draft.
+  */
+
+  return classifyDate(expectedDate);
+};
+
+/* ====================================================
    EA / ANALYST
 ==================================================== */
 
@@ -314,32 +352,16 @@ const isExcludedEaStatus = (status: string) => {
 const getEaKpi = (row: CaseRow): KpiType => {
   const status = row["EA STATUS"] || "";
 
-  /*
-    NA / N/A / SPECIAL CASE / WAITING GMC
-    NO cuentan.
-  */
   if (isExcludedEaStatus(status)) {
     return "none";
   }
 
-  /*
-    EA DONE es lo que determina si
-    realmente terminó.
-
-    Aunque EA STATUS sea DONE,
-    si EA DONE está vacío,
-    EL CASO SIGUE CONTANDO.
-  */
   const done = row["EA DONE"] || "";
 
   if (done.trim()) {
     return "none";
   }
 
-  /*
-    EA EXPECTED DONE determina
-    Backlog / Pendiente / Futuro.
-  */
   const expectedDate = parseDateOnly(
     row["EA EXPECTED DONE"] || ""
   );
@@ -348,15 +370,6 @@ const getEaKpi = (row: CaseRow): KpiType => {
     return "none";
   }
 
-  /*
-    Ejemplo:
-
-    STATUS = WORKING
-    EXPECTED DONE = fecha de semanas atrás
-    DONE = vacío
-
-    => BACKLOG
-  */
   return classifyDate(expectedDate);
 };
 
@@ -554,7 +567,7 @@ export default function Home() {
   }, [data.rows]);
 
   /* ====================================================
-     PARALEGAL STATS
+     PARALEGAL / 1ST DRAFT STATS
   ==================================================== */
 
   const paralegalStats = useMemo(() => {
@@ -564,6 +577,26 @@ export default function Home() {
 
     data.rows.forEach((row) => {
       const kpi = getParalegalKpi(row);
+
+      if (kpi === "backlog") backlog++;
+      if (kpi === "pending") pending++;
+      if (kpi === "future") future++;
+    });
+
+    return { backlog, pending, future };
+  }, [data.rows]);
+
+  /* ====================================================
+     PARALEGAL / CVL STATS
+  ==================================================== */
+
+  const plCvlStats = useMemo(() => {
+    let backlog = 0;
+    let pending = 0;
+    let future = 0;
+
+    data.rows.forEach((row) => {
+      const kpi = getPlCvlKpi(row);
 
       if (kpi === "backlog") backlog++;
       if (kpi === "pending") pending++;
@@ -676,7 +709,7 @@ export default function Home() {
   }, [data.rows, psychDetailType]);
 
   /* ====================================================
-     DETALLE PARALEGAL
+     DETALLE PARALEGAL / 1ST DRAFT
   ==================================================== */
 
   const paralegalDetailType: KpiType | null =
@@ -724,6 +757,52 @@ export default function Home() {
   }, [data.rows, paralegalDetailType]);
 
   /* ====================================================
+     DETALLE PARALEGAL / ESCALACIÓN A CVL
+  ==================================================== */
+
+  const plCvlDetailType: KpiType | null =
+    expandedKpi === "pl-cvl-backlog"
+      ? "backlog"
+      : expandedKpi === "pl-cvl-pending"
+      ? "pending"
+      : expandedKpi === "pl-cvl-future"
+      ? "future"
+      : null;
+
+  const plCvlCases = useMemo(() => {
+    if (!plCvlDetailType) return [];
+
+    return data.rows
+      .filter(
+        (row) =>
+          getPlCvlKpi(row) === plCvlDetailType
+      )
+      .map((row) => ({
+        row: row.__row,
+        client:
+          row["CLIENTE"] || "Sin cliente",
+        id:
+          row["ID"] || "",
+        paralegal:
+          row["PARALEGAL"] || "",
+        expected:
+          row["PL CVL EXPECTED DONE"] || "",
+        done:
+          row["PL CVL DONE"] || "",
+      }))
+      .sort((a, b) => {
+        const dateA = parseDateOnly(a.expected);
+        const dateB = parseDateOnly(b.expected);
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+
+        return dateA.getTime() - dateB.getTime();
+      });
+  }, [data.rows, plCvlDetailType]);
+
+  /* ====================================================
      DETALLE EA
   ==================================================== */
 
@@ -753,7 +832,6 @@ export default function Home() {
         member:
           row["EA MEMBER"] || "",
 
-        // Fecha en que fue asignado al analista
         assigned:
           row["EA ASSIGNED"] || "",
 
@@ -894,7 +972,9 @@ export default function Home() {
           userSelect: "none",
         }}
       >
-        <div className="muted">{section}</div>
+        <div className="muted">
+          {section}
+        </div>
 
         <div
           style={{
@@ -1268,7 +1348,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= PARALEGAL ================= */}
+        {/* ================= PARALEGAL / 1ST DRAFT ================= */}
 
         <div
           style={{
@@ -1396,6 +1476,139 @@ export default function Home() {
                         ) : (
                           "—"
                         )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ================= PARALEGAL / ESCALACIÓN CVL ================= */}
+
+        <div
+          style={{
+            marginTop: 28,
+            marginBottom: 10,
+            fontWeight: 800,
+            fontSize: 18,
+          }}
+        >
+          Paralegal · Escalación a CVL
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(3, minmax(0, 1fr))",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          <KpiCard
+            section="ESCALACIÓN CVL"
+            title="Backlog"
+            value={plCvlStats.backlog}
+            description="PL CVL Expected Done anterior"
+            expandedName="pl-cvl-backlog"
+          />
+
+          <KpiCard
+            section="ESCALACIÓN CVL"
+            title="Pendientes"
+            value={plCvlStats.pending}
+            description="PL CVL Expected Done de esta semana"
+            expandedName="pl-cvl-pending"
+          />
+
+          <KpiCard
+            section="ESCALACIÓN CVL"
+            title="Próximas entregas"
+            value={plCvlStats.future}
+            description="PL CVL Expected Done futuro"
+            expandedName="pl-cvl-future"
+          />
+        </div>
+
+        {plCvlDetailType && (
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 14,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
+                  {plCvlDetailType === "backlog"
+                    ? "Backlog · Escalación a CVL"
+                    : plCvlDetailType === "pending"
+                    ? "Pendientes · Escalación a CVL"
+                    : "Próximas entregas · Escalación a CVL"}
+                </div>
+
+                <div className="muted">
+                  {plCvlCases.length} caso
+                  {plCvlCases.length === 1 ? "" : "s"}
+                </div>
+              </div>
+
+              <button
+                className="btn btnGhost"
+                onClick={() => setExpandedKpi(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="tableWrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>ID</th>
+                    <th>Paralegal</th>
+                    <th>PL CVL Expected Done</th>
+                    <th>PL CVL Done</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {plCvlCases.map((item) => (
+                    <tr key={item.row}>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
+
+                      <td>
+                        {item.id || "—"}
+                      </td>
+
+                      <td>
+                        {item.paralegal || "—"}
+                      </td>
+
+                      <td>
+                        {item.expected || "—"}
+                      </td>
+
+                      <td>
+                        {item.done || "—"}
                       </td>
                     </tr>
                   ))}
