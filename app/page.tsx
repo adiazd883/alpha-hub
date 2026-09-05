@@ -30,6 +30,9 @@ type ExpandedKpi =
   | "psych-backlog"
   | "psych-pending"
   | "psych-future"
+  | "caratula-backlog"
+  | "caratula-pending"
+  | "caratula-future"
   | "paralegal-backlog"
   | "paralegal-pending"
   | "paralegal-future"
@@ -162,7 +165,9 @@ const startOfWeek = (date: Date) => {
 
 const addDays = (date: Date, days: number) => {
   const result = new Date(date);
+
   result.setDate(result.getDate() + days);
+
   return result;
 };
 
@@ -253,6 +258,28 @@ const getPsychKpi = (row: CaseRow): KpiType => {
   );
 
   if (!expectedDate) return "none";
+
+  return classifyDate(expectedDate);
+};
+
+/* ====================================================
+   PARALEGAL / LLENADO DE CARÁTULA
+==================================================== */
+
+const getCaratulaKpi = (row: CaseRow): KpiType => {
+  const done = row["CARATULA DONE"] || "";
+
+  if (done.trim()) {
+    return "none";
+  }
+
+  const expectedDate = parseDateOnly(
+    row["CARÁTULA EXPECTED DONE"] || ""
+  );
+
+  if (!expectedDate) {
+    return "none";
+  }
 
   return classifyDate(expectedDate);
 };
@@ -483,6 +510,10 @@ export default function Home() {
     window.location.href = "/api/auth/logout";
   }
 
+  /* ====================================================
+     PERMISOS
+  ==================================================== */
+
   const canEdit = (header: string) => {
     if (!user?.role) return false;
 
@@ -513,6 +544,10 @@ export default function Home() {
     return false;
   };
 
+  /* ====================================================
+     BUSCADOR
+  ==================================================== */
+
   const rows = useMemo(() => {
     const search = q.toLowerCase();
 
@@ -528,7 +563,7 @@ export default function Home() {
   }, [data.rows, q]);
 
   /* ====================================================
-     STATS
+     STATS MGM
   ==================================================== */
 
   const mgmStats = useMemo(() => {
@@ -547,6 +582,10 @@ export default function Home() {
     return { backlog, pending, future };
   }, [data.rows]);
 
+  /* ====================================================
+     STATS PSYCH
+  ==================================================== */
+
   const psychStats = useMemo(() => {
     let backlog = 0;
     let pending = 0;
@@ -562,6 +601,30 @@ export default function Home() {
 
     return { backlog, pending, future };
   }, [data.rows]);
+
+  /* ====================================================
+     STATS CARÁTULA
+  ==================================================== */
+
+  const caratulaStats = useMemo(() => {
+    let backlog = 0;
+    let pending = 0;
+    let future = 0;
+
+    data.rows.forEach((row) => {
+      const kpi = getCaratulaKpi(row);
+
+      if (kpi === "backlog") backlog++;
+      if (kpi === "pending") pending++;
+      if (kpi === "future") future++;
+    });
+
+    return { backlog, pending, future };
+  }, [data.rows]);
+
+  /* ====================================================
+     STATS 1ST DRAFT
+  ==================================================== */
 
   const paralegalStats = useMemo(() => {
     let backlog = 0;
@@ -579,6 +642,10 @@ export default function Home() {
     return { backlog, pending, future };
   }, [data.rows]);
 
+  /* ====================================================
+     STATS PL CVL
+  ==================================================== */
+
   const plCvlStats = useMemo(() => {
     let backlog = 0;
     let pending = 0;
@@ -595,6 +662,10 @@ export default function Home() {
     return { backlog, pending, future };
   }, [data.rows]);
 
+  /* ====================================================
+     STATS EA
+  ==================================================== */
+
   const eaStats = useMemo(() => {
     let backlog = 0;
     let pending = 0;
@@ -610,6 +681,10 @@ export default function Home() {
 
     return { backlog, pending, future };
   }, [data.rows]);
+
+  /* ====================================================
+     STATS CVL
+  ==================================================== */
 
   const cvlStats = useMemo(() => {
     let backlog = 0;
@@ -644,15 +719,22 @@ export default function Home() {
     if (!mgmDetailType) return [];
 
     return data.rows
-      .filter((row) => getMgmKpi(row) === mgmDetailType)
+      .filter(
+        (row) =>
+          getMgmKpi(row) === mgmDetailType
+      )
       .map((row) => ({
         row: row.__row,
-        client: row["CLIENTE"] || "Sin cliente",
-        id: row["ID"] || "",
+        client:
+          row["CLIENTE"] || "Sin cliente",
+        id:
+          row["ID"] || "",
         caseType:
           row["DUE DATE/NO DUE DATE"] || "",
-        commitment: row["COMMITMENT"] || "",
-        status: row["STATUS"] || "",
+        commitment:
+          row["COMMITMENT"] || "",
+        status:
+          row["STATUS"] || "",
       }))
       .sort((a, b) => {
         const dateA = parseDateOnly(a.commitment);
@@ -684,18 +766,25 @@ export default function Home() {
 
     return data.rows
       .filter(
-        (row) => getPsychKpi(row) === psychDetailType
+        (row) =>
+          getPsychKpi(row) === psychDetailType
       )
       .map((row) => ({
         row: row.__row,
-        client: row["CLIENTE"] || "Sin cliente",
-        id: row["ID"] || "",
-        psych: row["PSYCH"] || "",
-        status: row["DOE STATUS"] || "",
+        client:
+          row["CLIENTE"] || "Sin cliente",
+        id:
+          row["ID"] || "",
+        psych:
+          row["PSYCH"] || "",
+        status:
+          row["DOE STATUS"] || "",
         expected:
           row["EXPECTED DONE (doe)"] || "",
-        done: row["DONE (doe)"] || "",
-        classValue: row["CLASS"] || "",
+        done:
+          row["DONE (doe)"] || "",
+        classValue:
+          row["CLASS"] || "",
       }))
       .sort((a, b) => {
         const dateA = parseDateOnly(a.expected);
@@ -710,7 +799,65 @@ export default function Home() {
   }, [data.rows, psychDetailType]);
 
   /* ====================================================
-     DETALLE PARALEGAL / 1ST DRAFT
+     DETALLE CARÁTULA
+  ==================================================== */
+
+  const caratulaDetailType: KpiType | null =
+    expandedKpi === "caratula-backlog"
+      ? "backlog"
+      : expandedKpi === "caratula-pending"
+      ? "pending"
+      : expandedKpi === "caratula-future"
+      ? "future"
+      : null;
+
+  const caratulaCases = useMemo(() => {
+    if (!caratulaDetailType) return [];
+
+    return data.rows
+      .filter(
+        (row) =>
+          getCaratulaKpi(row) ===
+          caratulaDetailType
+      )
+      .map((row) => ({
+        row: row.__row,
+
+        client:
+          row["CLIENTE"] || "Sin cliente",
+
+        id:
+          row["ID"] || "",
+
+        assigned:
+          row["PL ASSIGNED"] || "",
+
+        paralegal:
+          row["PARALEGAL"] || "",
+
+        expected:
+          row["CARÁTULA EXPECTED DONE"] || "",
+
+        done:
+          row["CARATULA DONE"] || "",
+
+        link:
+          row["LINK CARÁTULA"] || "",
+      }))
+      .sort((a, b) => {
+        const dateA = parseDateOnly(a.expected);
+        const dateB = parseDateOnly(b.expected);
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+
+        return dateA.getTime() - dateB.getTime();
+      });
+  }, [data.rows, caratulaDetailType]);
+
+  /* ====================================================
+     DETALLE 1ST DRAFT
   ==================================================== */
 
   const paralegalDetailType: KpiType | null =
@@ -733,15 +880,25 @@ export default function Home() {
       )
       .map((row) => ({
         row: row.__row,
-        client: row["CLIENTE"] || "Sin cliente",
-        id: row["ID"] || "",
-        paralegal: row["PARALEGAL"] || "",
+
+        client:
+          row["CLIENTE"] || "Sin cliente",
+
+        id:
+          row["ID"] || "",
+
+        paralegal:
+          row["PARALEGAL"] || "",
+
         status:
           row["STATUS 1ST DRAFT"] || "",
+
         expected:
           row["1ST DRAFT EXP DONE"] || "",
+
         done:
           row["1ST DRAFT DONE"] || "",
+
         link:
           row["LINK INF AFFIDAVIT"] || "",
       }))
@@ -758,7 +915,7 @@ export default function Home() {
   }, [data.rows, paralegalDetailType]);
 
   /* ====================================================
-     DETALLE PARALEGAL / ESCALACIÓN A CVL
+     DETALLE PL CVL
   ==================================================== */
 
   const plCvlDetailType: KpiType | null =
@@ -776,18 +933,24 @@ export default function Home() {
     return data.rows
       .filter(
         (row) =>
-          getPlCvlKpi(row) === plCvlDetailType
+          getPlCvlKpi(row) ===
+          plCvlDetailType
       )
       .map((row) => ({
         row: row.__row,
+
         client:
           row["CLIENTE"] || "Sin cliente",
+
         id:
           row["ID"] || "",
+
         paralegal:
           row["PARALEGAL"] || "",
+
         expected:
           row["PL CVL EXPECTED DONE"] || "",
+
         done:
           row["PL CVL DONE"] || "",
       }))
@@ -820,35 +983,52 @@ export default function Home() {
     if (!eaDetailType) return [];
 
     return data.rows
-      .filter((row) => getEaKpi(row) === eaDetailType)
+      .filter(
+        (row) =>
+          getEaKpi(row) === eaDetailType
+      )
       .map((row) => ({
         row: row.__row,
+
         client:
           row["CLIENTE"] || "Sin cliente",
+
         id:
           row["ID"] || "",
+
         member:
           row["EA MEMBER"] || "",
+
         assigned:
           row["EA ASSIGNED"] || "",
+
         status:
           row["EA STATUS"] || "",
+
         expected:
           row["EA EXPECTED DONE"] || "",
+
         done:
           row["EA DONE"] || "",
+
         pe:
           row["EA P.E."] || "",
+
         peApproved:
           row["FECHA P.E. APROBADA"] || "",
+
         stoppers:
           row["EA STOPPERS"] || "",
+
         hojas:
           row["EA HOJAS"] || "",
+
         ws:
           row["EA WS"] || "",
+
         caratula:
           row["EA ACTUALIZACIÓN CARATULA"] || "",
+
         link:
           row["EA LINK DRIVE"] || "",
       }))
@@ -887,18 +1067,25 @@ export default function Home() {
       )
       .map((row) => ({
         row: row.__row,
+
         client:
           row["CLIENTE"] || "Sin cliente",
+
         id:
           row["ID"] || "",
+
         member:
           row["CVL MEMBER"] || "",
+
         expected:
           row["CVL EXPECTED DONE"] || "",
+
         status:
           row["CVL STATUS"] || "",
+
         done:
           row["DONE CVL"] || "",
+
         link:
           row["LINK CVL"] || "",
       }))
@@ -1039,6 +1226,10 @@ export default function Home() {
     );
   }
 
+  /* ====================================================
+     LOADING
+  ==================================================== */
+
   if (loadingUser) {
     return (
       <main className="shell">
@@ -1050,6 +1241,10 @@ export default function Home() {
       </main>
     );
   }
+
+  /* ====================================================
+     LOGIN
+  ==================================================== */
 
   if (!user?.authenticated) {
     return (
@@ -1094,6 +1289,10 @@ export default function Home() {
       </>
     );
   }
+
+  /* ====================================================
+     HUB
+  ==================================================== */
 
   return (
     <>
@@ -1175,7 +1374,13 @@ export default function Home() {
         </div>
 
         {mgmDetailType && (
-          <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1185,7 +1390,12 @@ export default function Home() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {mgmDetailType === "backlog"
                     ? "Backlog MGM"
                     : mgmDetailType === "pending"
@@ -1222,7 +1432,9 @@ export default function Home() {
                 <tbody>
                   {mgmCases.map((item) => (
                     <tr key={item.row}>
-                      <td><strong>{item.client}</strong></td>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
                       <td>{item.id || "—"}</td>
                       <td>{item.caseType || "—"}</td>
                       <td>{item.commitment || "—"}</td>
@@ -1283,7 +1495,13 @@ export default function Home() {
         </div>
 
         {psychDetailType && (
-          <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1293,7 +1511,12 @@ export default function Home() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {psychDetailType === "backlog"
                     ? "Backlog Psych"
                     : psychDetailType === "pending"
@@ -1332,7 +1555,9 @@ export default function Home() {
                 <tbody>
                   {psychCases.map((item) => (
                     <tr key={item.row}>
-                      <td><strong>{item.client}</strong></td>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
                       <td>{item.id || "—"}</td>
                       <td>{item.psych || "—"}</td>
                       <td>{item.status || "—"}</td>
@@ -1347,7 +1572,160 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= PARALEGAL / 1ST DRAFT ================= */}
+        {/* ================= LLENADO CARÁTULA ================= */}
+
+        <div
+          style={{
+            marginTop: 28,
+            marginBottom: 10,
+            fontWeight: 800,
+            fontSize: 18,
+          }}
+        >
+          Paralegal · Llenado de Carátula
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(3, minmax(0, 1fr))",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          <KpiCard
+            section="LLENADO DE CARÁTULA"
+            title="Backlog"
+            value={caratulaStats.backlog}
+            description="Carátula Expected Done anterior"
+            expandedName="caratula-backlog"
+          />
+
+          <KpiCard
+            section="LLENADO DE CARÁTULA"
+            title="Pendientes"
+            value={caratulaStats.pending}
+            description="Carátula Expected Done de esta semana"
+            expandedName="caratula-pending"
+          />
+
+          <KpiCard
+            section="LLENADO DE CARÁTULA"
+            title="Próximas entregas"
+            value={caratulaStats.future}
+            description="Carátula Expected Done futuro"
+            expandedName="caratula-future"
+          />
+        </div>
+
+        {caratulaDetailType && (
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 14,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
+                  {caratulaDetailType === "backlog"
+                    ? "Backlog · Llenado de Carátula"
+                    : caratulaDetailType === "pending"
+                    ? "Pendientes · Llenado de Carátula"
+                    : "Próximas entregas · Llenado de Carátula"}
+                </div>
+
+                <div className="muted">
+                  {caratulaCases.length} caso
+                  {caratulaCases.length === 1 ? "" : "s"}
+                </div>
+              </div>
+
+              <button
+                className="btn btnGhost"
+                onClick={() => setExpandedKpi(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="tableWrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>ID</th>
+                    <th>PL Assigned</th>
+                    <th>Paralegal</th>
+                    <th>Carátula Expected Done</th>
+                    <th>Carátula Done</th>
+                    <th>Link Carátula</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {caratulaCases.map((item) => (
+                    <tr key={item.row}>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
+
+                      <td>
+                        {item.id || "—"}
+                      </td>
+
+                      <td>
+                        {item.assigned || "—"}
+                      </td>
+
+                      <td>
+                        {item.paralegal || "—"}
+                      </td>
+
+                      <td>
+                        {item.expected || "—"}
+                      </td>
+
+                      <td>
+                        {item.done || "—"}
+                      </td>
+
+                      <td>
+                        {item.link ? (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Abrir carátula
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ================= 1ST DRAFT ================= */}
 
         <div
           style={{
@@ -1395,7 +1773,13 @@ export default function Home() {
         </div>
 
         {paralegalDetailType && (
-          <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1405,7 +1789,12 @@ export default function Home() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {paralegalDetailType === "backlog"
                     ? "Backlog Paralegal · 1st Draft"
                     : paralegalDetailType === "pending"
@@ -1444,15 +1833,37 @@ export default function Home() {
                 <tbody>
                   {paralegalCases.map((item) => (
                     <tr key={item.row}>
-                      <td><strong>{item.client}</strong></td>
-                      <td>{item.id || "—"}</td>
-                      <td>{item.paralegal || "—"}</td>
-                      <td>{item.status || "—"}</td>
-                      <td>{item.expected || "—"}</td>
-                      <td>{item.done || "—"}</td>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
+
+                      <td>
+                        {item.id || "—"}
+                      </td>
+
+                      <td>
+                        {item.paralegal || "—"}
+                      </td>
+
+                      <td>
+                        {item.status || "—"}
+                      </td>
+
+                      <td>
+                        {item.expected || "—"}
+                      </td>
+
+                      <td>
+                        {item.done || "—"}
+                      </td>
+
                       <td>
                         {item.link ? (
-                          <a href={item.link} target="_blank" rel="noreferrer">
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             Abrir link
                           </a>
                         ) : (
@@ -1467,7 +1878,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= PARALEGAL / ESCALACIÓN CVL ================= */}
+        {/* ================= ESCALACIÓN CVL ================= */}
 
         <div
           style={{
@@ -1515,7 +1926,13 @@ export default function Home() {
         </div>
 
         {plCvlDetailType && (
-          <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1525,7 +1942,12 @@ export default function Home() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {plCvlDetailType === "backlog"
                     ? "Backlog · Escalación a CVL"
                     : plCvlDetailType === "pending"
@@ -1562,7 +1984,9 @@ export default function Home() {
                 <tbody>
                   {plCvlCases.map((item) => (
                     <tr key={item.row}>
-                      <td><strong>{item.client}</strong></td>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
                       <td>{item.id || "—"}</td>
                       <td>{item.paralegal || "—"}</td>
                       <td>{item.expected || "—"}</td>
@@ -1575,7 +1999,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= EA / ANALYST ================= */}
+        {/* ================= EA ================= */}
 
         <div
           style={{
@@ -1623,7 +2047,13 @@ export default function Home() {
         </div>
 
         {eaDetailType && (
-          <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1633,7 +2063,12 @@ export default function Home() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {eaDetailType === "backlog"
                     ? "Backlog EA · Analyst"
                     : eaDetailType === "pending"
@@ -1679,7 +2114,9 @@ export default function Home() {
                 <tbody>
                   {eaCases.map((item) => (
                     <tr key={item.row}>
-                      <td><strong>{item.client}</strong></td>
+                      <td>
+                        <strong>{item.client}</strong>
+                      </td>
                       <td>{item.id || "—"}</td>
                       <td>{item.member || "—"}</td>
                       <td>{item.assigned || "—"}</td>
@@ -1694,7 +2131,11 @@ export default function Home() {
                       <td>{item.caratula || "—"}</td>
                       <td>
                         {item.link ? (
-                          <a href={item.link} target="_blank" rel="noreferrer">
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             Abrir Drive
                           </a>
                         ) : (
@@ -1757,7 +2198,13 @@ export default function Home() {
         </div>
 
         {cvlDetailType && (
-          <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+          <div
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1767,7 +2214,12 @@ export default function Home() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {cvlDetailType === "backlog"
                     ? "Backlog CVL"
                     : cvlDetailType === "pending"
@@ -1809,17 +2261,11 @@ export default function Home() {
                       <td>
                         <strong>{item.client}</strong>
                       </td>
-
                       <td>{item.id || "—"}</td>
-
                       <td>{item.member || "—"}</td>
-
                       <td>{item.expected || "—"}</td>
-
                       <td>{item.status || "—"}</td>
-
                       <td>{item.done || "—"}</td>
-
                       <td>
                         {item.link ? (
                           <a
