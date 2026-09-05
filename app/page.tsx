@@ -27,10 +27,7 @@ type User = {
 
 type MainView = "dashboard" | "cases" | "team";
 
-type TeamGroup =
-  | "paralegal"
-  | "psych"
-  | "ea";
+type TeamGroup = "paralegal" | "psych" | "ea";
 
 type TeamCalendar =
   | "caratula"
@@ -59,6 +56,10 @@ type KpiSelection = {
   section: KpiSection;
   type: Exclude<KpiType, "none">;
 } | null;
+
+type OpenCaseSource =
+  | "cases"
+  | "calendar";
 
 /* =========================================================
    LABELS
@@ -106,9 +107,7 @@ const weekDays = [
 const norm = (value: string) =>
   value.trim().toUpperCase().replace(/\s+/g, " ");
 
-const parseDateOnly = (
-  value: string
-): Date | null => {
+const parseDateOnly = (value: string): Date | null => {
   const raw = value?.trim();
 
   if (!raw) return null;
@@ -122,11 +121,7 @@ const parseDateOnly = (
     const month = Number(iso[2]);
     const day = Number(iso[3]);
 
-    const date = new Date(
-      year,
-      month - 1,
-      day
-    );
+    const date = new Date(year, month - 1, day);
 
     if (
       date.getFullYear() === year &&
@@ -156,11 +151,7 @@ const parseDateOnly = (
       month = second;
     }
 
-    const date = new Date(
-      year,
-      month - 1,
-      day
-    );
+    const date = new Date(year, month - 1, day);
 
     if (
       date.getFullYear() === year &&
@@ -211,60 +202,41 @@ const startOfWeek = (date: Date) => {
   );
 
   const day = result.getDay();
-  const diff =
-    day === 0 ? -6 : 1 - day;
+  const diff = day === 0 ? -6 : 1 - day;
 
-  result.setDate(
-    result.getDate() + diff
-  );
+  result.setDate(result.getDate() + diff);
 
   return result;
 };
 
-const addDays = (
-  date: Date,
-  days: number
-) => {
+const addDays = (date: Date, days: number) => {
   const result = new Date(date);
 
-  result.setDate(
-    result.getDate() + days
-  );
+  result.setDate(result.getDate() + days);
 
   return result;
 };
 
-const sameDay = (
-  a: Date,
-  b: Date
-) =>
+const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
-const classifyDate = (
-  date: Date
-): KpiType => {
-  const currentWeekStart =
-    startOfWeek(new Date());
+const classifyDate = (date: Date): KpiType => {
+  const currentWeekStart = startOfWeek(new Date());
 
   const nextWeekStart = addDays(
     currentWeekStart,
     7
   );
 
-  if (
-    date.getTime() <
-    currentWeekStart.getTime()
-  ) {
+  if (date.getTime() < currentWeekStart.getTime()) {
     return "backlog";
   }
 
   if (
-    date.getTime() >=
-      currentWeekStart.getTime() &&
-    date.getTime() <
-      nextWeekStart.getTime()
+    date.getTime() >= currentWeekStart.getTime() &&
+    date.getTime() < nextWeekStart.getTime()
   ) {
     return "pending";
   }
@@ -276,26 +248,18 @@ const classifyDate = (
    KPI LOGIC
 ========================================================= */
 
-const getMgmKpi = (
-  row: CaseRow
-): KpiType => {
+const getMgmKpi = (row: CaseRow): KpiType => {
   const type = norm(
     row["DUE DATE/NO DUE DATE"] || ""
   );
 
   if (
-    ![
-      "DUE DATE",
-      "NO DUE DATE",
-      "NOID",
-    ].includes(type)
+    !["DUE DATE", "NO DUE DATE", "NOID"].includes(type)
   ) {
     return "none";
   }
 
-  const status = norm(
-    row["STATUS"] || ""
-  );
+  const status = norm(row["STATUS"] || "");
 
   if (
     [
@@ -317,9 +281,7 @@ const getMgmKpi = (
   return classifyDate(date);
 };
 
-const getPsychKpi = (
-  row: CaseRow
-): KpiType => {
+const getPsychKpi = (row: CaseRow): KpiType => {
   const status = norm(
     row["DOE STATUS"] || ""
   );
@@ -339,9 +301,7 @@ const getPsychKpi = (
     return "none";
   }
 
-  if (
-    (row["DONE (doe)"] || "").trim()
-  ) {
+  if ((row["DONE (doe)"] || "").trim()) {
     return "none";
   }
 
@@ -354,12 +314,8 @@ const getPsychKpi = (
   return classifyDate(date);
 };
 
-const getCaratulaKpi = (
-  row: CaseRow
-): KpiType => {
-  if (
-    (row["CARATULA DONE"] || "").trim()
-  ) {
+const getCaratulaKpi = (row: CaseRow): KpiType => {
+  if ((row["CARATULA DONE"] || "").trim()) {
     return "none";
   }
 
@@ -372,9 +328,7 @@ const getCaratulaKpi = (
   return classifyDate(date);
 };
 
-const getDraftKpi = (
-  row: CaseRow
-): KpiType => {
+const getDraftKpi = (row: CaseRow): KpiType => {
   const status = norm(
     row["STATUS 1ST DRAFT"] || ""
   );
@@ -393,9 +347,7 @@ const getDraftKpi = (
     return "none";
   }
 
-  if (
-    (row["1ST DRAFT DONE"] || "").trim()
-  ) {
+  if ((row["1ST DRAFT DONE"] || "").trim()) {
     return "none";
   }
 
@@ -408,12 +360,8 @@ const getDraftKpi = (
   return classifyDate(date);
 };
 
-const getPlCvlKpi = (
-  row: CaseRow
-): KpiType => {
-  if (
-    (row["PL CVL DONE"] || "").trim()
-  ) {
+const getPlCvlKpi = (row: CaseRow): KpiType => {
+  if ((row["PL CVL DONE"] || "").trim()) {
     return "none";
   }
 
@@ -426,9 +374,7 @@ const getPlCvlKpi = (
   return classifyDate(date);
 };
 
-const getEaKpi = (
-  row: CaseRow
-): KpiType => {
+const getEaKpi = (row: CaseRow): KpiType => {
   const status = norm(
     row["EA STATUS"] || ""
   );
@@ -444,9 +390,7 @@ const getEaKpi = (
     return "none";
   }
 
-  if (
-    (row["EA DONE"] || "").trim()
-  ) {
+  if ((row["EA DONE"] || "").trim()) {
     return "none";
   }
 
@@ -459,27 +403,20 @@ const getEaKpi = (
   return classifyDate(date);
 };
 
-const getCvlKpi = (
-  row: CaseRow
-): KpiType => {
+const getCvlKpi = (row: CaseRow): KpiType => {
   const status = norm(
     row["CVL STATUS"] || ""
   );
 
   if (
-    [
-      "NA",
-      "N/A",
-      "CANCELLED",
-      "CANCELED",
-    ].includes(status)
+    ["NA", "N/A", "CANCELLED", "CANCELED"].includes(
+      status
+    )
   ) {
     return "none";
   }
 
-  if (
-    (row["DONE CVL"] || "").trim()
-  ) {
+  if ((row["DONE CVL"] || "").trim()) {
     return "none";
   }
 
@@ -492,38 +429,19 @@ const getCvlKpi = (
   return classifyDate(date);
 };
 
-const getKpiGetter = (
-  section: KpiSection
-) => {
-  if (section === "mgm") {
-    return getMgmKpi;
-  }
-
-  if (section === "psych") {
-    return getPsychKpi;
-  }
-
-  if (section === "caratula") {
-    return getCaratulaKpi;
-  }
-
-  if (section === "draft") {
-    return getDraftKpi;
-  }
-
-  if (section === "plcvl") {
-    return getPlCvlKpi;
-  }
-
-  if (section === "ea") {
-    return getEaKpi;
-  }
+const getKpiGetter = (section: KpiSection) => {
+  if (section === "mgm") return getMgmKpi;
+  if (section === "psych") return getPsychKpi;
+  if (section === "caratula") return getCaratulaKpi;
+  if (section === "draft") return getDraftKpi;
+  if (section === "plcvl") return getPlCvlKpi;
+  if (section === "ea") return getEaKpi;
 
   return getCvlKpi;
 };
 
 /* =========================================================
-   TEAM CALENDAR CONFIG
+   CALENDAR CONFIG
 ========================================================= */
 
 const calendarDateHeader = (
@@ -602,7 +520,7 @@ const calendarActive = (
 };
 
 /* =========================================================
-   MAIN COMPONENT
+   MAIN
 ========================================================= */
 
 export default function Home() {
@@ -634,49 +552,39 @@ export default function Home() {
   const [teamGroup, setTeamGroup] =
     useState<TeamGroup>("paralegal");
 
-  const [
-    teamCalendar,
-    setTeamCalendar,
-  ] =
+  const [teamCalendar, setTeamCalendar] =
     useState<TeamCalendar>("caratula");
 
-  const [
-    calendarMonth,
-    setCalendarMonth,
-  ] = useState(() => {
-    const now = new Date();
+  const [calendarMonth, setCalendarMonth] =
+    useState(() => {
+      const now = new Date();
 
-    return new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      1
-    );
-  });
+      return new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      );
+    });
 
   const [search, setSearch] =
     useState("");
 
-  const [
-    statusFilter,
-    setStatusFilter,
-  ] = useState("");
+  const [statusFilter, setStatusFilter] =
+    useState("");
 
-  const [
-    selectedCase,
-    setSelectedCase,
-  ] =
+  const [selectedCase, setSelectedCase] =
     useState<CaseRow | null>(null);
 
-  const [
-    selectedKpi,
-    setSelectedKpi,
-  ] =
+  const [openCaseSource, setOpenCaseSource] =
+    useState<OpenCaseSource>("cases");
+
+  const [selectedStage, setSelectedStage] =
+    useState<TeamCalendar | null>(null);
+
+  const [selectedKpi, setSelectedKpi] =
     useState<KpiSelection>(null);
 
-  const [
-    savingField,
-    setSavingField,
-  ] =
+  const [savingField, setSavingField] =
     useState<string | null>(null);
 
   const [message, setMessage] =
@@ -684,6 +592,44 @@ export default function Home() {
 
   const [error, setError] =
     useState("");
+
+  /* =====================================================
+     ROLE PERMISSIONS
+  ===================================================== */
+
+  const role = user?.role;
+
+  const canSeeAllTeam =
+    role === "ADMIN" ||
+    role === "TL" ||
+    role === "MANAGER" ||
+    role === "COORDINATOR";
+
+  const canSeeParalegal =
+    canSeeAllTeam ||
+    role === "PARALEGAL";
+
+  const canSeePsych =
+    canSeeAllTeam ||
+    role === "PSYCH";
+
+  const canSeeEa =
+    canSeeAllTeam ||
+    role === "ANALYST";
+
+  const canEditStage =
+    role === "ADMIN" ||
+    role === "TL" ||
+    (role === "PARALEGAL" &&
+      ["caratula", "draft", "plcvl"].includes(
+        selectedStage || ""
+      )) ||
+    (role === "PSYCH" &&
+      selectedStage === "psych") ||
+    (role === "ANALYST" &&
+      ["ea", "cvl"].includes(
+        selectedStage || ""
+      ));
 
   /* =====================================================
      LOAD
@@ -698,10 +644,7 @@ export default function Home() {
         }
       );
 
-      const json =
-        await response.json();
-
-      setUser(json);
+      setUser(await response.json());
     } catch {
       setUser({
         authenticated: false,
@@ -725,8 +668,7 @@ export default function Home() {
         }
       );
 
-      const json =
-        await response.json();
+      const json = await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -738,9 +680,7 @@ export default function Home() {
       setData(json);
     } catch (e) {
       setError(
-        e instanceof Error
-          ? e.message
-          : "Error"
+        e instanceof Error ? e.message : "Error"
       );
     } finally {
       setLoadingCases(false);
@@ -791,13 +731,11 @@ export default function Home() {
         }
       );
 
-      const json =
-        await response.json();
+      const json = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          json.error ||
-            "No se pudo guardar"
+          json.error || "No se pudo guardar"
         );
       }
 
@@ -805,8 +743,7 @@ export default function Home() {
         ...prev,
 
         rows: prev.rows.map((row) =>
-          row.__row ===
-          String(rowNumber)
+          row.__row === String(rowNumber)
             ? {
                 ...row,
                 [header]: value,
@@ -816,8 +753,7 @@ export default function Home() {
       }));
 
       setSelectedCase((prev) =>
-        prev?.__row ===
-        String(rowNumber)
+        prev?.__row === String(rowNumber)
           ? {
               ...prev,
               [header]: value,
@@ -834,13 +770,30 @@ export default function Home() {
       }, 2200);
     } catch (e) {
       setError(
-        e instanceof Error
-          ? e.message
-          : "Error"
+        e instanceof Error ? e.message : "Error"
       );
     } finally {
       setSavingField(null);
     }
+  }
+
+  /* =====================================================
+     OPEN CASE
+  ===================================================== */
+
+  function openGeneralCase(row: CaseRow) {
+    setOpenCaseSource("cases");
+    setSelectedStage(null);
+    setSelectedCase(row);
+  }
+
+  function openCalendarCase(
+    row: CaseRow,
+    stage: TeamCalendar
+  ) {
+    setOpenCaseSource("calendar");
+    setSelectedStage(stage);
+    setSelectedCase(row);
   }
 
   /* =====================================================
@@ -850,8 +803,7 @@ export default function Home() {
   const calculateStats = (
     section: KpiSection
   ) => {
-    const getter =
-      getKpiGetter(section);
+    const getter = getKpiGetter(section);
 
     let backlog = 0;
     let pending = 0;
@@ -860,17 +812,9 @@ export default function Home() {
     data.rows.forEach((row) => {
       const result = getter(row);
 
-      if (result === "backlog") {
-        backlog++;
-      }
-
-      if (result === "pending") {
-        pending++;
-      }
-
-      if (result === "future") {
-        future++;
-      }
+      if (result === "backlog") backlog++;
+      if (result === "pending") pending++;
+      if (result === "future") future++;
     });
 
     return {
@@ -916,99 +860,62 @@ export default function Home() {
   );
 
   /* =====================================================
-     CASE FILTERS
+     CASE FILTER
   ===================================================== */
 
   const filteredCases = useMemo(() => {
-    const q =
-      search.trim().toLowerCase();
+    const q = search.trim().toLowerCase();
 
     return data.rows.filter((row) => {
       const matchesSearch =
         !q ||
-        (
-          row["CLIENTE"] || ""
-        )
+        (row["CLIENTE"] || "")
           .toLowerCase()
           .includes(q) ||
-        (
-          row["ID"] || ""
-        )
+        (row["ID"] || "")
           .toLowerCase()
           .includes(q) ||
-        (
-          row["RECEIPT NUMBER"] || ""
-        )
+        (row["RECEIPT NUMBER"] || "")
           .toLowerCase()
           .includes(q);
 
       const matchesStatus =
         !statusFilter ||
-        norm(
-          row["STATUS"] || ""
-        ) === norm(statusFilter);
+        norm(row["STATUS"] || "") ===
+          norm(statusFilter);
 
-      return (
-        matchesSearch &&
-        matchesStatus
-      );
+      return matchesSearch && matchesStatus;
     });
-  }, [
-    data.rows,
-    search,
-    statusFilter,
-  ]);
+  }, [data.rows, search, statusFilter]);
 
   /* =====================================================
      KPI DETAILS
   ===================================================== */
 
   const kpiCases = useMemo(() => {
-    if (!selectedKpi) {
-      return [];
-    }
+    if (!selectedKpi) return [];
 
-    const getter =
-      getKpiGetter(
-        selectedKpi.section
-      );
+    const getter = getKpiGetter(
+      selectedKpi.section
+    );
 
     return data.rows.filter(
       (row) =>
-        getter(row) ===
-        selectedKpi.type
+        getter(row) === selectedKpi.type
     );
-  }, [
-    data.rows,
-    selectedKpi,
-  ]);
+  }, [data.rows, selectedKpi]);
 
   const sectionLabel = (
     section: KpiSection
   ) => {
-    if (section === "mgm") {
-      return "Entregas MGM";
-    }
-
-    if (section === "psych") {
-      return "Psych";
-    }
-
-    if (section === "caratula") {
+    if (section === "mgm") return "Entregas MGM";
+    if (section === "psych") return "Psych";
+    if (section === "caratula")
       return "Llenado de Carátula";
-    }
-
-    if (section === "draft") {
-      return "1st Draft";
-    }
-
-    if (section === "plcvl") {
+    if (section === "draft") return "1st Draft";
+    if (section === "plcvl")
       return "Escalación CVL";
-    }
-
-    if (section === "ea") {
-      return "EA · Analyst";
-    }
+    if (section === "ea") return "EA · Analyst";
 
     return "CVL";
   };
@@ -1017,76 +924,65 @@ export default function Home() {
      CALENDAR
   ===================================================== */
 
-  const calendarDays =
-    useMemo(() => {
-      const year =
-        calendarMonth.getFullYear();
+  const calendarDays = useMemo(() => {
+    const year =
+      calendarMonth.getFullYear();
 
-      const month =
-        calendarMonth.getMonth();
+    const month =
+      calendarMonth.getMonth();
 
-      const firstDay =
-        new Date(year, month, 1);
+    const firstDay = new Date(
+      year,
+      month,
+      1
+    );
 
-      const lastDay =
-        new Date(
-          year,
-          month + 1,
-          0
-        );
+    const lastDay = new Date(
+      year,
+      month + 1,
+      0
+    );
 
-      const mondayIndex =
-        firstDay.getDay() === 0
-          ? 6
-          : firstDay.getDay() - 1;
+    const mondayIndex =
+      firstDay.getDay() === 0
+        ? 6
+        : firstDay.getDay() - 1;
 
-      const startDate =
-        addDays(
-          firstDay,
-          -mondayIndex
-        );
+    const startDate = addDays(
+      firstDay,
+      -mondayIndex
+    );
 
-      const lastDayMondayIndex =
-        lastDay.getDay() === 0
-          ? 6
-          : lastDay.getDay() - 1;
+    const lastDayMondayIndex =
+      lastDay.getDay() === 0
+        ? 6
+        : lastDay.getDay() - 1;
 
-      const remaining =
-        6 - lastDayMondayIndex;
+    const remaining =
+      6 - lastDayMondayIndex;
 
-      const endDate =
-        addDays(
-          lastDay,
-          remaining
-        );
+    const endDate = addDays(
+      lastDay,
+      remaining
+    );
 
-      const days: Date[] = [];
+    const days: Date[] = [];
 
-      let cursor =
-        new Date(startDate);
+    let cursor = new Date(startDate);
 
-      while (
-        cursor.getTime() <=
-        endDate.getTime()
-      ) {
-        days.push(
-          new Date(cursor)
-        );
+    while (
+      cursor.getTime() <= endDate.getTime()
+    ) {
+      days.push(new Date(cursor));
+      cursor = addDays(cursor, 1);
+    }
 
-        cursor = addDays(
-          cursor,
-          1
-        );
-      }
-
-      return days;
-    }, [calendarMonth]);
+    return days;
+  }, [calendarMonth]);
 
   const calendarEvents = useMemo(() => {
     const header =
-      calendarDateHeader(
-        teamCalendar
-      );
+      calendarDateHeader(teamCalendar);
 
     return data.rows
       .filter((row) =>
@@ -1097,6 +993,7 @@ export default function Home() {
       )
       .map((row) => ({
         row,
+
         date: parseDateOnly(
           row[header] || ""
         ),
@@ -1109,12 +1006,9 @@ export default function Home() {
           date: Date;
         } => !!item.date
       );
-  }, [
-    data.rows,
-    teamCalendar,
-  ]);
+  }, [data.rows, teamCalendar]);
 
-  const previousMonth = () => {
+  function previousMonth() {
     setCalendarMonth(
       new Date(
         calendarMonth.getFullYear(),
@@ -1122,9 +1016,9 @@ export default function Home() {
         1
       )
     );
-  };
+  }
 
-  const nextMonth = () => {
+  function nextMonth() {
     setCalendarMonth(
       new Date(
         calendarMonth.getFullYear(),
@@ -1132,9 +1026,9 @@ export default function Home() {
         1
       )
     );
-  };
+  }
 
-  const goToday = () => {
+  function goToday() {
     const today = new Date();
 
     setCalendarMonth(
@@ -1144,15 +1038,13 @@ export default function Home() {
         1
       )
     );
-  };
+  }
 
   /* =====================================================
-     STATUS STYLE
+     STYLE
   ===================================================== */
 
-  const statusClass = (
-    status: string
-  ) => {
+  const statusClass = (status: string) => {
     const value = norm(status);
 
     if (
@@ -1200,6 +1092,17 @@ export default function Home() {
   function toggleTeam() {
     setMainView("team");
     setTeamOpen(true);
+
+    if (role === "PARALEGAL") {
+      setTeamGroup("paralegal");
+      setTeamCalendar("caratula");
+    } else if (role === "PSYCH") {
+      setTeamGroup("psych");
+      setTeamCalendar("psych");
+    } else if (role === "ANALYST") {
+      setTeamGroup("ea");
+      setTeamCalendar("ea");
+    }
   }
 
   function chooseTeamGroup(
@@ -1210,26 +1113,20 @@ export default function Home() {
     setTeamGroup(group);
 
     if (group === "paralegal") {
-      setTeamCalendar(
-        "caratula"
-      );
+      setTeamCalendar("caratula");
     }
 
     if (group === "psych") {
-      setTeamCalendar(
-        "psych"
-      );
+      setTeamCalendar("psych");
     }
 
     if (group === "ea") {
-      setTeamCalendar(
-        "ea"
-      );
+      setTeamCalendar("ea");
     }
   }
 
   /* =====================================================
-     COMPONENT: KPI CARD
+     KPI COMPONENTS
   ===================================================== */
 
   function KpiCard({
@@ -1240,10 +1137,7 @@ export default function Home() {
   }: {
     title: string;
     value: number;
-    type: Exclude<
-      KpiType,
-      "none"
-    >;
+    type: Exclude<KpiType, "none">;
     section: KpiSection;
   }) {
     return (
@@ -1257,18 +1151,11 @@ export default function Home() {
         }
       >
         <div className="metricTop">
-          <span>
-            {title}
-          </span>
-
-          <span className="metricDot">
-            •
-          </span>
+          <span>{title}</span>
+          <span className="metricDot">•</span>
         </div>
 
-        <strong>
-          {value}
-        </strong>
+        <strong>{value}</strong>
 
         <small>
           Doble clic para ver casos
@@ -1276,10 +1163,6 @@ export default function Home() {
       </button>
     );
   }
-
-  /* =====================================================
-     COMPONENT: KPI SECTION
-  ===================================================== */
 
   function KpiRow({
     title,
@@ -1297,35 +1180,27 @@ export default function Home() {
     return (
       <section className="workflowSection">
         <div className="workflowTitle">
-          <h2>
-            {title}
-          </h2>
+          <h2>{title}</h2>
         </div>
 
         <div className="metricGrid">
           <KpiCard
             title="Backlog"
-            value={
-              stats.backlog
-            }
+            value={stats.backlog}
             type="backlog"
             section={section}
           />
 
           <KpiCard
             title="Pendientes"
-            value={
-              stats.pending
-            }
+            value={stats.pending}
             type="pending"
             section={section}
           />
 
           <KpiCard
             title="Próximas entregas"
-            value={
-              stats.future
-            }
+            value={stats.future}
             type="future"
             section={section}
           />
@@ -1335,7 +1210,7 @@ export default function Home() {
   }
 
   /* =====================================================
-     COMPONENT: FIELD
+     FIELD
   ===================================================== */
 
   function Field({
@@ -1355,9 +1230,7 @@ export default function Home() {
     readOnly?: boolean;
     options?: string[];
   }) {
-    if (!selectedCase) {
-      return null;
-    }
+    if (!selectedCase) return null;
 
     const value =
       selectedCase[header] || "";
@@ -1371,24 +1244,26 @@ export default function Home() {
       });
     };
 
+    const locked =
+      readOnly ||
+      (openCaseSource === "calendar" &&
+        !canEditStage) ||
+      role === "MANAGER" ||
+      role === "COORDINATOR";
+
     return (
       <div className="detailField">
-        <label>
-          {label}
-        </label>
+        <label>{label}</label>
 
-        {readOnly ? (
+        {locked ? (
           <div className="readValue">
             {value || "—"}
           </div>
-        ) : type ===
-          "textarea" ? (
+        ) : type === "textarea" ? (
           <textarea
             value={value}
             onChange={(e) =>
-              updateLocal(
-                e.target.value
-              )
+              updateLocal(e.target.value)
             }
             onBlur={(e) =>
               saveField(
@@ -1400,17 +1275,14 @@ export default function Home() {
               )
             }
           />
-        ) : type ===
-            "select" ? (
+        ) : type === "select" ? (
           <select
             value={value}
             onChange={(e) => {
               const newValue =
                 e.target.value;
 
-              updateLocal(
-                newValue
-              );
+              updateLocal(newValue);
 
               saveField(
                 Number(
@@ -1421,9 +1293,7 @@ export default function Home() {
               );
             }}
           >
-            <option value="">
-              —
-            </option>
+            <option value="">—</option>
 
             {(options || []).map(
               (option) => (
@@ -1441,15 +1311,11 @@ export default function Home() {
             type={type}
             value={
               type === "date"
-                ? toInputDate(
-                    value
-                  )
+                ? toInputDate(value)
                 : value
             }
             onChange={(e) =>
-              updateLocal(
-                e.target.value
-              )
+              updateLocal(e.target.value)
             }
             onBlur={(e) =>
               saveField(
@@ -1463,13 +1329,380 @@ export default function Home() {
           />
         )}
 
-        {savingField ===
-          header && (
+        {savingField === header && (
           <span className="savingText">
             Guardando…
           </span>
         )}
       </div>
+    );
+  }
+
+  /* =====================================================
+     STAGE CONTENT
+  ===================================================== */
+
+  function StageContent({
+    stage,
+  }: {
+    stage: TeamCalendar;
+  }) {
+    if (!selectedCase) return null;
+
+    if (stage === "caratula") {
+      return (
+        <section className="detailSection">
+          <div className="detailSectionHeader">
+            <div className="stageIcon">PL</div>
+
+            <div>
+              <h3>
+                Paralegal · Llenado de Carátula
+              </h3>
+
+              <p>
+                Entrega de Carátula
+              </p>
+            </div>
+          </div>
+
+          <div className="fieldGrid">
+            <Field
+              label="Paralegal"
+              header="PARALEGAL"
+              readOnly
+            />
+
+            <Field
+              label="PL Assigned"
+              header="PL ASSIGNED"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="Expected Done"
+              header="CARÁTULA EXPECTED DONE"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="Done"
+              header="CARATULA DONE"
+              type="date"
+            />
+
+            <Field
+              label="Link Carátula"
+              header="LINK CARÁTULA"
+            />
+          </div>
+        </section>
+      );
+    }
+
+    if (stage === "draft") {
+      return (
+        <section className="detailSection">
+          <div className="detailSectionHeader">
+            <div className="stageIcon">PL</div>
+
+            <div>
+              <h3>
+                Paralegal · 1st Draft
+              </h3>
+
+              <p>
+                Primera entrega del Draft
+              </p>
+            </div>
+          </div>
+
+          <div className="fieldGrid">
+            <Field
+              label="Paralegal"
+              header="PARALEGAL"
+              readOnly
+            />
+
+            <Field
+              label="Status 1st Draft"
+              header="STATUS 1ST DRAFT"
+              type="select"
+              options={[
+                "DONE",
+                "WORKING",
+                "NA",
+                "UNRESPONSIVE",
+                "CANCELLED/CLOSED",
+                "SPECIAL CASE",
+              ]}
+            />
+
+            <Field
+              label="Expected Done"
+              header="1ST DRAFT EXP DONE"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="1st Draft Done"
+              header="1ST DRAFT DONE"
+              type="date"
+            />
+
+            <Field
+              label="Link Inf Affidavit"
+              header="LINK INF AFFIDAVIT"
+            />
+          </div>
+        </section>
+      );
+    }
+
+    if (stage === "plcvl") {
+      return (
+        <section className="detailSection">
+          <div className="detailSectionHeader">
+            <div className="stageIcon">PL</div>
+
+            <div>
+              <h3>
+                Paralegal · Escalación a CVL
+              </h3>
+
+              <p>
+                Entrega de escalación
+              </p>
+            </div>
+          </div>
+
+          <div className="fieldGrid">
+            <Field
+              label="Paralegal"
+              header="PARALEGAL"
+              readOnly
+            />
+
+            <Field
+              label="Expected Done"
+              header="PL CVL EXPECTED DONE"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="Done"
+              header="PL CVL DONE"
+              type="date"
+            />
+          </div>
+        </section>
+      );
+    }
+
+    if (stage === "psych") {
+      return (
+        <section className="detailSection">
+          <div className="detailSectionHeader">
+            <div className="stageIcon">PS</div>
+
+            <div>
+              <h3>Psych · DOE</h3>
+
+              <p>
+                Entrega de Psych
+              </p>
+            </div>
+          </div>
+
+          <div className="fieldGrid">
+            <Field
+              label="Psych"
+              header="PSYCH"
+              readOnly
+            />
+
+            <Field
+              label="DOE Status"
+              header="DOE STATUS"
+              type="select"
+              options={[
+                "DONE",
+                "CORRECTIONS",
+                "REVIEW",
+                "SPECIAL CASE",
+                "UNRESPONSIVE",
+                "ON HOLD",
+                "CANCELLED",
+                "NA",
+              ]}
+            />
+
+            <Field
+              label="Expected Done"
+              header="EXPECTED DONE (doe)"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="Done"
+              header="DONE (doe)"
+              type="date"
+            />
+
+            <Field
+              label="Link DOE"
+              header="LINK DOE"
+            />
+
+            <Field
+              label="Class"
+              header="CLASS"
+              readOnly
+            />
+          </div>
+        </section>
+      );
+    }
+
+    if (stage === "ea") {
+      return (
+        <section className="detailSection">
+          <div className="detailSectionHeader">
+            <div className="stageIcon">EA</div>
+
+            <div>
+              <h3>EA · Analyst</h3>
+
+              <p>
+                Evidence Analysis
+              </p>
+            </div>
+          </div>
+
+          <div className="fieldGrid">
+            <Field
+              label="EA Member"
+              header="EA MEMBER"
+              readOnly
+            />
+
+            <Field
+              label="EA Assigned"
+              header="EA ASSIGNED"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="EA Status"
+              header="EA STATUS"
+            />
+
+            <Field
+              label="Expected Done"
+              header="EA EXPECTED DONE"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="EA Done"
+              header="EA DONE"
+              type="date"
+            />
+
+            <Field
+              label="EA P.E."
+              header="EA P.E."
+              type="select"
+              options={[
+                "APPROVED",
+                "CORRECTIONS",
+                "PENDING",
+                "NA",
+              ]}
+            />
+
+            <Field
+              label="Fecha P.E. Aprobada"
+              header="FECHA P.E. APROBADA"
+              type="date"
+            />
+
+            <Field
+              label="EA Stoppers"
+              header="EA STOPPERS"
+            />
+
+            <Field
+              label="EA Hojas"
+              header="EA HOJAS"
+            />
+
+            <Field
+              label="EA WS"
+              header="EA WS"
+            />
+
+            <Field
+              label="Link Drive"
+              header="EA LINK DRIVE"
+            />
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="detailSection">
+        <div className="detailSectionHeader">
+          <div className="stageIcon">CV</div>
+
+          <div>
+            <h3>CVL</h3>
+
+            <p>
+              Entrega CVL
+            </p>
+          </div>
+        </div>
+
+        <div className="fieldGrid">
+          <Field
+            label="CVL Member"
+            header="CVL MEMBER"
+            readOnly
+          />
+
+          <Field
+            label="CVL Status"
+            header="CVL STATUS"
+          />
+
+          <Field
+            label="Expected Done"
+            header="CVL EXPECTED DONE"
+            type="date"
+            readOnly
+          />
+
+          <Field
+            label="Done CVL"
+            header="DONE CVL"
+            type="date"
+          />
+
+          <Field
+            label="Link CVL"
+            header="LINK CVL"
+          />
+        </div>
+      </section>
     );
   }
 
@@ -1493,9 +1726,7 @@ export default function Home() {
             A
           </div>
 
-          <h1>
-            Alpha Hub
-          </h1>
+          <h1>Alpha Hub</h1>
 
           <p>
             Case operations workspace
@@ -1521,10 +1752,7 @@ export default function Home() {
 
   return (
     <div className="appLayout">
-
-      {/* =================================================
-          SIDEBAR
-      ================================================= */}
+      {/* SIDEBAR */}
 
       <aside className="sidebar">
         <div className="sidebarBrand">
@@ -1533,13 +1761,8 @@ export default function Home() {
           </div>
 
           <div className="brandWords">
-            <strong>
-              ALPHA
-            </strong>
-
-            <span>
-              HUB
-            </span>
+            <strong>ALPHA</strong>
+            <span>HUB</span>
           </div>
         </div>
 
@@ -1548,25 +1771,19 @@ export default function Home() {
         </div>
 
         <nav className="sidebarNav">
-
           <button
             className={`navItem ${
-              mainView ===
-              "dashboard"
+              mainView === "dashboard"
                 ? "active"
                 : ""
             }`}
-            onClick={
-              openDashboard
-            }
+            onClick={openDashboard}
           >
             <span className="navIcon">
               ⌂
             </span>
 
-            <span>
-              Dashboard
-            </span>
+            <span>Dashboard</span>
           </button>
 
           <button
@@ -1575,17 +1792,13 @@ export default function Home() {
                 ? "active"
                 : ""
             }`}
-            onClick={
-              openCases
-            }
+            onClick={openCases}
           >
             <span className="navIcon">
               ▦
             </span>
 
-            <span>
-              Cases
-            </span>
+            <span>Cases</span>
           </button>
 
           <button
@@ -1594,9 +1807,7 @@ export default function Home() {
                 ? "active"
                 : ""
             }`}
-            onClick={
-              toggleTeam
-            }
+            onClick={toggleTeam}
           >
             <span className="navIcon">
               ◉
@@ -1607,65 +1818,62 @@ export default function Home() {
             </span>
 
             <span className="teamChevron">
-              {teamOpen
-                ? "⌃"
-                : "⌄"}
+              {teamOpen ? "⌃" : "⌄"}
             </span>
           </button>
 
           {teamOpen && (
             <div className="teamSubMenu">
+              {canSeeParalegal && (
+                <button
+                  className={
+                    teamGroup === "paralegal"
+                      ? "teamSub active"
+                      : "teamSub"
+                  }
+                  onClick={() =>
+                    chooseTeamGroup(
+                      "paralegal"
+                    )
+                  }
+                >
+                  Paralegales
+                </button>
+              )}
 
-              <button
-                className={
-                  teamGroup ===
-                  "paralegal"
-                    ? "teamSub active"
-                    : "teamSub"
-                }
-                onClick={() =>
-                  chooseTeamGroup(
-                    "paralegal"
-                  )
-                }
-              >
-                Paralegales
-              </button>
+              {canSeePsych && (
+                <button
+                  className={
+                    teamGroup === "psych"
+                      ? "teamSub active"
+                      : "teamSub"
+                  }
+                  onClick={() =>
+                    chooseTeamGroup(
+                      "psych"
+                    )
+                  }
+                >
+                  Psych
+                </button>
+              )}
 
-              <button
-                className={
-                  teamGroup ===
-                  "psych"
-                    ? "teamSub active"
-                    : "teamSub"
-                }
-                onClick={() =>
-                  chooseTeamGroup(
-                    "psych"
-                  )
-                }
-              >
-                Psych
-              </button>
-
-              <button
-                className={
-                  teamGroup === "ea"
-                    ? "teamSub active"
-                    : "teamSub"
-                }
-                onClick={() =>
-                  chooseTeamGroup(
-                    "ea"
-                  )
-                }
-              >
-                EA
-              </button>
-
+              {canSeeEa && (
+                <button
+                  className={
+                    teamGroup === "ea"
+                      ? "teamSub active"
+                      : "teamSub"
+                  }
+                  onClick={() =>
+                    chooseTeamGroup("ea")
+                  }
+                >
+                  EA
+                </button>
+              )}
             </div>
           )}
-
         </nav>
 
         <div className="sidebarBottom">
@@ -1682,9 +1890,7 @@ export default function Home() {
               ]}
             </strong>
 
-            <span>
-              {user.email}
-            </span>
+            <span>{user.email}</span>
           </div>
 
           <button
@@ -1700,12 +1906,9 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* =================================================
-          CONTENT
-      ================================================= */}
+      {/* MAIN CONTENT */}
 
       <main className="mainContent">
-
         {message && (
           <div className="floatingMessage">
             ✓ {message}
@@ -1718,12 +1921,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* =================================================
-            DASHBOARD
-        ================================================= */}
+        {/* DASHBOARD */}
 
-        {mainView ===
-          "dashboard" && (
+        {mainView === "dashboard" && (
           <>
             <header className="pageHeader">
               <div>
@@ -1731,22 +1931,17 @@ export default function Home() {
                   CASE OPERATIONS
                 </p>
 
-                <h1>
-                  Dashboard
-                </h1>
+                <h1>Dashboard</h1>
 
                 <p>
-                  Overview of current
-                  workflow and case
-                  activity.
+                  Overview of current workflow
+                  and case activity.
                 </p>
               </div>
 
               <button
                 className="refreshButton"
-                onClick={
-                  loadCases
-                }
+                onClick={loadCases}
               >
                 ↻ Refresh
               </button>
@@ -1758,7 +1953,6 @@ export default function Home() {
               </div>
             ) : (
               <div className="dashboardContent">
-
                 <KpiRow
                   title="Entregas MGM"
                   section="mgm"
@@ -1768,59 +1962,44 @@ export default function Home() {
                 <KpiRow
                   title="Psych"
                   section="psych"
-                  stats={
-                    psychStats
-                  }
+                  stats={psychStats}
                 />
 
                 <KpiRow
                   title="Paralegal · Llenado de Carátula"
                   section="caratula"
-                  stats={
-                    caratulaStats
-                  }
+                  stats={caratulaStats}
                 />
 
                 <KpiRow
                   title="Paralegal · 1st Draft"
                   section="draft"
-                  stats={
-                    draftStats
-                  }
+                  stats={draftStats}
                 />
 
                 <KpiRow
                   title="Paralegal · Escalación a CVL"
                   section="plcvl"
-                  stats={
-                    plcvlStats
-                  }
+                  stats={plcvlStats}
                 />
 
                 <KpiRow
                   title="EA · Analyst"
                   section="ea"
-                  stats={
-                    eaStats
-                  }
+                  stats={eaStats}
                 />
 
                 <KpiRow
                   title="CVL"
                   section="cvl"
-                  stats={
-                    cvlStats
-                  }
+                  stats={cvlStats}
                 />
-
               </div>
             )}
           </>
         )}
 
-        {/* =================================================
-            CASES
-        ================================================= */}
+        {/* CASES */}
 
         {mainView === "cases" && (
           <>
@@ -1830,43 +2009,32 @@ export default function Home() {
                   CASE MANAGEMENT
                 </p>
 
-                <h1>
-                  Cases
-                </h1>
+                <h1>Cases</h1>
 
                 <p>
-                  Search, review and
-                  manage all cases.
+                  Search, review and manage
+                  all cases.
                 </p>
               </div>
 
               <button
                 className="refreshButton"
-                onClick={
-                  loadCases
-                }
+                onClick={loadCases}
               >
                 ↻ Refresh
               </button>
             </header>
 
             <section className="casesPanel">
-
               <div className="casesToolbar">
-
                 <div className="searchBox">
-                  <span>
-                    ⌕
-                  </span>
+                  <span>⌕</span>
 
                   <input
-                    value={
-                      search
-                    }
+                    value={search}
                     onChange={(e) =>
                       setSearch(
-                        e.target
-                          .value
+                        e.target.value
                       )
                     }
                     placeholder="Buscar cliente, ID o receipt..."
@@ -1875,13 +2043,10 @@ export default function Home() {
 
                 <select
                   className="filterSelect"
-                  value={
-                    statusFilter
-                  }
+                  value={statusFilter}
                   onChange={(e) =>
                     setStatusFilter(
-                      e.target
-                        .value
+                      e.target.value
                     )
                   }
                 >
@@ -1906,339 +2071,274 @@ export default function Home() {
                   </option>
 
                   <option value="CANCELLED/CLOSED">
-                    Cancelled /
-                    Closed
+                    Cancelled / Closed
                   </option>
                 </select>
 
                 <div className="caseCount">
-                  {
-                    filteredCases.length
-                  }{" "}
-                  casos
+                  {filteredCases.length} casos
                 </div>
               </div>
 
               <div className="casesTable">
-
                 <div className="casesTableHeader">
-                  <div>
-                    CLIENTE
-                  </div>
-
-                  <div>
-                    TIPO
-                  </div>
-
-                  <div>
-                    COMMITMENT
-                  </div>
-
-                  <div>
-                    PARALEGAL
-                  </div>
-
-                  <div>
-                    STATUS
-                  </div>
-
+                  <div>CLIENTE</div>
+                  <div>TIPO</div>
+                  <div>COMMITMENT</div>
+                  <div>PARALEGAL</div>
+                  <div>STATUS</div>
                   <div />
                 </div>
 
-                {filteredCases.map(
-                  (row) => (
-                    <button
-                      key={
-                        row.__row
-                      }
-                      className="caseTableRow"
-                      onClick={() =>
-                        setSelectedCase(
-                          row
-                        )
-                      }
-                    >
-                      <div className="caseClient">
-
-                        <div className="clientAvatar">
-                          {(row[
-                            "CLIENTE"
-                          ] || "?")
-                            .charAt(
-                              0
-                            )
-                            .toUpperCase()}
-                        </div>
-
-                        <div>
-                          <strong>
-                            {row[
-                              "CLIENTE"
-                            ] ||
-                              "Sin cliente"}
-                          </strong>
-
-                          <span>
-                            ID{" "}
-                            {row[
-                              "ID"
-                            ] ||
-                              "—"}
-                            {" · "}
-                            {row[
-                              "RECEIPT NUMBER"
-                            ] ||
-                              "No receipt"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="tableValue">
-                        {row[
-                          "DUE DATE/NO DUE DATE"
-                        ] || "—"}
-                      </div>
-
-                      <div className="tableValue">
-                        {row[
-                          "COMMITMENT"
-                        ] || "—"}
-                      </div>
-
-                      <div className="tableValue">
-                        {row[
-                          "PARALEGAL"
-                        ] || "—"}
+                {filteredCases.map((row) => (
+                  <button
+                    key={row.__row}
+                    className="caseTableRow"
+                    onClick={() =>
+                      openGeneralCase(row)
+                    }
+                  >
+                    <div className="caseClient">
+                      <div className="clientAvatar">
+                        {(row["CLIENTE"] || "?")
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
 
                       <div>
-                        <span
-                          className={statusClass(
-                            row[
-                              "STATUS"
-                            ] ||
-                              ""
-                          )}
-                        >
+                        <strong>
+                          {row["CLIENTE"] ||
+                            "Sin cliente"}
+                        </strong>
+
+                        <span>
+                          ID {row["ID"] || "—"}
+                          {" · "}
                           {row[
-                            "STATUS"
-                          ] ||
-                            "NO STATUS"}
+                            "RECEIPT NUMBER"
+                          ] || "No receipt"}
                         </span>
                       </div>
+                    </div>
 
-                      <div className="rowArrow">
-                        ›
-                      </div>
-                    </button>
-                  )
-                )}
+                    <div className="tableValue">
+                      {row[
+                        "DUE DATE/NO DUE DATE"
+                      ] || "—"}
+                    </div>
+
+                    <div className="tableValue">
+                      {row["COMMITMENT"] ||
+                        "—"}
+                    </div>
+
+                    <div className="tableValue">
+                      {row["PARALEGAL"] ||
+                        "—"}
+                    </div>
+
+                    <div>
+                      <span
+                        className={statusClass(
+                          row["STATUS"] || ""
+                        )}
+                      >
+                        {row["STATUS"] ||
+                          "NO STATUS"}
+                      </span>
+                    </div>
+
+                    <div className="rowArrow">
+                      ›
+                    </div>
+                  </button>
+                ))}
 
                 {!filteredCases.length && (
                   <div className="emptyState">
-                    No encontramos
-                    casos con esos
-                    filtros.
+                    No encontramos casos con
+                    esos filtros.
                   </div>
                 )}
-
               </div>
             </section>
           </>
         )}
 
-        {/* =================================================
-            TEAM
-        ================================================= */}
+        {/* TEAM */}
 
         {mainView === "team" && (
           <>
             <header className="pageHeader teamPageHeader">
-
               <div>
                 <p className="eyebrow">
                   TEAM WORKLOAD
                 </p>
 
-                <h1>
-                  Team
-                </h1>
+                <h1>Team</h1>
 
                 <p>
-                  Calendario de
-                  entregas del equipo.
+                  Calendario de entregas del
+                  equipo.
                 </p>
               </div>
 
               <button
                 className="refreshButton"
-                onClick={
-                  loadCases
-                }
+                onClick={loadCases}
               >
                 ↻ Refresh
               </button>
-
             </header>
 
-            <div className="teamGroupTabs">
+            {canSeeAllTeam && (
+              <div className="teamGroupTabs">
+                {canSeeParalegal && (
+                  <button
+                    className={
+                      teamGroup === "paralegal"
+                        ? "teamGroupTab active"
+                        : "teamGroupTab"
+                    }
+                    onClick={() =>
+                      chooseTeamGroup(
+                        "paralegal"
+                      )
+                    }
+                  >
+                    Paralegales
+                  </button>
+                )}
 
-              <button
-                className={
-                  teamGroup ===
-                  "paralegal"
-                    ? "teamGroupTab active"
-                    : "teamGroupTab"
-                }
-                onClick={() =>
-                  chooseTeamGroup(
-                    "paralegal"
-                  )
-                }
-              >
-                Paralegales
-              </button>
+                {canSeePsych && (
+                  <button
+                    className={
+                      teamGroup === "psych"
+                        ? "teamGroupTab active"
+                        : "teamGroupTab"
+                    }
+                    onClick={() =>
+                      chooseTeamGroup(
+                        "psych"
+                      )
+                    }
+                  >
+                    Psych
+                  </button>
+                )}
 
-              <button
-                className={
-                  teamGroup ===
-                  "psych"
-                    ? "teamGroupTab active"
-                    : "teamGroupTab"
-                }
-                onClick={() =>
-                  chooseTeamGroup(
-                    "psych"
-                  )
-                }
-              >
-                Psych
-              </button>
-
-              <button
-                className={
-                  teamGroup === "ea"
-                    ? "teamGroupTab active"
-                    : "teamGroupTab"
-                }
-                onClick={() =>
-                  chooseTeamGroup(
-                    "ea"
-                  )
-                }
-              >
-                EA
-              </button>
-
-            </div>
+                {canSeeEa && (
+                  <button
+                    className={
+                      teamGroup === "ea"
+                        ? "teamGroupTab active"
+                        : "teamGroupTab"
+                    }
+                    onClick={() =>
+                      chooseTeamGroup("ea")
+                    }
+                  >
+                    EA
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="teamStageTabs">
-
-              {teamGroup ===
-                "paralegal" && (
-                <>
-                  <button
-                    className={
-                      teamCalendar ===
-                      "caratula"
-                        ? "stageTab active"
-                        : "stageTab"
-                    }
-                    onClick={() =>
-                      setTeamCalendar(
+              {teamGroup === "paralegal" &&
+                canSeeParalegal && (
+                  <>
+                    <button
+                      className={
+                        teamCalendar ===
                         "caratula"
-                      )
-                    }
-                  >
-                    Carátula
-                  </button>
+                          ? "stageTab active"
+                          : "stageTab"
+                      }
+                      onClick={() =>
+                        setTeamCalendar(
+                          "caratula"
+                        )
+                      }
+                    >
+                      Carátula
+                    </button>
 
-                  <button
-                    className={
-                      teamCalendar ===
-                      "draft"
-                        ? "stageTab active"
-                        : "stageTab"
-                    }
-                    onClick={() =>
-                      setTeamCalendar(
+                    <button
+                      className={
+                        teamCalendar ===
                         "draft"
-                      )
-                    }
-                  >
-                    1st Draft
-                  </button>
+                          ? "stageTab active"
+                          : "stageTab"
+                      }
+                      onClick={() =>
+                        setTeamCalendar(
+                          "draft"
+                        )
+                      }
+                    >
+                      1st Draft
+                    </button>
 
-                  <button
-                    className={
-                      teamCalendar ===
-                      "plcvl"
-                        ? "stageTab active"
-                        : "stageTab"
-                    }
-                    onClick={() =>
-                      setTeamCalendar(
+                    <button
+                      className={
+                        teamCalendar ===
                         "plcvl"
-                      )
-                    }
-                  >
-                    Escalación CVL
+                          ? "stageTab active"
+                          : "stageTab"
+                      }
+                      onClick={() =>
+                        setTeamCalendar(
+                          "plcvl"
+                        )
+                      }
+                    >
+                      Escalación CVL
+                    </button>
+                  </>
+                )}
+
+              {teamGroup === "psych" &&
+                canSeePsych && (
+                  <button className="stageTab active">
+                    DOE
                   </button>
-                </>
-              )}
+                )}
 
-              {teamGroup ===
-                "psych" && (
-                <button className="stageTab active">
-                  DOE
-                </button>
-              )}
+              {teamGroup === "ea" &&
+                canSeeEa && (
+                  <>
+                    <button
+                      className={
+                        teamCalendar === "ea"
+                          ? "stageTab active"
+                          : "stageTab"
+                      }
+                      onClick={() =>
+                        setTeamCalendar("ea")
+                      }
+                    >
+                      EA / Analyst
+                    </button>
 
-              {teamGroup ===
-                "ea" && (
-                <>
-                  <button
-                    className={
-                      teamCalendar ===
-                      "ea"
-                        ? "stageTab active"
-                        : "stageTab"
-                    }
-                    onClick={() =>
-                      setTeamCalendar(
-                        "ea"
-                      )
-                    }
-                  >
-                    EA / Analyst
-                  </button>
-
-                  <button
-                    className={
-                      teamCalendar ===
-                      "cvl"
-                        ? "stageTab active"
-                        : "stageTab"
-                    }
-                    onClick={() =>
-                      setTeamCalendar(
-                        "cvl"
-                      )
-                    }
-                  >
-                    CVL
-                  </button>
-                </>
-              )}
-
+                    <button
+                      className={
+                        teamCalendar === "cvl"
+                          ? "stageTab active"
+                          : "stageTab"
+                      }
+                      onClick={() =>
+                        setTeamCalendar("cvl")
+                      }
+                    >
+                      CVL
+                    </button>
+                  </>
+                )}
             </div>
 
-            {/* CALENDAR */}
-
             <section className="calendarCard">
-
               <div className="calendarToolbar">
-
                 <div className="calendarTitle">
                   <h2>
                     {
@@ -2246,201 +2346,151 @@ export default function Home() {
                         calendarMonth.getMonth()
                       ]
                     }{" "}
-                    {
-                      calendarMonth.getFullYear()
-                    }
+                    {calendarMonth.getFullYear()}
                   </h2>
 
                   <span>
-                    {
-                      calendarEvents.length
-                    }{" "}
+                    {calendarEvents.length}{" "}
                     entregas activas
                   </span>
                 </div>
 
                 <div className="calendarControls">
-
                   <button
-                    onClick={
-                      previousMonth
-                    }
+                    onClick={previousMonth}
                   >
                     ‹
                   </button>
 
                   <button
                     className="todayButton"
-                    onClick={
-                      goToday
-                    }
+                    onClick={goToday}
                   >
                     Hoy
                   </button>
 
                   <button
-                    onClick={
-                      nextMonth
-                    }
+                    onClick={nextMonth}
                   >
                     ›
                   </button>
-
                 </div>
               </div>
 
               <div className="calendarWeekHeader">
-                {weekDays.map(
-                  (day) => (
-                    <div
-                      key={day}
-                    >
-                      {day}
-                    </div>
-                  )
-                )}
+                {weekDays.map((day) => (
+                  <div key={day}>
+                    {day}
+                  </div>
+                ))}
               </div>
 
               <div className="calendarGrid">
+                {calendarDays.map((day) => {
+                  const isCurrentMonth =
+                    day.getMonth() ===
+                    calendarMonth.getMonth();
 
-                {calendarDays.map(
-                  (day) => {
-                    const isCurrentMonth =
-                      day.getMonth() ===
-                      calendarMonth.getMonth();
-
-                    const isToday =
-                      sameDay(
-                        day,
-                        new Date()
-                      );
-
-                    const dayEvents =
-                      calendarEvents.filter(
-                        (event) =>
-                          sameDay(
-                            event.date,
-                            day
-                          )
-                      );
-
-                    return (
-                      <div
-                        key={
-                          day.toISOString()
-                        }
-                        className={`calendarDay ${
-                          !isCurrentMonth
-                            ? "outsideMonth"
-                            : ""
-                        }`}
-                      >
-
-                        <div className="calendarDayNumber">
-
-                          <span
-                            className={
-                              isToday
-                                ? "todayNumber"
-                                : ""
-                            }
-                          >
-                            {
-                              day.getDate()
-                            }
-                          </span>
-
-                        </div>
-
-                        <div className="calendarEvents">
-
-                          {dayEvents.map(
-                            ({
-                              row,
-                            }) => {
-                              const statusHeader =
-                                calendarStatusHeader(
-                                  teamCalendar
-                                );
-
-                              const status =
-                                statusHeader
-                                  ? row[
-                                      statusHeader
-                                    ] ||
-                                    ""
-                                  : "";
-
-                              return (
-                                <button
-                                  key={
-                                    row.__row
-                                  }
-                                  className={`calendarEvent ${
-                                    classifyDate(
-                                      day
-                                    ) ===
-                                    "backlog"
-                                      ? "calendarEventBacklog"
-                                      : classifyDate(
-                                          day
-                                        ) ===
-                                        "pending"
-                                      ? "calendarEventPending"
-                                      : "calendarEventFuture"
-                                  }`}
-                                  title={`${
-                                    row[
-                                      "CLIENTE"
-                                    ] ||
-                                    "Sin cliente"
-                                  }${
-                                    status
-                                      ? ` · ${status}`
-                                      : ""
-                                  }`}
-                                  onClick={() =>
-                                    setSelectedCase(
-                                      row
-                                    )
-                                  }
-                                >
-                                  <strong>
-                                    {row[
-                                      "CLIENTE"
-                                    ] ||
-                                      "Sin cliente"}
-                                  </strong>
-
-                                  {status && (
-                                    <span>
-                                      {
-                                        status
-                                      }
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            }
-                          )}
-
-                        </div>
-
-                      </div>
+                  const isToday =
+                    sameDay(
+                      day,
+                      new Date()
                     );
-                  }
-                )}
 
+                  const dayEvents =
+                    calendarEvents.filter(
+                      (event) =>
+                        sameDay(
+                          event.date,
+                          day
+                        )
+                    );
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`calendarDay ${
+                        !isCurrentMonth
+                          ? "outsideMonth"
+                          : ""
+                      }`}
+                    >
+                      <div className="calendarDayNumber">
+                        <span
+                          className={
+                            isToday
+                              ? "todayNumber"
+                              : ""
+                          }
+                        >
+                          {day.getDate()}
+                        </span>
+                      </div>
+
+                      <div className="calendarEvents">
+                        {dayEvents.map(
+                          ({ row }) => {
+                            const statusHeader =
+                              calendarStatusHeader(
+                                teamCalendar
+                              );
+
+                            const status =
+                              statusHeader
+                                ? row[
+                                    statusHeader
+                                  ] || ""
+                                : "";
+
+                            return (
+                              <button
+                                key={row.__row}
+                                className={`calendarEvent ${
+                                  classifyDate(
+                                    day
+                                  ) === "backlog"
+                                    ? "calendarEventBacklog"
+                                    : classifyDate(
+                                        day
+                                      ) ===
+                                      "pending"
+                                    ? "calendarEventPending"
+                                    : "calendarEventFuture"
+                                }`}
+                                onClick={() =>
+                                  openCalendarCase(
+                                    row,
+                                    teamCalendar
+                                  )
+                                }
+                              >
+                                <strong>
+                                  {row[
+                                    "CLIENTE"
+                                  ] ||
+                                    "Sin cliente"}
+                                </strong>
+
+                                {status && (
+                                  <span>
+                                    {status}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </>
         )}
-
       </main>
 
-      {/* =================================================
-          KPI DRAWER
-      ================================================= */}
+      {/* KPI DRAWER */}
 
       {selectedKpi && (
         <div
@@ -2456,7 +2506,6 @@ export default function Home() {
             }
           >
             <div className="drawerHeader">
-
               <div>
                 <p className="eyebrow">
                   {sectionLabel(
@@ -2475,600 +2524,297 @@ export default function Home() {
                 </h2>
 
                 <p>
-                  {
-                    kpiCases.length
-                  }{" "}
-                  casos
+                  {kpiCases.length} casos
                 </p>
               </div>
 
               <button
                 className="closeButton"
                 onClick={() =>
-                  setSelectedKpi(
-                    null
-                  )
+                  setSelectedKpi(null)
                 }
               >
                 ×
               </button>
-
             </div>
 
             <div className="drawerCases">
+              {kpiCases.map((row) => (
+                <button
+                  key={row.__row}
+                  className="drawerCase"
+                  onClick={() => {
+                    setSelectedKpi(null);
+                    openGeneralCase(row);
+                  }}
+                >
+                  <div>
+                    <strong>
+                      {row["CLIENTE"] ||
+                        "Sin cliente"}
+                    </strong>
 
-              {kpiCases.map(
-                (row) => (
-                  <button
-                    key={
-                      row.__row
-                    }
-                    className="drawerCase"
-                    onClick={() => {
-                      setSelectedKpi(
-                        null
-                      );
-
-                      setSelectedCase(
-                        row
-                      );
-                    }}
-                  >
-                    <div>
-                      <strong>
-                        {row[
-                          "CLIENTE"
-                        ] ||
-                          "Sin cliente"}
-                      </strong>
-
-                      <span>
-                        ID{" "}
-                        {row[
-                          "ID"
-                        ] ||
-                          "—"}
-                      </span>
-                    </div>
-
-                    <span
-                      className={statusClass(
-                        row[
-                          "STATUS"
-                        ] ||
-                          ""
-                      )}
-                    >
-                      {row[
-                        "STATUS"
-                      ] ||
-                        "NO STATUS"}
+                    <span>
+                      ID {row["ID"] || "—"}
                     </span>
+                  </div>
 
-                    <b>
-                      ›
-                    </b>
-                  </button>
-                )
-              )}
+                  <span
+                    className={statusClass(
+                      row["STATUS"] || ""
+                    )}
+                  >
+                    {row["STATUS"] ||
+                      "NO STATUS"}
+                  </span>
 
+                  <b>›</b>
+                </button>
+              ))}
             </div>
           </aside>
         </div>
       )}
 
       {/* =================================================
-          CASE MODAL
+          MODAL FROM TEAM
+          SOLO MUESTRA LA ETAPA
       ================================================= */}
 
-      {selectedCase && (
-        <div
-          className="modalOverlay"
-          onMouseDown={() =>
-            setSelectedCase(null)
-          }
-        >
+      {selectedCase &&
+        openCaseSource === "calendar" &&
+        selectedStage && (
           <div
-            className="caseModal"
-            onMouseDown={(e) =>
-              e.stopPropagation()
+            className="modalOverlay"
+            onMouseDown={() =>
+              setSelectedCase(null)
             }
           >
+            <div
+              className="caseModal"
+              onMouseDown={(e) =>
+                e.stopPropagation()
+              }
+              style={{
+                height: "auto",
+                maxHeight: "90vh",
+                maxWidth: "760px",
+              }}
+            >
+              <div className="modalHeader">
+                <div>
+                  <p className="eyebrow">
+                    TEAM DELIVERY
+                  </p>
 
-            <div className="modalHeader">
-
-              <div>
-                <p className="eyebrow">
-                  CASE DETAILS
-                </p>
-
-                <h2>
-                  {selectedCase[
-                    "CLIENTE"
-                  ] ||
-                    "Sin cliente"}
-                </h2>
-
-                <div className="caseMeta">
-
-                  <span>
-                    ID{" "}
+                  <h2>
                     {selectedCase[
-                      "ID"
-                    ] ||
-                      "—"}
-                  </span>
+                      "CLIENTE"
+                    ] || "Sin cliente"}
+                  </h2>
 
-                  <span>
-                    {selectedCase[
-                      "DUE DATE/NO DUE DATE"
-                    ] || "—"}
-                  </span>
+                  <div className="caseMeta">
+                    <span>
+                      ID{" "}
+                      {selectedCase["ID"] ||
+                        "—"}
+                    </span>
 
-                  <span
-                    className={statusClass(
-                      selectedCase[
-                        "STATUS"
-                      ] || ""
-                    )}
-                  >
-                    {selectedCase[
-                      "STATUS"
-                    ] ||
-                      "NO STATUS"}
-                  </span>
-
+                    <span>
+                      {sectionLabel(
+                        selectedStage ===
+                          "caratula"
+                          ? "caratula"
+                          : selectedStage ===
+                            "draft"
+                          ? "draft"
+                          : selectedStage ===
+                            "plcvl"
+                          ? "plcvl"
+                          : selectedStage ===
+                            "psych"
+                          ? "psych"
+                          : selectedStage ===
+                            "ea"
+                          ? "ea"
+                          : "cvl"
+                      )}
+                    </span>
+                  </div>
                 </div>
+
+                <button
+                  className="closeButton"
+                  onClick={() =>
+                    setSelectedCase(null)
+                  }
+                >
+                  ×
+                </button>
               </div>
 
-              <button
-                className="closeButton"
-                onClick={() =>
-                  setSelectedCase(
-                    null
-                  )
-                }
+              <div
+                className="modalBody"
+                style={{
+                  height: "auto",
+                  maxHeight:
+                    "calc(90vh - 105px)",
+                }}
               >
-                ×
-              </button>
-
-            </div>
-
-            <div className="modalBody">
-
-              {/* GENERAL */}
-
-              <section className="detailSection">
-
-                <div className="detailSectionHeader">
-
-                  <div className="stageIcon">
-                    01
-                  </div>
-
-                  <div>
-                    <h3>
-                      General
-                    </h3>
-
-                    <p>
-                      Información
-                      principal del
-                      caso
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="fieldGrid">
-
-                  <Field
-                    label="Receipt Number"
-                    header="RECEIPT NUMBER"
-                    readOnly
-                  />
-
-                  <Field
-                    label="Receipt Date"
-                    header="RECEIPT DATE"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Deadline"
-                    header="DEADLINE"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Commitment"
-                    header="COMMITMENT"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Status"
-                    header="STATUS"
-                    type="select"
-                    options={[
-                      "WORKING",
-                      "MGM REVIEW",
-                      "SENT TO USCIS",
-                      "SPECIAL CASE",
-                      "CANCELLED/CLOSED",
-                    ]}
-                  />
-
-                  <Field
-                    label="Sent to MGM"
-                    header="SENT TO MGM"
-                    type="date"
-                  />
-
-                </div>
-
-                <Field
-                  label="Nota"
-                  header="NOTA"
-                  type="textarea"
+                <StageContent
+                  stage={selectedStage}
                 />
+              </div>
+            </div>
+          </div>
+        )}
 
-              </section>
+      {/* =================================================
+          GENERAL CASE MODAL
+          SOLO CUANDO VIENE DE CASES/KPI
+      ================================================= */}
 
-              {/* PSYCH */}
+      {selectedCase &&
+        openCaseSource === "cases" && (
+          <div
+            className="modalOverlay"
+            onMouseDown={() =>
+              setSelectedCase(null)
+            }
+          >
+            <div
+              className="caseModal"
+              onMouseDown={(e) =>
+                e.stopPropagation()
+              }
+            >
+              <div className="modalHeader">
+                <div>
+                  <p className="eyebrow">
+                    CASE DETAILS
+                  </p>
 
-              <section className="detailSection">
+                  <h2>
+                    {selectedCase[
+                      "CLIENTE"
+                    ] || "Sin cliente"}
+                  </h2>
 
-                <div className="detailSectionHeader">
+                  <div className="caseMeta">
+                    <span>
+                      ID{" "}
+                      {selectedCase["ID"] ||
+                        "—"}
+                    </span>
 
-                  <div className="stageIcon">
-                    02
+                    <span>
+                      {selectedCase[
+                        "DUE DATE/NO DUE DATE"
+                      ] || "—"}
+                    </span>
+
+                    <span
+                      className={statusClass(
+                        selectedCase[
+                          "STATUS"
+                        ] || ""
+                      )}
+                    >
+                      {selectedCase[
+                        "STATUS"
+                      ] || "NO STATUS"}
+                    </span>
                   </div>
-
-                  <div>
-                    <h3>
-                      Psych
-                    </h3>
-
-                    <p>
-                      DOE workflow
-                    </p>
-                  </div>
-
                 </div>
 
-                <div className="fieldGrid">
+                <button
+                  className="closeButton"
+                  onClick={() =>
+                    setSelectedCase(null)
+                  }
+                >
+                  ×
+                </button>
+              </div>
 
-                  <Field
-                    label="Psych"
-                    header="PSYCH"
-                    readOnly
-                  />
+              <div className="modalBody">
+                <section className="detailSection">
+                  <div className="detailSectionHeader">
+                    <div className="stageIcon">
+                      01
+                    </div>
 
-                  <Field
-                    label="DOE Status"
-                    header="DOE STATUS"
-                    type="select"
-                    options={[
-                      "DONE",
-                      "CORRECTIONS",
-                      "REVIEW",
-                      "SPECIAL CASE",
-                      "UNRESPONSIVE",
-                      "ON HOLD",
-                      "CANCELLED",
-                      "NA",
-                    ]}
-                  />
-
-                  <Field
-                    label="Expected Done"
-                    header="EXPECTED DONE (doe)"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Done"
-                    header="DONE (doe)"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Link DOE"
-                    header="LINK DOE"
-                  />
-
-                  <Field
-                    label="Class"
-                    header="CLASS"
-                    readOnly
-                  />
-
-                </div>
-
-              </section>
-
-              {/* PARALEGAL */}
-
-              <section className="detailSection">
-
-                <div className="detailSectionHeader">
-
-                  <div className="stageIcon">
-                    03
+                    <div>
+                      <h3>General</h3>
+                      <p>
+                        Información principal
+                        del caso
+                      </p>
+                    </div>
                   </div>
-
-                  <div>
-                    <h3>
-                      Paralegal
-                    </h3>
-
-                    <p>
-                      Carátula, Draft
-                      y CVL
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="subStage">
-
-                  <h4>
-                    Llenado de
-                    Carátula
-                  </h4>
 
                   <div className="fieldGrid">
+                    <Field
+                      label="Receipt Number"
+                      header="RECEIPT NUMBER"
+                      readOnly
+                    />
 
                     <Field
-                      label="PL Assigned"
-                      header="PL ASSIGNED"
+                      label="Receipt Date"
+                      header="RECEIPT DATE"
                       type="date"
                     />
 
                     <Field
-                      label="Expected Done"
-                      header="CARÁTULA EXPECTED DONE"
+                      label="Deadline"
+                      header="DEADLINE"
                       type="date"
                     />
 
                     <Field
-                      label="Done"
-                      header="CARATULA DONE"
+                      label="Commitment"
+                      header="COMMITMENT"
                       type="date"
                     />
-
-                    <Field
-                      label="Link Carátula"
-                      header="LINK CARÁTULA"
-                    />
-
-                  </div>
-                </div>
-
-                <div className="subStage">
-
-                  <h4>
-                    1st Draft
-                  </h4>
-
-                  <div className="fieldGrid">
 
                     <Field
                       label="Status"
-                      header="STATUS 1ST DRAFT"
+                      header="STATUS"
                       type="select"
                       options={[
-                        "DONE",
                         "WORKING",
-                        "NA",
-                        "UNRESPONSIVE",
-                        "CANCELLED/CLOSED",
+                        "MGM REVIEW",
+                        "SENT TO USCIS",
                         "SPECIAL CASE",
+                        "CANCELLED/CLOSED",
                       ]}
                     />
 
                     <Field
-                      label="Expected Done"
-                      header="1ST DRAFT EXP DONE"
+                      label="Sent to MGM"
+                      header="SENT TO MGM"
                       type="date"
                     />
-
-                    <Field
-                      label="Done"
-                      header="1ST DRAFT DONE"
-                      type="date"
-                    />
-
-                    <Field
-                      label="Link Inf Affidavit"
-                      header="LINK INF AFFIDAVIT"
-                    />
-
-                  </div>
-                </div>
-
-                <div className="subStage">
-
-                  <h4>
-                    Escalación a CVL
-                  </h4>
-
-                  <div className="fieldGrid">
-
-                    <Field
-                      label="Expected Done"
-                      header="PL CVL EXPECTED DONE"
-                      type="date"
-                    />
-
-                    <Field
-                      label="Done"
-                      header="PL CVL DONE"
-                      type="date"
-                    />
-
-                  </div>
-                </div>
-
-              </section>
-
-              {/* EA */}
-
-              <section className="detailSection">
-
-                <div className="detailSectionHeader">
-
-                  <div className="stageIcon">
-                    04
                   </div>
 
-                  <div>
-                    <h3>
-                      EA · Analyst
-                    </h3>
-
-                    <p>
-                      Evidence
-                      Analysis
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="fieldGrid">
-
                   <Field
-                    label="EA Member"
-                    header="EA MEMBER"
-                    readOnly
+                    label="Nota"
+                    header="NOTA"
+                    type="textarea"
                   />
+                </section>
 
-                  <Field
-                    label="Assigned"
-                    header="EA ASSIGNED"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Status"
-                    header="EA STATUS"
-                  />
-
-                  <Field
-                    label="Expected Done"
-                    header="EA EXPECTED DONE"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Done"
-                    header="EA DONE"
-                    type="date"
-                  />
-
-                  <Field
-                    label="EA P.E."
-                    header="EA P.E."
-                    type="select"
-                    options={[
-                      "APPROVED",
-                      "CORRECTIONS",
-                      "PENDING",
-                      "NA",
-                    ]}
-                  />
-
-                  <Field
-                    label="P.E. Approved"
-                    header="FECHA P.E. APROBADA"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Stoppers"
-                    header="EA STOPPERS"
-                  />
-
-                  <Field
-                    label="Hojas"
-                    header="EA HOJAS"
-                  />
-
-                  <Field
-                    label="WS"
-                    header="EA WS"
-                  />
-
-                  <Field
-                    label="Link Drive"
-                    header="EA LINK DRIVE"
-                  />
-
-                </div>
-
-              </section>
-
-              {/* CVL */}
-
-              <section className="detailSection">
-
-                <div className="detailSectionHeader">
-
-                  <div className="stageIcon">
-                    05
-                  </div>
-
-                  <div>
-                    <h3>
-                      CVL
-                    </h3>
-
-                    <p>
-                      CVL workflow
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="fieldGrid">
-
-                  <Field
-                    label="CVL Member"
-                    header="CVL MEMBER"
-                    readOnly
-                  />
-
-                  <Field
-                    label="Status"
-                    header="CVL STATUS"
-                  />
-
-                  <Field
-                    label="Expected Done"
-                    header="CVL EXPECTED DONE"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Done"
-                    header="DONE CVL"
-                    type="date"
-                  />
-
-                  <Field
-                    label="Link CVL"
-                    header="LINK CVL"
-                  />
-
-                </div>
-
-              </section>
-
+                <StageContent stage="psych" />
+                <StageContent stage="caratula" />
+                <StageContent stage="draft" />
+                <StageContent stage="plcvl" />
+                <StageContent stage="ea" />
+                <StageContent stage="cvl" />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
