@@ -264,66 +264,38 @@ const sameDay = (
 const getDeliveryWeekLabel = (
   date: Date
 ) => {
-  const weekStart =
-    startOfWeek(date);
+  const tempDate = new Date(
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    )
+  );
 
-  const weekEnd =
-    addDays(
-      weekStart,
-      6
-    );
+  const dayNumber =
+    tempDate.getUTCDay() || 7;
 
-  const startDay =
-    String(
-      weekStart.getDate()
-    ).padStart(2, "0");
+  tempDate.setUTCDate(
+    tempDate.getUTCDate() + 4 - dayNumber
+  );
 
-  const endDay =
-    String(
-      weekEnd.getDate()
-    ).padStart(2, "0");
+  const yearStart = new Date(
+    Date.UTC(
+      tempDate.getUTCFullYear(),
+      0,
+      1
+    )
+  );
 
-  const startMonth =
-    weekStart
-      .toLocaleDateString(
-        "es-ES",
-        {
-          month: "short",
-        }
-      )
-      .replace(".", "");
+  const weekNumber = Math.ceil(
+    (
+      (tempDate.getTime() - yearStart.getTime()) /
+        86400000 +
+      1
+    ) / 7
+  );
 
-  const endMonth =
-    weekEnd
-      .toLocaleDateString(
-        "es-ES",
-        {
-          month: "short",
-        }
-      )
-      .replace(".", "");
-
-  const startYear =
-    weekStart.getFullYear();
-
-  const endYear =
-    weekEnd.getFullYear();
-
-  if (
-    weekStart.getMonth() ===
-      weekEnd.getMonth() &&
-    startYear === endYear
-  ) {
-    return `${startDay}–${endDay} ${endMonth} ${endYear}`;
-  }
-
-  if (
-    startYear === endYear
-  ) {
-    return `${startDay} ${startMonth} – ${endDay} ${endMonth} ${endYear}`;
-  }
-
-  return `${startDay} ${startMonth} ${startYear} – ${endDay} ${endMonth} ${endYear}`;
+  return `Semana ${weekNumber}`;
 };
 
 const classifyDate = (
