@@ -3386,3 +3386,396 @@ button {
     padding-top: 14px;
   }
 }
+/* =========================================================
+   ALPHA HUB - RENDICIÓN DE CUENTAS
+   ========================================================= */
+
+.accountabilityPageHeader {
+  margin-bottom: 20px;
+}
+
+.accountabilityWeekCard {
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) auto minmax(360px, auto);
+  align-items: center;
+  gap: 18px;
+  border: 1px solid #e1e6ed;
+  border-radius: 13px;
+  background: white;
+  box-shadow: 0 3px 14px rgba(25, 39, 67, 0.025);
+}
+
+.accountabilityWeekInfo h2 {
+  margin: 4px 0 3px;
+  color: #2d3a51;
+  font-size: 16px;
+}
+
+.accountabilityWeekInfo > span {
+  color: #8c97a8;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.accountabilityWeekControls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.accountabilityArrowButton {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dfe5ed;
+  border-radius: 8px;
+  background: white;
+  color: #536177;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.accountabilityArrowButton:hover:not(:disabled) {
+  background: #f7f9fc;
+  border-color: #cbd4e0;
+}
+
+.accountabilityArrowButton:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.accountabilityDateFilter {
+  min-width: 145px;
+  height: 46px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #e0e5ed;
+  border-radius: 9px;
+  background: #fafbfc;
+}
+
+.accountabilityDateFilter > span {
+  margin-bottom: 2px;
+  color: #9aa4b3;
+  font-size: 6px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.accountabilityDateFilter input {
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #3c4960;
+  font-size: 9px;
+  font-weight: 720;
+}
+
+.accountabilityGlobalSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(72px, 1fr));
+  gap: 7px;
+}
+
+.accountabilityGlobalSummary > div {
+  min-height: 60px;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #e7ebf1;
+  border-radius: 9px;
+  background: #fafbfd;
+}
+
+.accountabilityGlobalSummary span,
+.accountabilityMetrics span {
+  color: #929daf;
+  font-size: 6px;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+}
+
+.accountabilityGlobalSummary strong {
+  margin-top: 3px;
+  color: #2d3b52;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.accountabilityGlobalSummary .accountabilityProductivitySummary {
+  background: #f3f7ff;
+  border-color: #dce6fb;
+}
+
+.accountabilityProductivitySummary strong {
+  color: #3f61ad;
+}
+
+.accountabilityCollaborators {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.accountabilityPersonCard {
+  overflow: hidden;
+  border: 1px solid #dfe5ed;
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 4px 18px rgba(25, 39, 67, 0.03);
+}
+
+.accountabilityPersonHeader {
+  min-height: 72px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-bottom: 1px solid #e9edf2;
+  background: #fbfcfe;
+}
+
+.accountabilityPersonAvatar {
+  width: 39px;
+  height: 39px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #edf2ff;
+  color: #4d6dc8;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.accountabilityPersonHeader h2 {
+  margin: 3px 0 0;
+  color: #27354b;
+  font-size: 18px;
+}
+
+.accountabilityStages {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.accountabilityStageCard {
+  overflow: hidden;
+  border: 1px solid #e5e9ef;
+  border-radius: 11px;
+  background: white;
+}
+
+.accountabilityStageTop {
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.accountabilityStageTop h3 {
+  margin: 4px 0 0;
+  color: #334158;
+  font-size: 13px;
+}
+
+.accountabilityMetrics {
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.accountabilityMetrics > div,
+.accountabilityAdvancedMetric {
+  min-width: 105px;
+  min-height: 60px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #e5eaf1;
+  border-radius: 8px;
+  background: #fafbfd;
+  text-align: left;
+}
+
+.accountabilityMetrics strong,
+.accountabilityAdvancedMetric strong {
+  margin-top: 3px;
+  color: #2f3d54;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.accountabilityMetrics small,
+.accountabilityAdvancedMetric small {
+  margin-top: 4px;
+  color: #9aa4b3;
+  font-size: 6px;
+  white-space: nowrap;
+}
+
+.accountabilityMetrics .accountabilityProductivityMetric {
+  background: #f4f7ff;
+  border-color: #dce5f8;
+}
+
+.accountabilityProductivityMetric strong {
+  color: #4262aa;
+}
+
+.accountabilityAdvancedMetric {
+  cursor: pointer;
+}
+
+.accountabilityAdvancedMetric:hover {
+  background: #f7f4ff;
+  border-color: #ddd5ef;
+}
+
+.accountabilityAdvancedMetric strong {
+  color: #745ca3;
+}
+
+.accountabilityTableWrap {
+  overflow-x: auto;
+}
+
+.accountabilityTableHeader,
+.accountabilityTableRow {
+  min-width: 680px;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.6fr) minmax(150px, .85fr) minmax(160px, .9fr);
+  align-items: center;
+  gap: 13px;
+}
+
+.accountabilityTableHeader {
+  padding: 9px 15px;
+  background: #fafbfd;
+  color: #929daf;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+}
+
+.accountabilityTableRow {
+  min-height: 50px;
+  padding: 9px 15px;
+  border-top: 1px solid #eef1f5;
+  color: #59667b;
+  font-size: 9px;
+}
+
+.accountabilityTableRow:hover {
+  background: #fafbfe;
+}
+
+.accountabilityClientCell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.accountabilityClientCell strong {
+  overflow: hidden;
+  color: #39475e;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountabilityBacklogTag {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #fff0f0;
+  color: #ad5151;
+  font-size: 6px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+.accountabilityDoneDate {
+  color: #327254;
+  font-weight: 760;
+}
+
+.accountabilityMissingDate {
+  color: #bd5d5d;
+  font-weight: 760;
+}
+
+.accountabilityDeliveredRow {
+  background: #fcfefd;
+}
+
+.accountabilityPendingRow {
+  background: #fffdfd;
+}
+
+.accountabilityNoRows {
+  padding: 22px 15px;
+  color: #98a2b1;
+  text-align: center;
+  font-size: 9px;
+}
+
+.accountabilityEmptyState {
+  border: 1px solid #e1e6ed;
+  border-radius: 13px;
+  background: white;
+}
+
+@media (max-width: 1180px) {
+  .accountabilityWeekCard {
+    grid-template-columns: 1fr;
+  }
+
+  .accountabilityGlobalSummary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 850px) {
+  .accountabilityStageTop {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .accountabilityMetrics {
+    overflow-x: auto;
+  }
+
+  .accountabilityMetrics > div,
+  .accountabilityAdvancedMetric {
+    min-width: 115px;
+  }
+
+  .accountabilityWeekControls {
+    width: 100%;
+  }
+
+  .accountabilityDateFilter {
+    flex: 1;
+  }
+}
+
+@media (max-width: 620px) {
+  .accountabilityGlobalSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
