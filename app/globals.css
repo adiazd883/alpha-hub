@@ -3165,6 +3165,28 @@ button {
   font-size: 7px;
 }
 
+.historyPersonCardInteractive {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.13s ease,
+    border-color 0.13s ease,
+    box-shadow 0.13s ease,
+    background 0.13s ease;
+}
+
+.historyPersonCardInteractive:hover {
+  transform: translateY(-1px);
+  border-color: #ccd6e5;
+  background: #f7f9fd;
+  box-shadow: 0 5px 16px rgba(31, 48, 79, 0.06);
+}
+
+.historyPersonCardInteractive:active {
+  transform: translateY(0);
+}
+
 .historyDetailCard {
   margin-bottom: 17px;
   overflow: hidden;
