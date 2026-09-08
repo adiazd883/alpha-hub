@@ -2116,6 +2116,12 @@ export default function Home() {
                   ),
                 0
               ),
+
+            items:
+              points.flatMap(
+                (point) =>
+                  point.items[name] || []
+              ),
           })
         );
 
@@ -5204,10 +5210,19 @@ export default function Home() {
               <div className="historyTotalsGrid">
                 {historyData.totals.map(
                   (item) => (
-                    <div
-                      className="historyPersonCard"
+                    <button
+                      type="button"
+                      className="historyPersonCard historyPersonCardInteractive"
                       key={
                         item.name
+                      }
+                      title="Doble clic para ver clientes y fechas DONE"
+                      onDoubleClick={() =>
+                        setDeliveryDetail({
+                          title: item.name,
+                          subtitle: `${item.total} entregas completadas · ${monthNames[historyMonthDate.getMonth()]} ${historyMonthDate.getFullYear()}`,
+                          items: item.items,
+                        })
                       }
                     >
                       <span>
@@ -5225,7 +5240,7 @@ export default function Home() {
                       <small>
                         entregas
                       </small>
-                    </div>
+                    </button>
                   )
                 )}
               </div>
