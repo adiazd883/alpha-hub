@@ -21,7 +21,7 @@ type User = {
   role: Role | null;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability";
 
 type TeamGroup = "paralegal" | "psych" | "ea";
 
@@ -70,6 +70,35 @@ type DeliveryDetail = {
   subtitle: string;
   items: DeliveryDetailItem[];
 } | null;
+
+type AccountabilityStageResult = {
+  stage: TeamCalendar;
+  label: string;
+  expectedLabel: string;
+  meta: number;
+  delivered: number;
+  backlog: number;
+  scheduled: number;
+  advanced: number;
+  productivity: number | null;
+  rows: {
+    client: string;
+    expected: string;
+    done: string;
+    delivered: boolean;
+    backlog: boolean;
+  }[];
+  advancedRows: {
+    client: string;
+    expected: string;
+    done: string;
+  }[];
+};
+
+type AccountabilityCollaborator = {
+  name: string;
+  stages: AccountabilityStageResult[];
+};
 
 const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
@@ -909,6 +938,25 @@ const weeksIntersectingMonth = (
   return weeks;
 };
 
+const accountabilityStages: TeamCalendar[] = [
+  "mgm",
+  "draft",
+  "plcvl",
+  "psych",
+  "ea",
+  "cvl",
+];
+
+const dateInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const accountabilityExpectedLabel = (stage: TeamCalendar) =>
+  stage === "mgm" ? "COMMITMENT" : "EXPECTED DONE";
+
 export default function Home() {
   const [user, setUser] =
     useState<User | null>(null);
@@ -974,6 +1022,16 @@ export default function Home() {
     historyStage,
     setHistoryStage,
   ] = useState<TeamCalendar>("draft");
+
+  const [
+    accountabilityWeekStart,
+    setAccountabilityWeekStart,
+  ] = useState(() =>
+    addDays(
+      startOfWeek(new Date()),
+      -7
+    )
+  );
 
   const [search, setSearch] =
     useState("");
@@ -2305,6 +2363,450 @@ export default function Home() {
       };
     }, [historyData]);
 
+  /* =========================
+     RENDICIÓN DE CUENTAS
+     ========================= */
+
+  const accountabilityWeekEnd =
+    useMemo(
+      () =>
+        addDays(
+          accountabilityWeekStart,
+          6
+        ),
+      [accountabilityWeekStart]
+    );
+
+  const latestCompletedWeekStart =
+    useMemo(
+      () =>
+        addDays(
+          startOfWeek(new Date()),
+          -7
+        ),
+      []
+    );
+
+  const accountabilityVisibleStages =
+    useMemo(() => {
+      if (canSeeAllTeam) {
+        return accountabilityStages;
+      }
+
+      if (role === "PARALEGAL") {
+        return [
+          "mgm",
+          "draft",
+          "plcvl",
+        ] as TeamCalendar[];
+      }
+
+      if (role === "PSYCH") {
+        return ["psych"] as TeamCalendar[];
+      }
+
+      if (role === "ANALYST") {
+        return [
+          "ea",
+          "cvl",
+        ] as TeamCalendar[];
+      }
+
+      return [] as TeamCalendar[];
+    }, [
+      canSeeAllTeam,
+      role,
+    ]);
+
+  const accountabilityData =
+    useMemo(() => {
+      const collaboratorMap =
+        new Map<
+          string,
+          Map<
+            TeamCalendar,
+            AccountabilityStageResult
+          >
+        >();
+
+      accountabilityVisibleStages.forEach(
+        (stage) => {
+          const collaboratorKey =
+            collaboratorHeader(stage);
+          const expectedKey =
+            calendarDateHeader(stage);
+          const doneKey =
+            doneDateHeader(stage);
+
+          const byCollaborator =
+            new Map<
+              string,
+              {
+                metaRows: {
+                  row: CaseRow;
+                  expected: Date;
+                  done: Date | null;
+                }[];
+                advancedRows: {
+                  row: CaseRow;
+                  expected: Date;
+                  done: Date;
+                }[];
+              }
+            >();
+
+          data.rows.forEach((row) => {
+            if (
+              !scheduledEligible(
+                row,
+                stage
+              )
+            ) {
+              return;
+            }
+
+            const expected =
+              parseDateOnly(
+                row[expectedKey] || ""
+              );
+
+            if (!expected) {
+              return;
+            }
+
+            const done =
+              parseDateOnly(
+                row[doneKey] || ""
+              );
+
+            const collaborator =
+              (
+                row[
+                  collaboratorKey
+                ] || ""
+              ).trim() ||
+              "Sin asignar";
+
+            if (
+              !byCollaborator.has(
+                collaborator
+              )
+            ) {
+              byCollaborator.set(
+                collaborator,
+                {
+                  metaRows: [],
+                  advancedRows: [],
+                }
+              );
+            }
+
+            const bucket =
+              byCollaborator.get(
+                collaborator
+              )!;
+
+            const belongsToMeta =
+              expected.getTime() <=
+                accountabilityWeekEnd.getTime() &&
+              (
+                !done ||
+                done.getTime() >=
+                  accountabilityWeekStart.getTime()
+              );
+
+            if (belongsToMeta) {
+              bucket.metaRows.push({
+                row,
+                expected,
+                done,
+              });
+              return;
+            }
+
+            const isAdvanced =
+              expected.getTime() >
+                accountabilityWeekEnd.getTime() &&
+              !!done &&
+              done.getTime() >=
+                accountabilityWeekStart.getTime() &&
+              done.getTime() <=
+                accountabilityWeekEnd.getTime();
+
+            if (isAdvanced && done) {
+              bucket.advancedRows.push({
+                row,
+                expected,
+                done,
+              });
+            }
+          });
+
+          byCollaborator.forEach(
+            (bucket, collaborator) => {
+              const deliveredRows =
+                bucket.metaRows.filter(
+                  (item) =>
+                    !!item.done &&
+                    item.done.getTime() >=
+                      accountabilityWeekStart.getTime() &&
+                    item.done.getTime() <=
+                      accountabilityWeekEnd.getTime()
+                );
+
+              const backlog =
+                bucket.metaRows.filter(
+                  (item) =>
+                    item.expected.getTime() <
+                    accountabilityWeekStart.getTime()
+                ).length;
+
+              const scheduled =
+                bucket.metaRows.filter(
+                  (item) =>
+                    item.expected.getTime() >=
+                      accountabilityWeekStart.getTime() &&
+                    item.expected.getTime() <=
+                      accountabilityWeekEnd.getTime()
+                ).length;
+
+              const meta =
+                bucket.metaRows.length;
+              const delivered =
+                deliveredRows.length;
+
+              if (
+                meta === 0 &&
+                bucket.advancedRows.length === 0
+              ) {
+                return;
+              }
+
+              const stageResult: AccountabilityStageResult = {
+                stage,
+                label: stageLabel(stage),
+                expectedLabel:
+                  accountabilityExpectedLabel(
+                    stage
+                  ),
+                meta,
+                delivered,
+                backlog,
+                scheduled,
+                advanced:
+                  bucket.advancedRows.length,
+                productivity:
+                  meta > 0
+                    ? (delivered / meta) * 100
+                    : null,
+                rows:
+                  bucket.metaRows
+                    .sort(
+                      (a, b) =>
+                        a.expected.getTime() -
+                        b.expected.getTime()
+                    )
+                    .map((item) => ({
+                      client:
+                        item.row[
+                          "CLIENTE"
+                        ] ||
+                        "Sin cliente",
+                      expected:
+                        formatDate(
+                          item.row[
+                            expectedKey
+                          ] || ""
+                        ),
+                      done:
+                        item.done
+                          ? formatDate(
+                              item.row[
+                                doneKey
+                              ] || ""
+                            )
+                          : "—",
+                      delivered:
+                        !!item.done &&
+                        item.done.getTime() >=
+                          accountabilityWeekStart.getTime() &&
+                        item.done.getTime() <=
+                          accountabilityWeekEnd.getTime(),
+                      backlog:
+                        item.expected.getTime() <
+                        accountabilityWeekStart.getTime(),
+                    })),
+                advancedRows:
+                  bucket.advancedRows
+                    .sort(
+                      (a, b) =>
+                        a.done.getTime() -
+                        b.done.getTime()
+                    )
+                    .map((item) => ({
+                      client:
+                        item.row[
+                          "CLIENTE"
+                        ] ||
+                        "Sin cliente",
+                      expected:
+                        formatDate(
+                          item.row[
+                            expectedKey
+                          ] || ""
+                        ),
+                      done:
+                        formatDate(
+                          item.row[
+                            doneKey
+                          ] || ""
+                        ),
+                    })),
+              };
+
+              if (
+                !collaboratorMap.has(
+                  collaborator
+                )
+              ) {
+                collaboratorMap.set(
+                  collaborator,
+                  new Map()
+                );
+              }
+
+              collaboratorMap
+                .get(collaborator)!
+                .set(
+                  stage,
+                  stageResult
+                );
+            }
+          );
+        }
+      );
+
+      const collaborators: AccountabilityCollaborator[] =
+        Array.from(
+          collaboratorMap.entries()
+        )
+          .map(
+            ([name, stageMap]) => ({
+              name,
+              stages:
+                accountabilityVisibleStages
+                  .map(
+                    (stage) =>
+                      stageMap.get(
+                        stage
+                      )
+                  )
+                  .filter(
+                    (
+                      item
+                    ): item is AccountabilityStageResult =>
+                      !!item
+                  ),
+            })
+          )
+          .sort((a, b) => {
+            if (
+              a.name ===
+              "Sin asignar"
+            ) {
+              return 1;
+            }
+
+            if (
+              b.name ===
+              "Sin asignar"
+            ) {
+              return -1;
+            }
+
+            return a.name.localeCompare(
+              b.name
+            );
+          });
+
+      const meta =
+        collaborators.reduce(
+          (total, collaborator) =>
+            total +
+            collaborator.stages.reduce(
+              (sum, stage) =>
+                sum + stage.meta,
+              0
+            ),
+          0
+        );
+
+      const delivered =
+        collaborators.reduce(
+          (total, collaborator) =>
+            total +
+            collaborator.stages.reduce(
+              (sum, stage) =>
+                sum + stage.delivered,
+              0
+            ),
+          0
+        );
+
+      const advanced =
+        collaborators.reduce(
+          (total, collaborator) =>
+            total +
+            collaborator.stages.reduce(
+              (sum, stage) =>
+                sum + stage.advanced,
+              0
+            ),
+          0
+        );
+
+      return {
+        collaborators,
+        meta,
+        delivered,
+        advanced,
+        productivity:
+          meta > 0
+            ? (delivered / meta) * 100
+            : null,
+      };
+    }, [
+      data.rows,
+      accountabilityVisibleStages,
+      accountabilityWeekStart,
+      accountabilityWeekEnd,
+    ]);
+
+  function previousAccountabilityWeek() {
+    setAccountabilityWeekStart(
+      addDays(
+        accountabilityWeekStart,
+        -7
+      )
+    );
+  }
+
+  function nextAccountabilityWeek() {
+    const next = addDays(
+      accountabilityWeekStart,
+      7
+    );
+
+    if (
+      next.getTime() <=
+      latestCompletedWeekStart.getTime()
+    ) {
+      setAccountabilityWeekStart(
+        next
+      );
+    }
+  }
+
   const calendarDays =
     useMemo(() => {
       const year =
@@ -2531,6 +3033,11 @@ export default function Home() {
 
   function openHistory() {
     setMainView("history");
+    setTeamOpen(false);
+  }
+
+  function openAccountability() {
+    setMainView("accountability");
     setTeamOpen(false);
   }
 
@@ -3608,6 +4115,26 @@ export default function Home() {
 
             <span>
               Histórico KPI
+            </span>
+          </button>
+
+          <button
+            className={`navItem ${
+              mainView ===
+              "accountability"
+                ? "active"
+                : ""
+            }`}
+            onClick={
+              openAccountability
+            }
+          >
+            <span className="navIcon">
+              ✓
+            </span>
+
+            <span>
+              Rendición de cuentas
             </span>
           </button>
         </nav>
@@ -4912,6 +5439,308 @@ export default function Home() {
                 </section>
               </>
             )}
+          </>
+        )}
+
+        {mainView ===
+          "accountability" && (
+          <>
+            <header className="pageHeader accountabilityPageHeader">
+              <div>
+                <p className="eyebrow">
+                  WEEKLY ACCOUNTABILITY
+                </p>
+
+                <h1>
+                  Rendición de cuentas
+                </h1>
+
+                <p>
+                  Meta real de la semana vs entregas completadas. Carátulas no se consideran.
+                </p>
+              </div>
+
+              <button
+                className="refreshButton"
+                onClick={
+                  loadCases
+                }
+              >
+                ↻ Refresh
+              </button>
+            </header>
+
+            <section className="accountabilityWeekCard">
+              <div className="accountabilityWeekInfo">
+                <p className="eyebrow">
+                  SEMANA AUDITADA
+                </p>
+
+                <h2>
+                  Semana {getIsoWeekNumber(accountabilityWeekStart)}
+                </h2>
+
+                <span>
+                  {formatDate(dateInputValue(accountabilityWeekStart))} – {formatDate(dateInputValue(accountabilityWeekEnd))}
+                </span>
+              </div>
+
+              <div className="accountabilityWeekControls">
+                <button
+                  type="button"
+                  className="accountabilityArrowButton"
+                  onClick={
+                    previousAccountabilityWeek
+                  }
+                  title="Semana anterior"
+                >
+                  ‹
+                </button>
+
+                <label className="accountabilityDateFilter">
+                  <span>
+                    IR A SEMANA
+                  </span>
+
+                  <input
+                    type="date"
+                    value={
+                      dateInputValue(
+                        accountabilityWeekStart
+                      )
+                    }
+                    max={
+                      dateInputValue(
+                        addDays(
+                          latestCompletedWeekStart,
+                          6
+                        )
+                      )
+                    }
+                    onChange={(e) => {
+                      const selected =
+                        parseDateOnly(
+                          e.target.value
+                        );
+
+                      if (!selected) {
+                        return;
+                      }
+
+                      const selectedWeek =
+                        startOfWeek(
+                          selected
+                        );
+
+                      setAccountabilityWeekStart(
+                        selectedWeek.getTime() >
+                          latestCompletedWeekStart.getTime()
+                          ? latestCompletedWeekStart
+                          : selectedWeek
+                      );
+                    }}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  className="accountabilityArrowButton"
+                  onClick={
+                    nextAccountabilityWeek
+                  }
+                  disabled={
+                    accountabilityWeekStart.getTime() >=
+                    latestCompletedWeekStart.getTime()
+                  }
+                  title="Semana siguiente"
+                >
+                  ›
+                </button>
+              </div>
+
+              <div className="accountabilityGlobalSummary">
+                <div>
+                  <span>META</span>
+                  <strong>{accountabilityData.meta}</strong>
+                </div>
+
+                <div>
+                  <span>ENTREGAS</span>
+                  <strong>{accountabilityData.delivered}</strong>
+                </div>
+
+                <div>
+                  <span>ADELANTADAS</span>
+                  <strong>{accountabilityData.advanced}</strong>
+                </div>
+
+                <div className="accountabilityProductivitySummary">
+                  <span>PRODUCTIVIDAD</span>
+                  <strong>
+                    {accountabilityData.productivity === null
+                      ? "—"
+                      : `${accountabilityData.productivity.toFixed(1)}%`}
+                  </strong>
+                </div>
+              </div>
+            </section>
+
+            <div className="accountabilityCollaborators">
+              {accountabilityData.collaborators.map(
+                (collaborator) => (
+                  <section
+                    className="accountabilityPersonCard"
+                    key={collaborator.name}
+                  >
+                    <div className="accountabilityPersonHeader">
+                      <div className="accountabilityPersonAvatar">
+                        {collaborator.name
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+
+                      <div>
+                        <p className="eyebrow">
+                          COLABORADOR
+                        </p>
+
+                        <h2>
+                          {collaborator.name}
+                        </h2>
+                      </div>
+                    </div>
+
+                    <div className="accountabilityStages">
+                      {collaborator.stages.map(
+                        (stage) => (
+                          <article
+                            className="accountabilityStageCard"
+                            key={`${collaborator.name}-${stage.stage}`}
+                          >
+                            <div className="accountabilityStageTop">
+                              <div>
+                                <p className="eyebrow">
+                                  KPI
+                                </p>
+
+                                <h3>
+                                  {stage.label}
+                                </h3>
+                              </div>
+
+                              <div className="accountabilityMetrics">
+                                <div>
+                                  <span>META</span>
+                                  <strong>{stage.meta}</strong>
+                                  <small>
+                                    {stage.backlog} backlog + {stage.scheduled} semana
+                                  </small>
+                                </div>
+
+                                <div>
+                                  <span>ENTREGAS</span>
+                                  <strong>{stage.delivered}</strong>
+                                  <small>de la meta</small>
+                                </div>
+
+                                <div className="accountabilityProductivityMetric">
+                                  <span>% PRODUCTIVIDAD</span>
+                                  <strong>
+                                    {stage.productivity === null
+                                      ? "—"
+                                      : `${stage.productivity.toFixed(1)}%`}
+                                  </strong>
+                                  <small>entregas ÷ meta</small>
+                                </div>
+
+                                {stage.advanced > 0 && (
+                                  <button
+                                    type="button"
+                                    className="accountabilityAdvancedMetric"
+                                    onDoubleClick={() =>
+                                      setDeliveryDetail({
+                                        title: `${collaborator.name} · ${stage.label}`,
+                                        subtitle: `${stage.advanced} entregas adelantadas`,
+                                        items: stage.advancedRows.map(
+                                          (item) => ({
+                                            client: item.client,
+                                            date: item.done,
+                                          })
+                                        ),
+                                      })
+                                    }
+                                    title="Doble clic para ver adelantadas"
+                                  >
+                                    <span>ADELANTADAS</span>
+                                    <strong>{stage.advanced}</strong>
+                                    <small>fuera de la meta</small>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="accountabilityTableWrap">
+                              <div className="accountabilityTableHeader">
+                                <div>CLIENTE</div>
+                                <div>{stage.expectedLabel}</div>
+                                <div>FECHA DE ENTREGA</div>
+                              </div>
+
+                              {stage.rows.map(
+                                (item, index) => (
+                                  <div
+                                    className={`accountabilityTableRow ${
+                                      item.delivered
+                                        ? "accountabilityDeliveredRow"
+                                        : "accountabilityPendingRow"
+                                    }`}
+                                    key={`${stage.stage}-${item.client}-${index}`}
+                                  >
+                                    <div className="accountabilityClientCell">
+                                      <strong>{item.client}</strong>
+
+                                      {item.backlog && (
+                                        <span className="accountabilityBacklogTag">
+                                          BACKLOG
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div>
+                                      {item.expected}
+                                    </div>
+
+                                    <div className={
+                                      item.delivered
+                                        ? "accountabilityDoneDate"
+                                        : "accountabilityMissingDate"
+                                    }>
+                                      {item.done}
+                                    </div>
+                                  </div>
+                                )
+                              )}
+
+                              {!stage.rows.length && (
+                                <div className="accountabilityNoRows">
+                                  No hubo casos dentro de la meta de esta semana.
+                                </div>
+                              )}
+                            </div>
+                          </article>
+                        )
+                      )}
+                    </div>
+                  </section>
+                )
+              )}
+
+              {!accountabilityData.collaborators.length && (
+                <div className="emptyState accountabilityEmptyState">
+                  No hay metas ni entregas para la semana seleccionada.
+                </div>
+              )}
+            </div>
           </>
         )}
 
