@@ -59,6 +59,17 @@ type Stats = {
   future: number;
 };
 
+type DeliveryDetailItem = {
+  client: string;
+  date?: string;
+};
+
+type DeliveryDetail = {
+  title: string;
+  subtitle: string;
+  items: DeliveryDetailItem[];
+} | null;
+
 const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
   TL: "Team Leader",
@@ -951,6 +962,9 @@ export default function Home() {
   const [error, setError] =
     useState("");
 
+  const [deliveryDetail, setDeliveryDetail] =
+    useState<DeliveryDetail>(null);
+
   const role = user?.role;
 
   const canSeeAllTeam =
@@ -1769,11 +1783,20 @@ export default function Home() {
             number
           > = {};
 
+          const items: Record<
+            number,
+            DeliveryDetailItem[]
+          > = {};
+
           workloadWeeks.forEach(
             (week) => {
               counts[
                 week.week
               ] = 0;
+
+              items[
+                week.week
+              ] = [];
             }
           );
 
@@ -1823,12 +1846,23 @@ export default function Home() {
                   counts[week] ||
                   0
                 ) + 1;
+
+              if (!items[week]) {
+                items[week] = [];
+              }
+
+              items[week].push({
+                client:
+                  row["CLIENTE"] ||
+                  "Sin cliente",
+              });
             }
           );
 
           return {
             name,
             counts,
+            items,
 
             total:
               Object.values(
@@ -1990,9 +2024,15 @@ export default function Home() {
               number
             > = {};
 
+            const items: Record<
+              string,
+              DeliveryDetailItem[]
+            > = {};
+
             names.forEach(
               (name) => {
                 values[name] = 0;
+                items[name] = [];
               }
             );
 
@@ -2029,6 +2069,19 @@ export default function Home() {
                       collaborator
                     ] || 0
                   ) + 1;
+
+                if (!items[collaborator]) {
+                  items[collaborator] = [];
+                }
+
+                items[collaborator].push({
+                  client:
+                    row["CLIENTE"] ||
+                    "Sin cliente",
+                  date: formatDate(
+                    row[doneKey] || ""
+                  ),
+                });
               }
             );
 
@@ -2038,6 +2091,7 @@ export default function Home() {
               label:
                 week.label,
               values,
+              items,
             };
           }
         );
@@ -4492,12 +4546,35 @@ export default function Home() {
                                 }
                                 className="workloadNumber"
                               >
-                                {item
+                                {(item
                                   .counts[
                                   week
                                     .week
                                 ] ||
-                                  0}
+                                  0) > 0 ? (
+                                  <button
+                                    className="workloadNumberButton"
+                                    title="Doble clic para ver clientes"
+                                    onDoubleClick={() =>
+                                      setDeliveryDetail({
+                                        title: item.name,
+                                        subtitle: `${week.label} · ${item.counts[week.week]} entregas programadas`,
+                                        items:
+                                          item.items[
+                                            week.week
+                                          ] || [],
+                                      })
+                                    }
+                                  >
+                                    {item
+                                      .counts[
+                                      week
+                                        .week
+                                    ] || 0}
+                                  </button>
+                                ) : (
+                                  <span>0</span>
+                                )}
                               </div>
                             )
                           )}
@@ -4991,6 +5068,17 @@ export default function Home() {
                                     name
                                   ] ||
                                   0,
+
+                                week:
+                                  point.week,
+
+                                label:
+                                  point.label,
+
+                                items:
+                                  point.items[
+                                    name
+                                  ] || [],
                               })
                             );
 
@@ -5038,12 +5126,32 @@ export default function Home() {
                                       cy={
                                         point.y
                                       }
-                                      r="4.5"
+                                      r="5.5"
                                       className={`historyPoint historyFill${
                                         collaboratorIndex %
                                         8
+                                      } ${
+                                        point.value > 0
+                                          ? "historyPointInteractive"
+                                          : ""
                                       }`}
-                                    />
+                                      onDoubleClick={() => {
+                                        if (point.value <= 0) {
+                                          return;
+                                        }
+
+                                        setDeliveryDetail({
+                                          title: name,
+                                          subtitle: `${point.label} · ${point.value} entregas completadas`,
+                                          items:
+                                            point.items,
+                                        });
+                                      }}
+                                    >
+                                      <title>
+                                        {`${name} · ${point.label} · ${point.value} entregas`}
+                                      </title>
+                                    </circle>
 
                                     {point.value >
                                       0 && (
@@ -5221,6 +5329,68 @@ export default function Home() {
           </>
         )}
       </main>
+
+      {deliveryDetail && (
+        <div
+          className="miniDetailOverlay"
+          onMouseDown={() =>
+            setDeliveryDetail(null)
+          }
+        >
+          <div
+            className="miniDetailCard"
+            onMouseDown={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div className="miniDetailHeader">
+              <div>
+                <p className="eyebrow">
+                  DETALLE DE ENTREGAS
+                </p>
+
+                <h3>
+                  {deliveryDetail.title}
+                </h3>
+
+                <span>
+                  {deliveryDetail.subtitle}
+                </span>
+              </div>
+
+              <button
+                className="miniDetailClose"
+                onClick={() =>
+                  setDeliveryDetail(null)
+                }
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="miniDetailList">
+              {deliveryDetail.items.map(
+                (item, index) => (
+                  <div
+                    key={`${item.client}-${item.date || "scheduled"}-${index}`}
+                    className="miniDetailRow"
+                  >
+                    <strong>
+                      {item.client}
+                    </strong>
+
+                    {item.date && (
+                      <span>
+                        {item.date}
+                      </span>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedKpi && (
         <div
