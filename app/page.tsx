@@ -37,6 +37,8 @@ type TeamCalendar =
   | "ea"
   | "cvl";
 
+type TeamViewMode = "calendar" | "table";
+
 type KpiType =
   | "backlog"
   | "pending"
@@ -125,7 +127,11 @@ const parseDateOnly = (value: string): Date | null => {
     const month = Number(iso[2]);
     const day = Number(iso[3]);
 
-    const date = new Date(year, month - 1, day);
+    const date = new Date(
+      year,
+      month - 1,
+      day
+    );
 
     if (
       date.getFullYear() === year &&
@@ -155,7 +161,11 @@ const parseDateOnly = (value: string): Date | null => {
       month = second;
     }
 
-    const date = new Date(year, month - 1, day);
+    const date = new Date(
+      year,
+      month - 1,
+      day
+    );
 
     if (
       date.getFullYear() === year &&
@@ -199,6 +209,18 @@ const toInputDate = (value: string) => {
   return `${year}-${month}-${day}`;
 };
 
+const formatDate = (value: string) => {
+  const parsed = parseDateOnly(value);
+
+  if (!parsed) return value || "—";
+
+  return parsed.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 const startOfWeek = (date: Date) => {
   const result = new Date(
     date.getFullYear(),
@@ -209,9 +231,7 @@ const startOfWeek = (date: Date) => {
   const day = result.getDay();
 
   const diff =
-    day === 0
-      ? -6
-      : 1 - day;
+    day === 0 ? -6 : 1 - day;
 
   result.setDate(
     result.getDate() + diff
@@ -523,7 +543,7 @@ const getKpiGetter = (
 };
 
 /* =========================================================
-   CALENDAR CONFIG
+   TEAM CONFIG
 ========================================================= */
 
 const calendarDateHeader = (
@@ -574,31 +594,87 @@ const calendarStatusHeader = (
   return "";
 };
 
+const collaboratorHeader = (
+  type: TeamCalendar
+) => {
+  if (type === "psych") {
+    return "PSYCH";
+  }
+
+  if (type === "ea") {
+    return "EA MEMBER";
+  }
+
+  if (type === "cvl") {
+    return "CVL MEMBER";
+  }
+
+  return "PARALEGAL";
+};
+
 const calendarActive = (
   row: CaseRow,
   type: TeamCalendar
 ) => {
   if (type === "caratula") {
-    return getCaratulaKpi(row) !== "none";
+    return (
+      getCaratulaKpi(row) !== "none"
+    );
   }
 
   if (type === "draft") {
-    return getDraftKpi(row) !== "none";
+    return (
+      getDraftKpi(row) !== "none"
+    );
   }
 
   if (type === "plcvl") {
-    return getPlCvlKpi(row) !== "none";
+    return (
+      getPlCvlKpi(row) !== "none"
+    );
   }
 
   if (type === "psych") {
-    return getPsychKpi(row) !== "none";
+    return (
+      getPsychKpi(row) !== "none"
+    );
   }
 
   if (type === "ea") {
-    return getEaKpi(row) !== "none";
+    return (
+      getEaKpi(row) !== "none"
+    );
   }
 
-  return getCvlKpi(row) !== "none";
+  return (
+    getCvlKpi(row) !== "none"
+  );
+};
+
+const stageLabel = (
+  stage: TeamCalendar
+) => {
+  if (stage === "caratula") {
+    return "Carátula";
+  }
+
+  if (stage === "draft") {
+    return "1st Draft";
+  }
+
+  if (stage === "plcvl") {
+    return "Escalación CVL";
+  }
+
+  if (stage === "psych") {
+    return "Psych · DOE";
+  }
+
+  if (stage === "ea") {
+    return "EA · Analyst";
+  }
+
+  return "CVL";
 };
 
 /* =========================================================
@@ -654,6 +730,19 @@ export default function Home() {
     useState<TeamCalendar>(
       "caratula"
     );
+
+  const [
+    teamViewMode,
+    setTeamViewMode,
+  ] =
+    useState<TeamViewMode>(
+      "calendar"
+    );
+
+  const [
+    collaboratorFilter,
+    setCollaboratorFilter,
+  ] = useState("");
 
   const [
     calendarMonth,
@@ -723,7 +812,7 @@ export default function Home() {
   ] = useState("");
 
   /* =====================================================
-     ROLE PERMISSIONS
+     PERMISSIONS
   ===================================================== */
 
   const role = user?.role;
@@ -845,6 +934,10 @@ export default function Home() {
     }
   }, [user]);
 
+  useEffect(() => {
+    setCollaboratorFilter("");
+  }, [teamCalendar]);
+
   /* =====================================================
      SAVE
   ===================================================== */
@@ -875,8 +968,7 @@ export default function Home() {
                 row: rowNumber,
 
                 changes: {
-                  [header]:
-                    value,
+                  [header]: value,
                 },
               }),
           }
@@ -895,18 +987,16 @@ export default function Home() {
       setData((prev) => ({
         ...prev,
 
-        rows:
-          prev.rows.map(
-            (row) =>
-              row.__row ===
-              String(rowNumber)
-                ? {
-                    ...row,
-                    [header]:
-                      value,
-                  }
-                : row
-          ),
+        rows: prev.rows.map(
+          (row) =>
+            row.__row ===
+            String(rowNumber)
+              ? {
+                  ...row,
+                  [header]: value,
+                }
+              : row
+        ),
       }));
 
       setSelectedCase(
@@ -915,8 +1005,7 @@ export default function Home() {
           String(rowNumber)
             ? {
                 ...prev,
-                [header]:
-                  value,
+                [header]: value,
               }
             : prev
       );
@@ -949,25 +1038,17 @@ export default function Home() {
   function openGeneralCase(
     row: CaseRow
   ) {
-    setOpenCaseSource(
-      "cases"
-    );
-
+    setOpenCaseSource("cases");
     setSelectedStage(null);
-
     setSelectedCase(row);
   }
 
-  function openCalendarCase(
+  function openTeamCase(
     row: CaseRow,
     stage: TeamCalendar
   ) {
-    setOpenCaseSource(
-      "calendar"
-    );
-
+    setOpenCaseSource("calendar");
     setSelectedStage(stage);
-
     setSelectedCase(row);
   }
 
@@ -991,22 +1072,19 @@ export default function Home() {
           getter(row);
 
         if (
-          result ===
-          "backlog"
+          result === "backlog"
         ) {
           backlog++;
         }
 
         if (
-          result ===
-          "pending"
+          result === "pending"
         ) {
           pending++;
         }
 
         if (
-          result ===
-          "future"
+          result === "future"
         ) {
           future++;
         }
@@ -1023,105 +1101,50 @@ export default function Home() {
   const mgmStats =
     useMemo(
       () =>
-        calculateStats(
-          "mgm"
-        ),
+        calculateStats("mgm"),
       [data.rows]
     );
 
   const psychStats =
     useMemo(
       () =>
-        calculateStats(
-          "psych"
-        ),
+        calculateStats("psych"),
       [data.rows]
     );
 
   const caratulaStats =
     useMemo(
       () =>
-        calculateStats(
-          "caratula"
-        ),
+        calculateStats("caratula"),
       [data.rows]
     );
 
   const draftStats =
     useMemo(
       () =>
-        calculateStats(
-          "draft"
-        ),
+        calculateStats("draft"),
       [data.rows]
     );
 
   const plcvlStats =
     useMemo(
       () =>
-        calculateStats(
-          "plcvl"
-        ),
+        calculateStats("plcvl"),
       [data.rows]
     );
 
   const eaStats =
     useMemo(
       () =>
-        calculateStats(
-          "ea"
-        ),
+        calculateStats("ea"),
       [data.rows]
     );
 
   const cvlStats =
     useMemo(
       () =>
-        calculateStats(
-          "cvl"
-        ),
+        calculateStats("cvl"),
       [data.rows]
-    );
-
-  const dashboardTotals =
-    useMemo(
-      () => ({
-        backlog:
-          mgmStats.backlog +
-          psychStats.backlog +
-          caratulaStats.backlog +
-          draftStats.backlog +
-          plcvlStats.backlog +
-          eaStats.backlog +
-          cvlStats.backlog,
-
-        pending:
-          mgmStats.pending +
-          psychStats.pending +
-          caratulaStats.pending +
-          draftStats.pending +
-          plcvlStats.pending +
-          eaStats.pending +
-          cvlStats.pending,
-
-        future:
-          mgmStats.future +
-          psychStats.future +
-          caratulaStats.future +
-          draftStats.future +
-          plcvlStats.future +
-          eaStats.future +
-          cvlStats.future,
-      }),
-      [
-        mgmStats,
-        psychStats,
-        caratulaStats,
-        draftStats,
-        plcvlStats,
-        eaStats,
-        cvlStats,
-      ]
     );
 
   /* =====================================================
@@ -1140,16 +1163,12 @@ export default function Home() {
           const matchesSearch =
             !q ||
             (
-              row[
-                "CLIENTE"
-              ] || ""
+              row["CLIENTE"] || ""
             )
               .toLowerCase()
               .includes(q) ||
             (
-              row[
-                "ID"
-              ] || ""
+              row["ID"] || ""
             )
               .toLowerCase()
               .includes(q) ||
@@ -1164,9 +1183,7 @@ export default function Home() {
           const matchesStatus =
             !statusFilter ||
             norm(
-              row[
-                "STATUS"
-              ] || ""
+              row["STATUS"] || ""
             ) ===
               norm(
                 statusFilter
@@ -1212,45 +1229,153 @@ export default function Home() {
   const sectionLabel = (
     section: KpiSection
   ) => {
-    if (
-      section === "mgm"
-    ) {
+    if (section === "mgm") {
       return "Entregas MGM";
     }
 
-    if (
-      section === "psych"
-    ) {
+    if (section === "psych") {
       return "Psych";
     }
 
     if (
-      section ===
-      "caratula"
+      section === "caratula"
     ) {
       return "Llenado de Carátula";
     }
 
-    if (
-      section === "draft"
-    ) {
+    if (section === "draft") {
       return "1st Draft";
     }
 
-    if (
-      section === "plcvl"
-    ) {
+    if (section === "plcvl") {
       return "Escalación CVL";
     }
 
-    if (
-      section === "ea"
-    ) {
+    if (section === "ea") {
       return "EA · Analyst";
     }
 
     return "CVL";
   };
+
+  /* =====================================================
+     TEAM ACTIVE ROWS
+  ===================================================== */
+
+  const currentCollaboratorHeader =
+    collaboratorHeader(
+      teamCalendar
+    );
+
+  const currentDateHeader =
+    calendarDateHeader(
+      teamCalendar
+    );
+
+  const currentStatusHeader =
+    calendarStatusHeader(
+      teamCalendar
+    );
+
+  const teamActiveRows =
+    useMemo(
+      () =>
+        data.rows.filter(
+          (row) =>
+            calendarActive(
+              row,
+              teamCalendar
+            )
+        ),
+      [
+        data.rows,
+        teamCalendar,
+      ]
+    );
+
+  /* =====================================================
+     COLLABORATORS
+  ===================================================== */
+
+  const collaborators =
+    useMemo(() => {
+      const names =
+        teamActiveRows
+          .map(
+            (row) =>
+              (
+                row[
+                  currentCollaboratorHeader
+                ] || ""
+              ).trim()
+          )
+          .filter(Boolean);
+
+      const uniqueNames =
+        Array.from(
+          new Set(names)
+        ).sort(
+          (a, b) =>
+            a.localeCompare(b)
+        );
+
+      const hasUnassigned =
+        teamActiveRows.some(
+          (row) =>
+            !(
+              row[
+                currentCollaboratorHeader
+              ] || ""
+            ).trim()
+        );
+
+      return {
+        names: uniqueNames,
+        hasUnassigned,
+      };
+    }, [
+      teamActiveRows,
+      currentCollaboratorHeader,
+    ]);
+
+  const filteredTeamRows =
+    useMemo(() => {
+      if (
+        !collaboratorFilter
+      ) {
+        return teamActiveRows;
+      }
+
+      if (
+        collaboratorFilter ===
+        "__UNASSIGNED__"
+      ) {
+        return teamActiveRows.filter(
+          (row) =>
+            !(
+              row[
+                currentCollaboratorHeader
+              ] || ""
+            ).trim()
+        );
+      }
+
+      return teamActiveRows.filter(
+        (row) =>
+          norm(
+            row[
+              currentCollaboratorHeader
+            ] || ""
+          ) ===
+          norm(
+            collaboratorFilter
+          )
+      );
+    }, [
+      teamActiveRows,
+      collaboratorFilter,
+      currentCollaboratorHeader,
+    ]);
 
   /* =====================================================
      CALENDAR
@@ -1279,11 +1404,9 @@ export default function Home() {
         );
 
       const mondayIndex =
-        firstDay.getDay() ===
-        0
+        firstDay.getDay() === 0
           ? 6
-          : firstDay.getDay() -
-            1;
+          : firstDay.getDay() - 1;
 
       const startDate =
         addDays(
@@ -1292,11 +1415,9 @@ export default function Home() {
         );
 
       const lastDayMondayIndex =
-        lastDay.getDay() ===
-        0
+        lastDay.getDay() === 0
           ? 6
-          : lastDay.getDay() -
-            1;
+          : lastDay.getDay() - 1;
 
       const remaining =
         6 -
@@ -1330,23 +1451,13 @@ export default function Home() {
       }
 
       return days;
-    }, [calendarMonth]);
+    }, [
+      calendarMonth,
+    ]);
 
   const calendarEvents =
     useMemo(() => {
-      const header =
-        calendarDateHeader(
-          teamCalendar
-        );
-
-      return data.rows
-        .filter(
-          (row) =>
-            calendarActive(
-              row,
-              teamCalendar
-            )
-        )
+      return filteredTeamRows
         .map(
           (row) => ({
             row,
@@ -1354,7 +1465,7 @@ export default function Home() {
             date:
               parseDateOnly(
                 row[
-                  header
+                  currentDateHeader
                 ] || ""
               ),
           })
@@ -1369,8 +1480,42 @@ export default function Home() {
             !!item.date
         );
     }, [
-      data.rows,
-      teamCalendar,
+      filteredTeamRows,
+      currentDateHeader,
+    ]);
+
+  const teamTableRows =
+    useMemo(() => {
+      return filteredTeamRows
+        .map(
+          (row) => ({
+            row,
+
+            date:
+              parseDateOnly(
+                row[
+                  currentDateHeader
+                ] || ""
+              ),
+          })
+        )
+        .filter(
+          (
+            item
+          ): item is {
+            row: CaseRow;
+            date: Date;
+          } =>
+            !!item.date
+        )
+        .sort(
+          (a, b) =>
+            a.date.getTime() -
+            b.date.getTime()
+        );
+    }, [
+      filteredTeamRows,
+      currentDateHeader,
     ]);
 
   function previousMonth() {
@@ -1396,8 +1541,7 @@ export default function Home() {
   }
 
   function goToday() {
-    const today =
-      new Date();
+    const today = new Date();
 
     setCalendarMonth(
       new Date(
@@ -1409,40 +1553,31 @@ export default function Home() {
   }
 
   /* =====================================================
-     STATUS STYLE
+     STATUS
   ===================================================== */
 
   const statusClass = (
     status: string
   ) => {
-    const value =
-      norm(status);
+    const value = norm(status);
 
     if (
       value === "DONE" ||
-      value ===
-        "SENT TO USCIS"
+      value === "SENT TO USCIS"
     ) {
       return "statusPill statusGreen";
     }
 
     if (
-      value.includes(
-        "REVIEW"
-      ) ||
-      value.includes(
-        "CORRECTION"
-      )
+      value.includes("REVIEW") ||
+      value.includes("CORRECTION")
     ) {
       return "statusPill statusPurple";
     }
 
     if (
-      value.includes(
-        "CANCEL"
-      ) ||
-      value ===
-        "SPECIAL CASE"
+      value.includes("CANCEL") ||
+      value === "SPECIAL CASE"
     ) {
       return "statusPill statusRed";
     }
@@ -1459,49 +1594,33 @@ export default function Home() {
   ===================================================== */
 
   function openDashboard() {
-    setMainView(
-      "dashboard"
-    );
-
+    setMainView("dashboard");
     setTeamOpen(false);
   }
 
   function openCases() {
     setMainView("cases");
-
     setTeamOpen(false);
   }
 
   function toggleTeam() {
     setMainView("team");
-
     setTeamOpen(true);
 
     if (
       role === "PARALEGAL"
     ) {
-      setTeamGroup(
-        "paralegal"
-      );
-
-      setTeamCalendar(
-        "caratula"
-      );
+      setTeamGroup("paralegal");
+      setTeamCalendar("caratula");
     } else if (
       role === "PSYCH"
     ) {
-      setTeamGroup(
-        "psych"
-      );
-
-      setTeamCalendar(
-        "psych"
-      );
+      setTeamGroup("psych");
+      setTeamCalendar("psych");
     } else if (
       role === "ANALYST"
     ) {
       setTeamGroup("ea");
-
       setTeamCalendar("ea");
     }
   }
@@ -1510,14 +1629,12 @@ export default function Home() {
     group: TeamGroup
   ) {
     setMainView("team");
-
     setTeamOpen(true);
-
     setTeamGroup(group);
+    setCollaboratorFilter("");
 
     if (
-      group ===
-      "paralegal"
+      group === "paralegal"
     ) {
       setTeamCalendar(
         "caratula"
@@ -1564,8 +1681,7 @@ export default function Home() {
 
         <button
           className={`workflowMetric ${
-            stats.backlog >
-            0
+            stats.backlog > 0
               ? "hasBacklog"
               : ""
           }`}
@@ -1653,9 +1769,7 @@ export default function Home() {
     }
 
     const value =
-      selectedCase[
-        header
-      ] || "";
+      selectedCase[header] || "";
 
     const updateLocal = (
       newValue: string
@@ -1675,10 +1789,8 @@ export default function Home() {
           "calendar" &&
         !canEditStage
       ) ||
-      role ===
-        "MANAGER" ||
-      role ===
-        "COORDINATOR";
+      role === "MANAGER" ||
+      role === "COORDINATOR";
 
     return (
       <div className="detailField">
@@ -1694,24 +1806,18 @@ export default function Home() {
           "textarea" ? (
           <textarea
             value={value}
-            onChange={(
-              e
-            ) =>
+            onChange={(e) =>
               updateLocal(
-                e.target
-                  .value
+                e.target.value
               )
             }
-            onBlur={(
-              e
-            ) =>
+            onBlur={(e) =>
               saveField(
                 Number(
                   selectedCase.__row
                 ),
                 header,
-                e.target
-                  .value
+                e.target.value
               )
             }
           />
@@ -1719,12 +1825,9 @@ export default function Home() {
             "select" ? (
           <select
             value={value}
-            onChange={(
-              e
-            ) => {
+            onChange={(e) => {
               const newValue =
-                e.target
-                  .value;
+                e.target.value;
 
               updateLocal(
                 newValue
@@ -1743,24 +1846,13 @@ export default function Home() {
               —
             </option>
 
-            {(
-              options ||
-              []
-            ).map(
-              (
-                option
-              ) => (
+            {(options || []).map(
+              (option) => (
                 <option
-                  key={
-                    option
-                  }
-                  value={
-                    option
-                  }
+                  key={option}
+                  value={option}
                 >
-                  {
-                    option
-                  }
+                  {option}
                 </option>
               )
             )}
@@ -1769,31 +1861,24 @@ export default function Home() {
           <input
             type={type}
             value={
-              type ===
-              "date"
+              type === "date"
                 ? toInputDate(
                     value
                   )
                 : value
             }
-            onChange={(
-              e
-            ) =>
+            onChange={(e) =>
               updateLocal(
-                e.target
-                  .value
+                e.target.value
               )
             }
-            onBlur={(
-              e
-            ) =>
+            onBlur={(e) =>
               saveField(
                 Number(
                   selectedCase.__row
                 ),
                 header,
-                e.target
-                  .value
+                e.target.value
               )
             }
           />
@@ -1823,8 +1908,7 @@ export default function Home() {
     }
 
     if (
-      stage ===
-      "caratula"
+      stage === "caratula"
     ) {
       return (
         <section className="detailSection">
@@ -1881,8 +1965,7 @@ export default function Home() {
     }
 
     if (
-      stage ===
-      "draft"
+      stage === "draft"
     ) {
       return (
         <section className="detailSection">
@@ -1946,8 +2029,7 @@ export default function Home() {
     }
 
     if (
-      stage ===
-      "plcvl"
+      stage === "plcvl"
     ) {
       return (
         <section className="detailSection">
@@ -1992,8 +2074,7 @@ export default function Home() {
     }
 
     if (
-      stage ===
-      "psych"
+      stage === "psych"
     ) {
       return (
         <section className="detailSection">
@@ -2263,9 +2344,8 @@ export default function Home() {
 
   return (
     <div className="appLayout">
-      {/* =================================================
-          SIDEBAR
-      ================================================= */}
+
+      {/* SIDEBAR */}
 
       <aside className="sidebar">
         <div className="sidebarBrand">
@@ -2357,6 +2437,7 @@ export default function Home() {
 
           {teamOpen && (
             <div className="teamSubMenu">
+
               {canSeeParalegal && (
                 <button
                   className={
@@ -2410,6 +2491,7 @@ export default function Home() {
                   EA
                 </button>
               )}
+
             </div>
           )}
         </nav>
@@ -2450,11 +2532,10 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* =================================================
-          MAIN CONTENT
-      ================================================= */}
+      {/* MAIN */}
 
       <main className="mainContent">
+
         {message && (
           <div className="floatingMessage">
             ✓ {message}
@@ -2467,9 +2548,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* =================================================
-            DASHBOARD
-        ================================================= */}
+        {/* DASHBOARD */}
 
         {mainView ===
           "dashboard" && (
@@ -2485,7 +2564,7 @@ export default function Home() {
                 </h1>
 
                 <p>
-                  Estado general de las entregas activas.
+                  Estado de las entregas activas por workflow.
                 </p>
               </div>
 
@@ -2505,93 +2584,6 @@ export default function Home() {
               </div>
             ) : (
               <div className="dashboardContent">
-                {/* =========================================
-                    SUMMARY
-                ========================================= */}
-
-                <section className="dashboardSummary">
-                  <div className="dashboardSummaryHeader">
-                    <div>
-                      <p className="dashboardSectionEyebrow">
-                        RESUMEN GENERAL
-                      </p>
-
-                      <h2>
-                        Estado de entregas
-                      </h2>
-                    </div>
-
-                    <span className="dashboardUpdated">
-                      Vista actual
-                    </span>
-                  </div>
-
-                  <div className="summaryMetrics">
-                    <div className="summaryMetric summaryMetric-backlog">
-                      <div className="summaryMetricTop">
-                        <span className="summaryIndicator" />
-
-                        <span>
-                          Backlog
-                        </span>
-                      </div>
-
-                      <strong>
-                        {
-                          dashboardTotals.backlog
-                        }
-                      </strong>
-
-                      <small>
-                        Entregas vencidas
-                      </small>
-                    </div>
-
-                    <div className="summaryMetric summaryMetric-pending">
-                      <div className="summaryMetricTop">
-                        <span className="summaryIndicator" />
-
-                        <span>
-                          Esta semana
-                        </span>
-                      </div>
-
-                      <strong>
-                        {
-                          dashboardTotals.pending
-                        }
-                      </strong>
-
-                      <small>
-                        Entregas programadas esta semana
-                      </small>
-                    </div>
-
-                    <div className="summaryMetric summaryMetric-future">
-                      <div className="summaryMetricTop">
-                        <span className="summaryIndicator" />
-
-                        <span>
-                          Próximas
-                        </span>
-                      </div>
-
-                      <strong>
-                        {
-                          dashboardTotals.future
-                        }
-                      </strong>
-
-                      <small>
-                        Entregas posteriores
-                      </small>
-                    </div>
-                  </div>
-                </section>
-
-                {/* =========================================
-                    MGM
-                ========================================= */}
 
                 <section className="workflowGroup">
                   <div className="workflowGroupHeader">
@@ -2618,10 +2610,6 @@ export default function Home() {
                     />
                   </div>
                 </section>
-
-                {/* =========================================
-                    PARALEGAL
-                ========================================= */}
 
                 <section className="workflowGroup">
                   <div className="workflowGroupHeader">
@@ -2665,10 +2653,6 @@ export default function Home() {
                   </div>
                 </section>
 
-                {/* =========================================
-                    PSYCH
-                ========================================= */}
-
                 <section className="workflowGroup">
                   <div className="workflowGroupHeader">
                     <p className="dashboardSectionEyebrow">
@@ -2694,10 +2678,6 @@ export default function Home() {
                     />
                   </div>
                 </section>
-
-                {/* =========================================
-                    EA
-                ========================================= */}
 
                 <section className="workflowGroup">
                   <div className="workflowGroupHeader">
@@ -2732,14 +2712,13 @@ export default function Home() {
                     />
                   </div>
                 </section>
+
               </div>
             )}
           </>
         )}
 
-        {/* =================================================
-            CASES
-        ================================================= */}
+        {/* CASES */}
 
         {mainView ===
           "cases" && (
@@ -2780,12 +2759,9 @@ export default function Home() {
                     value={
                       search
                     }
-                    onChange={(
-                      e
-                    ) =>
+                    onChange={(e) =>
                       setSearch(
-                        e.target
-                          .value
+                        e.target.value
                       )
                     }
                     placeholder="Buscar cliente, ID o receipt..."
@@ -2797,12 +2773,9 @@ export default function Home() {
                   value={
                     statusFilter
                   }
-                  onChange={(
-                    e
-                  ) =>
+                  onChange={(e) =>
                     setStatusFilter(
-                      e.target
-                        .value
+                      e.target.value
                     )
                   }
                 >
@@ -2832,10 +2805,7 @@ export default function Home() {
                 </select>
 
                 <div className="caseCount">
-                  {
-                    filteredCases.length
-                  }{" "}
-                  casos
+                  {filteredCases.length} casos
                 </div>
               </div>
 
@@ -2882,9 +2852,7 @@ export default function Home() {
                           {(row[
                             "CLIENTE"
                           ] || "?")
-                            .charAt(
-                              0
-                            )
+                            .charAt(0)
                             .toUpperCase()}
                         </div>
 
@@ -2898,9 +2866,7 @@ export default function Home() {
 
                           <span>
                             ID{" "}
-                            {row[
-                              "ID"
-                            ] ||
+                            {row["ID"] ||
                               "—"}
                             {" · "}
                             {row[
@@ -2932,9 +2898,7 @@ export default function Home() {
                       <div>
                         <span
                           className={statusClass(
-                            row[
-                              "STATUS"
-                            ] ||
+                            row["STATUS"] ||
                               ""
                           )}
                         >
@@ -2962,9 +2926,7 @@ export default function Home() {
           </>
         )}
 
-        {/* =================================================
-            TEAM
-        ================================================= */}
+        {/* TEAM */}
 
         {mainView ===
           "team" && (
@@ -2980,7 +2942,7 @@ export default function Home() {
                 </h1>
 
                 <p>
-                  Calendario de entregas del equipo.
+                  Entregas activas del equipo.
                 </p>
               </div>
 
@@ -2996,6 +2958,7 @@ export default function Home() {
 
             {canSeeAllTeam && (
               <div className="teamGroupTabs">
+
                 {canSeeParalegal && (
                   <button
                     className={
@@ -3049,10 +3012,12 @@ export default function Home() {
                     EA
                   </button>
                 )}
+
               </div>
             )}
 
             <div className="teamStageTabs">
+
               {teamGroup ===
                 "paralegal" &&
                 canSeeParalegal && (
@@ -3152,197 +3117,509 @@ export default function Home() {
                     </button>
                   </>
                 )}
+
             </div>
 
-            <section className="calendarCard">
-              <div className="calendarToolbar">
-                <div className="calendarTitle">
-                  <h2>
-                    {
-                      monthNames[
-                        calendarMonth.getMonth()
-                      ]
-                    }{" "}
-                    {
-                      calendarMonth.getFullYear()
-                    }
-                  </h2>
+            {/* TEAM TOOLBAR */}
 
+            <div className="teamViewToolbar">
+
+              <div className="teamViewSwitch">
+                <button
+                  className={
+                    teamViewMode ===
+                    "calendar"
+                      ? "teamViewButton active"
+                      : "teamViewButton"
+                  }
+                  onClick={() =>
+                    setTeamViewMode(
+                      "calendar"
+                    )
+                  }
+                >
                   <span>
-                    {
-                      calendarEvents.length
-                    }{" "}
-                    entregas activas
+                    ▦
                   </span>
-                </div>
 
-                <div className="calendarControls">
-                  <button
-                    onClick={
-                      previousMonth
+                  Calendario
+                </button>
+
+                <button
+                  className={
+                    teamViewMode ===
+                    "table"
+                      ? "teamViewButton active"
+                      : "teamViewButton"
+                  }
+                  onClick={() =>
+                    setTeamViewMode(
+                      "table"
+                    )
+                  }
+                >
+                  <span>
+                    ≡
+                  </span>
+
+                  Tabla
+                </button>
+              </div>
+
+              <div className="collaboratorFilterBox">
+                <span className="filterIcon">
+                  ◎
+                </span>
+
+                <div className="collaboratorFilterText">
+                  <span>
+                    COLABORADOR
+                  </span>
+
+                  <select
+                    value={
+                      collaboratorFilter
+                    }
+                    onChange={(e) =>
+                      setCollaboratorFilter(
+                        e.target.value
+                      )
                     }
                   >
-                    ‹
-                  </button>
+                    <option value="">
+                      Todos
+                    </option>
 
-                  <button
-                    className="todayButton"
-                    onClick={
-                      goToday
-                    }
-                  >
-                    Hoy
-                  </button>
+                    {collaborators.hasUnassigned && (
+                      <option value="__UNASSIGNED__">
+                        Sin asignar
+                      </option>
+                    )}
 
-                  <button
-                    onClick={
-                      nextMonth
-                    }
-                  >
-                    ›
-                  </button>
+                    {collaborators.names.map(
+                      (collaborator) => (
+                        <option
+                          key={
+                            collaborator
+                          }
+                          value={
+                            collaborator
+                          }
+                        >
+                          {collaborator}
+                        </option>
+                      )
+                    )}
+                  </select>
                 </div>
               </div>
 
-              <div className="calendarWeekHeader">
-                {weekDays.map(
-                  (day) => (
-                    <div
-                      key={
-                        day
+            </div>
+
+            {/* CALENDAR VIEW */}
+
+            {teamViewMode ===
+              "calendar" && (
+              <section className="calendarCard">
+
+                <div className="calendarToolbar">
+                  <div className="calendarTitle">
+                    <h2>
+                      {
+                        monthNames[
+                          calendarMonth.getMonth()
+                        ]
+                      }{" "}
+                      {
+                        calendarMonth.getFullYear()
+                      }
+                    </h2>
+
+                    <span>
+                      {
+                        calendarEvents.length
+                      }{" "}
+                      entregas activas
+
+                      {collaboratorFilter ===
+                      "__UNASSIGNED__"
+                        ? " · Sin asignar"
+                        : collaboratorFilter
+                        ? ` · ${collaboratorFilter}`
+                        : ""}
+                    </span>
+                  </div>
+
+                  <div className="calendarControls">
+                    <button
+                      onClick={
+                        previousMonth
                       }
                     >
-                      {day}
-                    </div>
-                  )
-                )}
-              </div>
+                      ‹
+                    </button>
 
-              <div className="calendarGrid">
-                {calendarDays.map(
-                  (day) => {
-                    const isCurrentMonth =
-                      day.getMonth() ===
-                      calendarMonth.getMonth();
+                    <button
+                      className="todayButton"
+                      onClick={
+                        goToday
+                      }
+                    >
+                      Hoy
+                    </button>
 
-                    const isToday =
-                      sameDay(
-                        day,
-                        new Date()
-                      );
+                    <button
+                      onClick={
+                        nextMonth
+                      }
+                    >
+                      ›
+                    </button>
+                  </div>
+                </div>
 
-                    const dayEvents =
-                      calendarEvents.filter(
-                        (
-                          event
-                        ) =>
-                          sameDay(
-                            event.date,
-                            day
-                          )
-                      );
-
-                    return (
+                <div className="calendarWeekHeader">
+                  {weekDays.map(
+                    (day) => (
                       <div
-                        key={
-                          day.toISOString()
-                        }
-                        className={`calendarDay ${
-                          !isCurrentMonth
-                            ? "outsideMonth"
-                            : ""
-                        }`}
+                        key={day}
                       >
-                        <div className="calendarDayNumber">
-                          <span
-                            className={
-                              isToday
-                                ? "todayNumber"
-                                : ""
-                            }
-                          >
-                            {
-                              day.getDate()
-                            }
-                          </span>
-                        </div>
-
-                        <div className="calendarEvents">
-                          {dayEvents.map(
-                            ({
-                              row,
-                            }) => {
-                              const statusHeader =
-                                calendarStatusHeader(
-                                  teamCalendar
-                                );
-
-                              const status =
-                                statusHeader
-                                  ? row[
-                                      statusHeader
-                                    ] ||
-                                    ""
-                                  : "";
-
-                              const deliveryType =
-                                classifyDate(
-                                  day
-                                );
-
-                              return (
-                                <button
-                                  key={
-                                    row.__row
-                                  }
-                                  className={`calendarEvent ${
-                                    deliveryType ===
-                                    "backlog"
-                                      ? "calendarEventBacklog"
-                                      : deliveryType ===
-                                        "pending"
-                                      ? "calendarEventPending"
-                                      : "calendarEventFuture"
-                                  }`}
-                                  onClick={() =>
-                                    openCalendarCase(
-                                      row,
-                                      teamCalendar
-                                    )
-                                  }
-                                >
-                                  <strong>
-                                    {row[
-                                      "CLIENTE"
-                                    ] ||
-                                      "Sin cliente"}
-                                  </strong>
-
-                                  {status && (
-                                    <span>
-                                      {
-                                        status
-                                      }
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            }
-                          )}
-                        </div>
+                        {day}
                       </div>
-                    );
-                  }
-                )}
-              </div>
-            </section>
+                    )
+                  )}
+                </div>
+
+                <div className="calendarGrid">
+                  {calendarDays.map(
+                    (day) => {
+                      const isCurrentMonth =
+                        day.getMonth() ===
+                        calendarMonth.getMonth();
+
+                      const isToday =
+                        sameDay(
+                          day,
+                          new Date()
+                        );
+
+                      const dayEvents =
+                        calendarEvents.filter(
+                          (event) =>
+                            sameDay(
+                              event.date,
+                              day
+                            )
+                        );
+
+                      return (
+                        <div
+                          key={
+                            day.toISOString()
+                          }
+                          className={`calendarDay ${
+                            !isCurrentMonth
+                              ? "outsideMonth"
+                              : ""
+                          }`}
+                        >
+                          <div className="calendarDayNumber">
+                            <span
+                              className={
+                                isToday
+                                  ? "todayNumber"
+                                  : ""
+                              }
+                            >
+                              {day.getDate()}
+                            </span>
+                          </div>
+
+                          <div className="calendarEvents">
+                            {dayEvents.map(
+                              ({
+                                row,
+                              }) => {
+                                const status =
+                                  currentStatusHeader
+                                    ? row[
+                                        currentStatusHeader
+                                      ] ||
+                                      ""
+                                    : "";
+
+                                const collaborator =
+                                  (
+                                    row[
+                                      currentCollaboratorHeader
+                                    ] || ""
+                                  ).trim();
+
+                                const deliveryType =
+                                  classifyDate(
+                                    day
+                                  );
+
+                                return (
+                                  <button
+                                    key={
+                                      row.__row
+                                    }
+                                    className={`calendarEvent ${
+                                      deliveryType ===
+                                      "backlog"
+                                        ? "calendarEventBacklog"
+                                        : deliveryType ===
+                                          "pending"
+                                        ? "calendarEventPending"
+                                        : "calendarEventFuture"
+                                    } ${
+                                      !collaborator
+                                        ? "calendarEventUnassigned"
+                                        : ""
+                                    }`}
+                                    onClick={() =>
+                                      openTeamCase(
+                                        row,
+                                        teamCalendar
+                                      )
+                                    }
+                                  >
+                                    <strong>
+                                      {row[
+                                        "CLIENTE"
+                                      ] ||
+                                        "Sin cliente"}
+                                    </strong>
+
+                                    {!collaborator ? (
+                                      <span className="unassignedEventLabel">
+                                        Sin asignar
+                                      </span>
+                                    ) : status ? (
+                                      <span>
+                                        {status}
+                                      </span>
+                                    ) : (
+                                      <span>
+                                        {collaborator}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              }
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* TABLE VIEW */}
+
+            {teamViewMode ===
+              "table" && (
+              <section className="teamTableCard">
+
+                <div className="teamTableTop">
+                  <div>
+                    <p className="eyebrow">
+                      {stageLabel(
+                        teamCalendar
+                      )}
+                    </p>
+
+                    <h2>
+                      Entregas activas
+                    </h2>
+
+                    <span>
+                      {
+                        teamTableRows.length
+                      }{" "}
+                      resultados
+
+                      {collaboratorFilter ===
+                      "__UNASSIGNED__"
+                        ? " · Sin asignar"
+                        : collaboratorFilter
+                        ? ` · ${collaboratorFilter}`
+                        : ""}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="teamTableHeader">
+                  <div>
+                    CLIENTE
+                  </div>
+
+                  <div>
+                    COLABORADOR
+                  </div>
+
+                  <div>
+                    EXPECTED DONE
+                  </div>
+
+                  <div>
+                    STATUS
+                  </div>
+
+                  <div>
+                    ESTADO
+                  </div>
+
+                  <div />
+                </div>
+
+                <div className="teamTableBody">
+                  {teamTableRows.map(
+                    ({
+                      row,
+                      date,
+                    }) => {
+                      const status =
+                        currentStatusHeader
+                          ? row[
+                              currentStatusHeader
+                            ] ||
+                            ""
+                          : "";
+
+                      const collaborator =
+                        (
+                          row[
+                            currentCollaboratorHeader
+                          ] || ""
+                        ).trim();
+
+                      const deliveryState =
+                        classifyDate(
+                          date
+                        );
+
+                      return (
+                        <button
+                          key={
+                            row.__row
+                          }
+                          className="teamTableRow"
+                          onClick={() =>
+                            openTeamCase(
+                              row,
+                              teamCalendar
+                            )
+                          }
+                        >
+                          <div className="teamTableClient">
+                            <div className="clientAvatar">
+                              {(row[
+                                "CLIENTE"
+                              ] || "?")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+
+                            <div>
+                              <strong>
+                                {row[
+                                  "CLIENTE"
+                                ] ||
+                                  "Sin cliente"}
+                              </strong>
+
+                              <span>
+                                ID{" "}
+                                {row["ID"] ||
+                                  "—"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="teamTableValue">
+                            {collaborator ? (
+                              collaborator
+                            ) : (
+                              <span className="unassignedPill">
+                                Sin asignar
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="teamTableValue teamDateValue">
+                            {formatDate(
+                              row[
+                                currentDateHeader
+                              ] || ""
+                            )}
+                          </div>
+
+                          <div>
+                            {status ? (
+                              <span
+                                className={statusClass(
+                                  status
+                                )}
+                              >
+                                {status}
+                              </span>
+                            ) : (
+                              <span className="tableDash">
+                                —
+                              </span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span
+                              className={`deliveryState ${
+                                deliveryState ===
+                                "backlog"
+                                  ? "deliveryBacklog"
+                                  : deliveryState ===
+                                    "pending"
+                                  ? "deliveryPending"
+                                  : "deliveryFuture"
+                              }`}
+                            >
+                              {deliveryState ===
+                              "backlog"
+                                ? "Backlog"
+                                : deliveryState ===
+                                  "pending"
+                                ? "Esta semana"
+                                : "Próxima"}
+                            </span>
+                          </div>
+
+                          <div className="rowArrow">
+                            ›
+                          </div>
+                        </button>
+                      );
+                    }
+                  )}
+
+                  {!teamTableRows.length && (
+                    <div className="emptyState">
+                      No hay entregas activas con este filtro.
+                    </div>
+                  )}
+                </div>
+
+              </section>
+            )}
+
           </>
         )}
+
       </main>
 
-      {/* =================================================
-          KPI DRAWER
-      ================================================= */}
+      {/* KPI DRAWER */}
 
       {selectedKpi && (
         <div
@@ -3355,9 +3632,7 @@ export default function Home() {
         >
           <aside
             className="drawer"
-            onMouseDown={(
-              e
-            ) =>
+            onMouseDown={(e) =>
               e.stopPropagation()
             }
           >
@@ -3380,10 +3655,7 @@ export default function Home() {
                 </h2>
 
                 <p>
-                  {
-                    kpiCases.length
-                  }{" "}
-                  casos
+                  {kpiCases.length} casos
                 </p>
               </div>
 
@@ -3427,18 +3699,14 @@ export default function Home() {
 
                       <span>
                         ID{" "}
-                        {row[
-                          "ID"
-                        ] ||
+                        {row["ID"] ||
                           "—"}
                       </span>
                     </div>
 
                     <span
                       className={statusClass(
-                        row[
-                          "STATUS"
-                        ] ||
+                        row["STATUS"] ||
                           ""
                       )}
                     >
@@ -3459,9 +3727,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* =================================================
-          TEAM DELIVERY MODAL
-      ================================================= */}
+      {/* TEAM MODAL */}
 
       {selectedCase &&
         openCaseSource ===
@@ -3477,9 +3743,7 @@ export default function Home() {
           >
             <div
               className="caseModal stageOnlyModal"
-              onMouseDown={(
-                e
-              ) =>
+              onMouseDown={(e) =>
                 e.stopPropagation()
               }
             >
@@ -3506,22 +3770,9 @@ export default function Home() {
                     </span>
 
                     <span>
-                      {selectedStage ===
-                      "caratula"
-                        ? "Llenado de Carátula"
-                        : selectedStage ===
-                          "draft"
-                        ? "1st Draft"
-                        : selectedStage ===
-                          "plcvl"
-                        ? "Escalación CVL"
-                        : selectedStage ===
-                          "psych"
-                        ? "Psych · DOE"
-                        : selectedStage ===
-                          "ea"
-                        ? "EA · Analyst"
-                        : "CVL"}
+                      {stageLabel(
+                        selectedStage
+                      )}
                     </span>
                   </div>
                 </div>
@@ -3549,9 +3800,7 @@ export default function Home() {
           </div>
         )}
 
-      {/* =================================================
-          GENERAL CASE MODAL
-      ================================================= */}
+      {/* GENERAL CASE MODAL */}
 
       {selectedCase &&
         openCaseSource ===
@@ -3566,9 +3815,7 @@ export default function Home() {
           >
             <div
               className="caseModal"
-              onMouseDown={(
-                e
-              ) =>
+              onMouseDown={(e) =>
                 e.stopPropagation()
               }
             >
@@ -3604,8 +3851,7 @@ export default function Home() {
                       className={statusClass(
                         selectedCase[
                           "STATUS"
-                        ] ||
-                          ""
+                        ] || ""
                       )}
                     >
                       {selectedCase[
@@ -3725,6 +3971,7 @@ export default function Home() {
             </div>
           </div>
         )}
+
     </div>
   );
 }
