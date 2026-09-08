@@ -2772,330 +2772,456 @@ button {
     font-size: 26px;
   }
 }
-/* ======================================================
-   WEEKLY WORKLOAD / CARGA SEMANAL
-====================================================== */
+/* =========================================================
+   ALPHA HUB - CARGA PROGRAMADA
+   ========================================================= */
 
-.weeklyLoadCard {
-  margin-bottom: 16px;
+.workloadCard {
+  margin-bottom: 18px;
   overflow: hidden;
-  border: 1px solid #dfe5ed;
-  border-radius: 16px;
+  border: 1px solid #e1e6ed;
+  border-radius: 13px;
   background: white;
-  box-shadow: 0 5px 20px rgba(24, 38, 66, 0.03);
+  box-shadow: 0 3px 14px rgba(25, 39, 67, 0.025);
 }
 
-.weeklyLoadHeader {
-  min-height: 72px;
-  padding: 16px 20px;
+.workloadHeader {
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid #e8edf2;
+  gap: 20px;
+  border-bottom: 1px solid #edf0f4;
 }
 
-.weeklyLoadTitle h2 {
-  margin: 3px 0 2px;
-  color: #28354b;
-  font-size: 17px;
-  font-weight: 770;
+.workloadHeader h2 {
+  margin: 4px 0 4px;
+  color: #334158;
+  font-size: 14px;
 }
 
-.weeklyLoadTitle p {
+.workloadHeader p:not(.eyebrow) {
+  max-width: 650px;
   margin: 0;
-  color: #929dac;
-  font-size: 9px;
-}
-
-.weeklyLoadBadge {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eef3ff;
-  color: #4663b6;
+  color: #8d99aa;
   font-size: 8px;
-  font-weight: 850;
-  white-space: nowrap;
+  line-height: 1.5;
 }
 
-.weeklyLoadTable {
+.workloadHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.workloadTotal {
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.workloadTotal span {
+  color: #9aa4b3;
+  font-size: 6px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.workloadTotal strong {
+  margin-top: 3px;
+  color: #29374f;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.workloadMonthButton {
+  min-width: 120px !important;
+}
+
+.workloadTableWrap {
   overflow-x: auto;
 }
 
-.weeklyLoadGrid,
-.weeklyLoadHeaderRow,
-.weeklyLoadRow {
-  min-width: 650px;
-}
-
-.weeklyLoadHeaderRow,
-.weeklyLoadRow {
+.workloadGrid {
+  min-width: 760px;
+  padding: 0 17px;
   display: grid;
-  grid-template-columns: minmax(190px, 1.4fr) repeat(6, minmax(85px, 0.75fr));
   align-items: center;
   gap: 8px;
 }
 
-.weeklyLoadHeaderRow {
-  padding: 11px 20px;
-  background: #fafbfc;
-  color: #8d98a9;
-  font-size: 8px;
+.workloadGridHeader {
+  min-height: 38px;
+  background: #fafbfd;
+  color: #9aa4b3;
+  font-size: 7px;
   font-weight: 850;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.045em;
 }
 
-.weeklyLoadRow {
+.workloadGridHeader > div:not(:first-child) {
+  text-align: center;
+}
+
+.workloadGridRow {
   min-height: 52px;
-  padding: 9px 20px;
-  border-top: 1px solid #edf0f4;
+  border-top: 1px solid #eef1f5;
+  color: #5d6a7f;
+  font-size: 9px;
+}
+
+.workloadGridRow:hover {
+  background: #fafbfe;
+}
+
+.workloadPerson strong {
+  color: #3c4960;
+  font-size: 9px;
+  font-weight: 760;
+}
+
+.workloadNumber {
   color: #596981;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
 }
 
-.weeklyLoadRow:hover {
-  background: #f8faff;
+.workloadTotalCell {
+  color: #26364f;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
 }
 
-.weeklyLoadName {
-  overflow: hidden;
-  color: #344158;
-  font-weight: 720;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+/* =========================================================
+   ALPHA HUB - HISTÓRICO KPI
+   ========================================================= */
+
+.historyFilterCard,
+.historyChartCard,
+.historyTotalsCard,
+.historyDetailCard {
+  border: 1px solid #e1e6ed;
+  border-radius: 13px;
+  background: white;
+  box-shadow: 0 3px 14px rgba(25, 39, 67, 0.025);
 }
 
-.weeklyLoadCount {
-  min-height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #f7f9fc;
-  color: #526077;
-  font-weight: 780;
-}
-
-.weeklyLoadCurrent {
-  background: #eef3ff;
-  color: #4263c1;
-}
-
-.weeklyLoadUnassigned .weeklyLoadName {
-  color: #ae4e4e;
-}
-
-.weeklyLoadUnassigned .weeklyLoadCount {
-  background: #fff6f6;
-}
-
-/* ======================================================
-   HISTÓRICO KPI
-====================================================== */
-
-.historyToolbar {
-  margin-bottom: 16px;
+.historyFilterCard {
+  margin-bottom: 17px;
   padding: 14px 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
-  border: 1px solid #e1e6ee;
-  border-radius: 14px;
-  background: white;
-}
-
-.historyFilters {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
 .historyFilter {
-  min-width: 160px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
 }
 
-.historyFilter label {
-  color: #8d98a9;
-  font-size: 8px;
+.historyFilter span {
+  margin-bottom: 5px;
+  color: #9aa4b3;
+  font-size: 7px;
   font-weight: 850;
   letter-spacing: 0.07em;
-  text-transform: uppercase;
 }
 
 .historyFilter select,
 .historyFilter input {
-  height: 38px;
+  height: 39px;
   padding: 0 11px;
-  border: 1px solid #dfe4eb;
+  border: 1px solid #e0e5ec;
   border-radius: 9px;
   outline: none;
-  background: #fafbfc;
-  color: #354158;
-  font-size: 10px;
-  font-weight: 650;
+  background: white;
+  color: #455267;
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .historyFilter select:focus,
 .historyFilter input:focus {
-  border-color: #7690e4;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(82, 112, 211, 0.07);
+  border-color: #8da1c2;
+  box-shadow: 0 0 0 2px rgba(69, 94, 135, 0.08);
+}
+
+.historySummary {
+  margin-left: auto;
+  min-width: 150px;
+  padding: 8px 13px 8px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border-left: 1px solid #edf0f4;
+}
+
+.historySummary span {
+  color: #9aa4b3;
+  font-size: 6px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.historySummary strong {
+  margin-top: 3px;
+  color: #27364f;
+  font-size: 26px;
+  line-height: 1;
 }
 
 .historyChartCard {
-  overflow: hidden;
-  margin-bottom: 16px;
-  border: 1px solid #dfe5ed;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 5px 20px rgba(24, 38, 66, 0.03);
+  margin-bottom: 17px;
+  padding: 17px 18px 13px;
 }
 
-.historyChartHeader {
-  min-height: 76px;
-  padding: 17px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid #e8edf2;
+.historyChartHeader h2,
+.historyTotalsHeader h2,
+.historyDetailHeader h2 {
+  margin: 4px 0 0;
+  color: #334158;
+  font-size: 14px;
 }
 
-.historyChartHeader h2 {
-  margin: 3px 0 2px;
-  color: #28354b;
-  font-size: 17px;
-  font-weight: 770;
-}
-
-.historyChartHeader p {
-  margin: 0;
-  color: #929dac;
-  font-size: 9px;
+.historyChartHeader p:not(.eyebrow) {
+  margin: 3px 0 0;
+  color: #8f99a9;
+  font-size: 8px;
 }
 
 .historyLegend {
+  margin: 16px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 15px;
+}
+
+.historyLegendItem {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px 14px;
-  flex-wrap: wrap;
-}
-
-.legendItem {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  color: #657287;
-  font-size: 9px;
-  font-weight: 650;
+  color: #647186;
+  font-size: 8px;
+  font-weight: 700;
 }
 
-.legendDot {
+.historyLegendDot {
   width: 8px;
   height: 8px;
+  flex: 0 0 auto;
   border-radius: 50%;
-  background: currentColor;
+}
+
+.historyChartScroll {
+  overflow-x: auto;
 }
 
 .historyChart {
   width: 100%;
-  overflow-x: auto;
-  padding: 18px 20px 8px;
-}
-
-.historyChartSvg {
-  display: block;
-  width: 100%;
-  min-width: 720px;
+  min-width: 760px;
   height: auto;
-  overflow: visible;
+  display: block;
 }
 
-.historyAxisLabel {
-  fill: #8d98a9;
+.historyGridLine {
+  stroke: #e8ecf2;
+  stroke-width: 1;
+}
+
+.historyAxisText {
+  fill: #98a2b1;
   font-size: 9px;
   font-weight: 650;
 }
 
-.historySummaryTable {
-  overflow-x: auto;
-  border-top: 1px solid #edf0f4;
+.historyValueText {
+  fill: #68758a;
+  font-size: 8px;
+  font-weight: 800;
 }
 
-.historySummaryHeader,
-.historySummaryRow {
-  min-width: 650px;
+.historyLine {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.historyPoint {
+  stroke: white;
+  stroke-width: 2;
+}
+
+.historyStroke0 { stroke: #315f9a; }
+.historyStroke1 { stroke: #6f5fa8; }
+.historyStroke2 { stroke: #3f8c78; }
+.historyStroke3 { stroke: #a56f3d; }
+.historyStroke4 { stroke: #a55567; }
+.historyStroke5 { stroke: #4f8394; }
+.historyStroke6 { stroke: #7e7450; }
+.historyStroke7 { stroke: #54697f; }
+
+.historyFill0,
+.historyColor0 { fill: #315f9a; background: #315f9a; }
+.historyFill1,
+.historyColor1 { fill: #6f5fa8; background: #6f5fa8; }
+.historyFill2,
+.historyColor2 { fill: #3f8c78; background: #3f8c78; }
+.historyFill3,
+.historyColor3 { fill: #a56f3d; background: #a56f3d; }
+.historyFill4,
+.historyColor4 { fill: #a55567; background: #a55567; }
+.historyFill5,
+.historyColor5 { fill: #4f8394; background: #4f8394; }
+.historyFill6,
+.historyColor6 { fill: #7e7450; background: #7e7450; }
+.historyFill7,
+.historyColor7 { fill: #54697f; background: #54697f; }
+
+.historyTotalsCard {
+  margin-bottom: 17px;
+  overflow: hidden;
+}
+
+.historyTotalsHeader,
+.historyDetailHeader {
+  padding: 14px 17px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.historyTotalsGrid {
+  padding: 15px;
   display: grid;
-  grid-template-columns: minmax(190px, 1.4fr) repeat(6, minmax(85px, 0.75fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.historyPersonCard {
+  min-height: 90px;
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #e7ebf1;
+  border-radius: 10px;
+  background: #fafbfd;
+}
+
+.historyPersonCard span {
+  overflow: hidden;
+  color: #6c788a;
+  font-size: 8px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyPersonCard strong {
+  margin-top: 6px;
+  color: #2d3b52;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.historyPersonCard small {
+  margin-top: 4px;
+  color: #9aa4b3;
+  font-size: 7px;
+}
+
+.historyDetailCard {
+  margin-bottom: 17px;
+  overflow: hidden;
+}
+
+.historyDetailWrap {
+  overflow-x: auto;
+}
+
+.historyDetailGrid {
+  min-width: 760px;
+  padding: 0 17px;
+  display: grid;
   align-items: center;
   gap: 8px;
 }
 
-.historySummaryHeader {
-  padding: 11px 20px;
-  background: #fafbfc;
-  color: #8d98a9;
-  font-size: 8px;
+.historyDetailGridHeader {
+  min-height: 38px;
+  background: #fafbfd;
+  color: #9aa4b3;
+  font-size: 7px;
   font-weight: 850;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.045em;
 }
 
-.historySummaryRow {
-  min-height: 50px;
-  padding: 9px 20px;
-  border-top: 1px solid #edf0f4;
+.historyDetailGridHeader > div:not(:first-child) {
+  text-align: center;
+}
+
+.historyDetailGridRow {
+  min-height: 52px;
+  border-top: 1px solid #eef1f5;
+  color: #5d6a7f;
+  font-size: 9px;
+}
+
+.historyDetailGridRow:hover {
+  background: #fafbfe;
+}
+
+.historyDetailPerson {
+  color: #445169;
+  font-weight: 760;
+}
+
+.historyDetailNumber {
   color: #596981;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
 }
 
-.historySummaryRow:hover {
-  background: #f8faff;
-}
-
-.historySummaryRow > div:first-child {
-  overflow: hidden;
-  color: #344158;
-  font-weight: 720;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.historyMetric {
-  min-height: 31px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #f7f9fc;
-  color: #526077;
-  font-weight: 780;
+.historyDetailTotal {
+  color: #26364f;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
 }
 
 .historyEmpty {
-  padding: 70px 30px;
-  color: #8a95a6;
-  text-align: center;
-  font-size: 11px;
+  margin-top: 18px;
 }
 
-@media (max-width: 820px) {
-  .weeklyLoadHeader,
-  .historyChartHeader,
-  .historyToolbar {
+@media (max-width: 900px) {
+  .workloadHeader {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .historyFilters,
-  .historyFilter {
+  .workloadHeaderRight {
     width: 100%;
+    justify-content: space-between;
   }
 
-  .historyLegend {
-    justify-content: flex-start;
+  .historyFilterCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .historyFilter {
+    min-width: 0;
+  }
+
+  .historySummary {
+    margin-left: 0;
+    align-items: flex-start;
+    border-left: 0;
+    border-top: 1px solid #edf0f4;
+    padding-left: 0;
+    padding-top: 14px;
   }
 }
