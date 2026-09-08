@@ -26,6 +26,7 @@ type MainView = "dashboard" | "cases" | "team" | "history";
 type TeamGroup = "paralegal" | "psych" | "ea";
 
 type TeamCalendar =
+  | "mgm"
   | "caratula"
   | "draft"
   | "plcvl"
@@ -527,6 +528,10 @@ const getKpiGetter = (
 const collaboratorHeader = (
   stage: TeamCalendar
 ) => {
+  if (stage === "mgm") {
+    return "__PARALEGAL_DRAFT";
+  }
+
   if (stage === "caratula") {
     return "__PARALEGAL_CARATULA";
   }
@@ -553,6 +558,10 @@ const collaboratorHeader = (
 const calendarDateHeader = (
   stage: TeamCalendar
 ) => {
+  if (stage === "mgm") {
+    return "COMMITMENT";
+  }
+
   if (stage === "caratula") {
     return "CARÁTULA EXPECTED DONE";
   }
@@ -579,6 +588,10 @@ const calendarDateHeader = (
 const doneDateHeader = (
   stage: TeamCalendar
 ) => {
+  if (stage === "mgm") {
+    return "SENT TO MGM";
+  }
+
   if (stage === "caratula") {
     return "CARATULA DONE";
   }
@@ -605,6 +618,10 @@ const doneDateHeader = (
 const calendarStatusHeader = (
   stage: TeamCalendar
 ) => {
+  if (stage === "mgm") {
+    return "STATUS";
+  }
+
   if (stage === "draft") {
     return "STATUS 1ST DRAFT";
   }
@@ -628,6 +645,13 @@ const calendarActive = (
   row: CaseRow,
   stage: TeamCalendar
 ) => {
+  if (stage === "mgm") {
+    return (
+      getMgmKpi(row) !== "none" &&
+      !(row["SENT TO MGM"] || "").trim()
+    );
+  }
+
   if (stage === "caratula") {
     return getCaratulaKpi(row) !== "none";
   }
@@ -668,6 +692,31 @@ const scheduledEligible = (
 
   if (!expectedDate) {
     return false;
+  }
+
+  if (stage === "mgm") {
+    const type = norm(
+      row["DUE DATE/NO DUE DATE"] || ""
+    );
+
+    if (
+      ![
+        "DUE DATE",
+        "NO DUE DATE",
+        "NOID",
+      ].includes(type)
+    ) {
+      return false;
+    }
+
+    const status = norm(
+      row["STATUS"] || ""
+    );
+
+    return ![
+      "SPECIAL CASE",
+      "CANCELLED/CLOSED",
+    ].includes(status);
   }
 
   if (stage === "draft") {
@@ -735,6 +784,10 @@ const scheduledEligible = (
 const stageLabel = (
   stage: TeamCalendar
 ) => {
+  if (stage === "mgm") {
+    return "Escalación MGM";
+  }
+
   if (stage === "caratula") {
     return "Carátula";
   }
@@ -762,6 +815,10 @@ const historyStageOptions: {
   value: TeamCalendar;
   label: string;
 }[] = [
+  {
+    value: "mgm",
+    label: "Paralegal · Escalación MGM",
+  },
   {
     value: "caratula",
     label: "Paralegal · Carátula",
@@ -995,6 +1052,7 @@ export default function Home() {
     (
       role === "PARALEGAL" &&
       [
+        "mgm",
         "caratula",
         "draft",
         "plcvl",
@@ -2892,6 +2950,60 @@ export default function Home() {
     }
 
     if (
+      stage === "mgm"
+    ) {
+      return (
+        <section className="detailSection">
+          <div className="detailSectionHeader">
+            <div className="stageIcon">
+              MGM
+            </div>
+
+            <div>
+              <h3>
+                Paralegal · Escalación MGM
+              </h3>
+
+              <p>
+                Entrega de escalación a MGM
+              </p>
+            </div>
+          </div>
+
+          <div className="fieldGrid">
+            <CollaboratorField
+              label="Paralegal"
+              header="__PARALEGAL_DRAFT"
+              exactColumn="S"
+              options={
+                paralegalOptions
+              }
+            />
+
+            <Field
+              label="Commitment"
+              header="COMMITMENT"
+              type="date"
+              readOnly
+            />
+
+            <Field
+              label="Sent to MGM"
+              header="SENT TO MGM"
+              type="date"
+            />
+
+            <Field
+              label="Tipo"
+              header="DUE DATE/NO DUE DATE"
+              readOnly
+            />
+          </div>
+        </section>
+      );
+    }
+
+    if (
       stage === "caratula"
     ) {
       return (
@@ -3585,32 +3697,6 @@ export default function Home() {
                 <section className="workflowGroup">
                   <div className="workflowGroupHeader">
                     <p className="dashboardSectionEyebrow">
-                      CASE DELIVERY
-                    </p>
-
-                    <h2>
-                      MGM
-                    </h2>
-
-                    <p>
-                      Entregas generales del caso
-                    </p>
-                  </div>
-
-                  <div className="workflowGroupBody">
-                    <DashboardWorkflowRow
-                      title="Entregas MGM"
-                      section="mgm"
-                      stats={
-                        mgmStats
-                      }
-                    />
-                  </div>
-                </section>
-
-                <section className="workflowGroup">
-                  <div className="workflowGroupHeader">
-                    <p className="dashboardSectionEyebrow">
                       PARALEGAL WORKFLOW
                     </p>
 
@@ -3624,6 +3710,14 @@ export default function Home() {
                   </div>
 
                   <div className="workflowGroupBody">
+                    <DashboardWorkflowRow
+                      title="Escalación MGM"
+                      section="mgm"
+                      stats={
+                        mgmStats
+                      }
+                    />
+
                     <DashboardWorkflowRow
                       title="Llenado de Carátula"
                       section="caratula"
@@ -4022,6 +4116,22 @@ export default function Home() {
                 "paralegal" &&
                 canSeeParalegal && (
                   <>
+                    <button
+                      className={
+                        teamCalendar ===
+                        "mgm"
+                          ? "stageTab active"
+                          : "stageTab"
+                      }
+                      onClick={() =>
+                        setTeamCalendar(
+                          "mgm"
+                        )
+                      }
+                    >
+                      Escalación MGM
+                    </button>
+
                     <button
                       className={
                         teamCalendar ===
