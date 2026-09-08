@@ -7,6 +7,10 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
 
   font-family:
     Inter,
@@ -30,10 +34,6 @@ textarea {
 
 button {
   border: 0;
-}
-
-body {
-  min-height: 100vh;
 }
 
 /* ======================================================
@@ -502,70 +502,7 @@ body {
 
 .dashboardContent {
   width: 100%;
-
   max-width: 1180px;
-}
-
-/* ======================================================
-   DASHBOARD SUMMARY
-====================================================== */
-
-.dashboardSummary {
-  margin-bottom: 34px;
-
-  overflow: hidden;
-
-  border:
-    1px
-    solid
-    #e3e7ed;
-
-  border-radius: 16px;
-
-  background: white;
-
-  box-shadow:
-    0
-    4px
-    18px
-    rgba(
-      25,
-      40,
-      70,
-      0.03
-    );
-}
-
-.dashboardSummaryHeader {
-  min-height: 65px;
-
-  padding:
-    16px
-    20px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  border-bottom:
-    1px
-    solid
-    #edf0f4;
-}
-
-.dashboardSummaryHeader h2 {
-  margin:
-    3px
-    0
-    0;
-
-  color: #26334a;
-
-  font-size: 15px;
-  font-weight: 760;
-
-  letter-spacing:
-    -0.015em;
 }
 
 .dashboardSectionEyebrow {
@@ -579,118 +516,6 @@ body {
   letter-spacing:
     0.14em;
 }
-
-.dashboardUpdated {
-  padding:
-    5px
-    9px;
-
-  border-radius:
-    999px;
-
-  background:
-    #f3f5f8;
-
-  color:
-    #8994a5;
-
-  font-size: 8px;
-  font-weight: 700;
-}
-
-.summaryMetrics {
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      3,
-      minmax(
-        0,
-        1fr
-      )
-    );
-}
-
-.summaryMetric {
-  min-height: 116px;
-
-  padding:
-    20px
-    22px;
-
-  border-right:
-    1px
-    solid
-    #edf0f4;
-}
-
-.summaryMetric:last-child {
-  border-right: 0;
-}
-
-.summaryMetricTop {
-  display: flex;
-  align-items: center;
-
-  gap: 7px;
-
-  color: #7c8798;
-
-  font-size: 10px;
-  font-weight: 720;
-}
-
-.summaryIndicator {
-  width: 7px;
-  height: 7px;
-
-  border-radius: 50%;
-}
-
-.summaryMetric-backlog
-  .summaryIndicator {
-  background: #d66b6b;
-}
-
-.summaryMetric-pending
-  .summaryIndicator {
-  background: #dda344;
-}
-
-.summaryMetric-future
-  .summaryIndicator {
-  background: #6681d6;
-}
-
-.summaryMetric > strong {
-  display: block;
-
-  margin-top: 8px;
-
-  color: #202d44;
-
-  font-size: 31px;
-  font-weight: 800;
-
-  line-height: 1;
-
-  letter-spacing:
-    -0.045em;
-}
-
-.summaryMetric small {
-  display: block;
-
-  margin-top: 7px;
-
-  color: #a0a9b7;
-
-  font-size: 8px;
-}
-
-/* ======================================================
-   DASHBOARD WORKFLOW GROUPS
-====================================================== */
 
 .workflowGroup {
   margin-bottom: 25px;
@@ -719,8 +544,8 @@ body {
 }
 
 .workflowGroupHeader p:not(
-    .dashboardSectionEyebrow
-  ) {
+  .dashboardSectionEyebrow
+) {
   margin:
     3px
     0
@@ -755,10 +580,6 @@ body {
     );
 }
 
-/* ======================================================
-   DASHBOARD WORKFLOW ROW
-====================================================== */
-
 .workflowLine {
   min-height: 67px;
 
@@ -769,22 +590,10 @@ body {
   display: grid;
 
   grid-template-columns:
-    minmax(
-      240px,
-      1.8fr
-    )
-    minmax(
-      110px,
-      0.75fr
-    )
-    minmax(
-      110px,
-      0.75fr
-    )
-    minmax(
-      110px,
-      0.75fr
-    );
+    minmax(240px, 1.8fr)
+    minmax(110px, 0.75fr)
+    minmax(110px, 0.75fr)
+    minmax(110px, 0.75fr);
 
   align-items: center;
 
@@ -850,9 +659,7 @@ body {
     #f3f6fb;
 
   transform:
-    translateY(
-      -1px
-    );
+    translateY(-1px);
 }
 
 .workflowMetric span {
@@ -975,7 +782,6 @@ body {
   width: 100%;
 
   border: 0;
-
   outline: none;
 
   background:
@@ -1022,26 +828,11 @@ body {
   display: grid;
 
   grid-template-columns:
-    minmax(
-      270px,
-      2fr
-    )
-    minmax(
-      130px,
-      1fr
-    )
-    minmax(
-      130px,
-      1fr
-    )
-    minmax(
-      130px,
-      1fr
-    )
-    minmax(
-      145px,
-      1fr
-    )
+    minmax(270px, 2fr)
+    minmax(130px, 1fr)
+    minmax(130px, 1fr)
+    minmax(130px, 1fr)
+    minmax(145px, 1fr)
     24px;
 
   align-items: center;
@@ -1120,14 +911,16 @@ body {
   font-weight: 850;
 }
 
-.caseClient > div:last-child {
+.caseClient > div:last-child,
+.teamTableClient > div:last-child {
   min-width: 0;
 
   display: flex;
   flex-direction: column;
 }
 
-.caseClient strong {
+.caseClient strong,
+.teamTableClient strong {
   overflow: hidden;
 
   color: #243148;
@@ -1140,7 +933,8 @@ body {
     ellipsis;
 }
 
-.caseClient span {
+.caseClient span,
+.teamTableClient span {
   overflow: hidden;
 
   margin-top: 3px;
@@ -1178,7 +972,7 @@ body {
 }
 
 /* ======================================================
-   TEAM TABS
+   TEAM GROUP + STAGE TABS
 ====================================================== */
 
 .teamGroupTabs {
@@ -1269,6 +1063,144 @@ body {
 
   color:
     #4263c1;
+}
+
+/* ======================================================
+   TEAM VIEW TOOLBAR
+====================================================== */
+
+.teamViewToolbar {
+  margin-bottom: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.teamViewSwitch {
+  display: inline-flex;
+
+  padding: 4px;
+
+  border:
+    1px
+    solid
+    #e0e5ed;
+
+  border-radius: 10px;
+
+  background: white;
+}
+
+.teamViewButton {
+  min-height: 34px;
+
+  padding:
+    7px
+    12px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #7b8798;
+
+  font-size: 10px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.teamViewButton span {
+  font-size: 13px;
+}
+
+.teamViewButton:hover {
+  background:
+    #f5f7fa;
+}
+
+.teamViewButton.active {
+  background:
+    #1b2945;
+
+  color: white;
+}
+
+.collaboratorFilterBox {
+  min-width: 220px;
+
+  height: 44px;
+
+  padding:
+    6px
+    11px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  border:
+    1px
+    solid
+    #e0e5ed;
+
+  border-radius: 10px;
+
+  background: white;
+}
+
+.filterIcon {
+  color: #74829a;
+
+  font-size: 16px;
+}
+
+.collaboratorFilterText {
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.collaboratorFilterText > span {
+  color: #9aa4b3;
+
+  font-size: 7px;
+  font-weight: 850;
+
+  letter-spacing:
+    0.08em;
+}
+
+.collaboratorFilterText select {
+  width: 100%;
+
+  margin-top: 1px;
+
+  padding: 0;
+
+  border: 0;
+  outline: none;
+
+  background: transparent;
+
+  color: #354158;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
 }
 
 /* ======================================================
@@ -1373,7 +1305,7 @@ body {
 }
 
 .calendarControls
-  .todayButton {
+.todayButton {
   width: auto;
 
   padding:
@@ -1390,10 +1322,7 @@ body {
   grid-template-columns:
     repeat(
       7,
-      minmax(
-        0,
-        1fr
-      )
+      minmax(0, 1fr)
     );
 
   border-bottom:
@@ -1425,10 +1354,7 @@ body {
   grid-template-columns:
     repeat(
       7,
-      minmax(
-        0,
-        1fr
-      )
+      minmax(0, 1fr)
     );
 }
 
@@ -1460,7 +1386,7 @@ body {
 }
 
 .calendarDay.outsideMonth
-  .calendarDayNumber {
+.calendarDayNumber {
   opacity: 0.38;
 }
 
@@ -1552,7 +1478,7 @@ body {
 
   font-size: 7px;
 
-  opacity: 0.75;
+  opacity: 0.78;
 
   white-space: nowrap;
 
@@ -1595,14 +1521,255 @@ body {
 
 .calendarEvent:hover {
   filter:
-    brightness(
-      0.98
-    );
+    brightness(0.98);
 
   transform:
-    translateY(
-      -1px
+    translateY(-1px);
+}
+
+/* unassigned delivery */
+
+.calendarEventUnassigned {
+  box-shadow:
+    inset
+    0
+    0
+    0
+    1px
+    rgba(
+      190,
+      77,
+      77,
+      0.25
     );
+}
+
+.calendarEvent
+.unassignedEventLabel {
+  color: #b54e4e;
+
+  font-weight: 850;
+
+  opacity: 1;
+}
+
+/* ======================================================
+   TEAM TABLE
+====================================================== */
+
+.teamTableCard {
+  overflow: hidden;
+
+  border:
+    1px
+    solid
+    #dfe5ed;
+
+  border-radius: 16px;
+
+  background: white;
+
+  box-shadow:
+    0
+    5px
+    20px
+    rgba(
+      24,
+      38,
+      66,
+      0.03
+    );
+}
+
+.teamTableTop {
+  min-height: 76px;
+
+  padding:
+    17px
+    20px;
+
+  display: flex;
+  align-items: center;
+
+  border-bottom:
+    1px
+    solid
+    #e8edf2;
+}
+
+.teamTableTop h2 {
+  margin:
+    3px
+    0
+    2px;
+
+  color: #28354b;
+
+  font-size: 17px;
+  font-weight: 770;
+}
+
+.teamTableTop span {
+  color: #929dac;
+
+  font-size: 9px;
+}
+
+.teamTableHeader,
+.teamTableRow {
+  display: grid;
+
+  grid-template-columns:
+    minmax(260px, 1.7fr)
+    minmax(145px, 1fr)
+    minmax(140px, 0.95fr)
+    minmax(140px, 1fr)
+    minmax(120px, 0.85fr)
+    24px;
+
+  align-items: center;
+
+  gap: 14px;
+}
+
+.teamTableHeader {
+  padding:
+    11px
+    20px;
+
+  background:
+    #fafbfc;
+
+  color: #8d98a9;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing:
+    0.08em;
+}
+
+.teamTableRow {
+  width: 100%;
+
+  min-height: 62px;
+
+  padding:
+    11px
+    20px;
+
+  border-top:
+    1px
+    solid
+    #edf0f4;
+
+  background: white;
+
+  color: #344158;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background
+    0.13s
+    ease;
+}
+
+.teamTableRow:hover {
+  background:
+    #f8faff;
+}
+
+.teamTableClient {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  gap: 10px;
+}
+
+.teamTableValue {
+  color: #657287;
+
+  font-size: 10px;
+}
+
+.teamDateValue {
+  font-weight: 650;
+
+  color: #526077;
+}
+
+.tableDash {
+  color: #a2aab6;
+
+  font-size: 10px;
+}
+
+.unassignedPill {
+  display: inline-flex;
+  align-items: center;
+
+  padding:
+    4px
+    8px;
+
+  border-radius:
+    999px;
+
+  background:
+    #fff0f0;
+
+  color:
+    #ae4e4e;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing:
+    0.02em;
+}
+
+.deliveryState {
+  display: inline-flex;
+  align-items: center;
+
+  padding:
+    4px
+    8px;
+
+  border-radius:
+    999px;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.deliveryBacklog {
+  background:
+    #fff0f0;
+
+  color:
+    #a74c4c;
+}
+
+.deliveryPending {
+  background:
+    #fff4df;
+
+  color:
+    #94661f;
+}
+
+.deliveryFuture {
+  background:
+    #eef3ff;
+
+  color:
+    #4663b6;
 }
 
 /* ======================================================
@@ -1701,9 +1868,7 @@ body {
     );
 
   backdrop-filter:
-    blur(
-      3px
-    );
+    blur(3px);
 }
 
 .drawer {
@@ -1738,18 +1903,14 @@ body {
 @keyframes drawerIn {
   from {
     transform:
-      translateX(
-        25px
-      );
+      translateX(25px);
 
     opacity: 0;
   }
 
   to {
     transform:
-      translateX(
-        0
-      );
+      translateX(0);
 
     opacity: 1;
   }
@@ -1873,7 +2034,7 @@ body {
 }
 
 /* ======================================================
-   CASE MODAL
+   MODAL
 ====================================================== */
 
 .modalOverlay {
@@ -1897,9 +2058,7 @@ body {
     );
 
   backdrop-filter:
-    blur(
-      4px
-    );
+    blur(4px);
 }
 
 .caseModal {
@@ -1947,7 +2106,7 @@ body {
 }
 
 .stageOnlyModal
-  .modalBody {
+.modalBody {
   height: auto;
 
   max-height:
@@ -2000,8 +2159,8 @@ body {
 }
 
 .caseMeta > span:not(
-    .statusPill
-  ) {
+  .statusPill
+) {
   padding:
     4px
     8px;
@@ -2057,7 +2216,7 @@ body {
 }
 
 /* ======================================================
-   DETAIL SECTIONS
+   DETAIL
 ====================================================== */
 
 .detailSection {
@@ -2122,45 +2281,13 @@ body {
   font-size: 9px;
 }
 
-.subStage {
-  padding-top: 15px;
-
-  margin-top: 15px;
-
-  border-top:
-    1px
-    solid
-    #edf0f4;
-}
-
-.subStage h4 {
-  margin:
-    0
-    0
-    12px;
-
-  color: #56637a;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  text-transform:
-    uppercase;
-
-  letter-spacing:
-    0.04em;
-}
-
 .fieldGrid {
   display: grid;
 
   grid-template-columns:
     repeat(
       2,
-      minmax(
-        0,
-        1fr
-      )
+      minmax(0, 1fr)
     );
 
   gap:
@@ -2446,6 +2573,21 @@ body {
 ====================================================== */
 
 @media (
+  max-width: 1100px
+) {
+  .teamTableHeader,
+  .teamTableRow {
+    grid-template-columns:
+      minmax(230px, 1.5fr)
+      minmax(125px, 1fr)
+      minmax(125px, 1fr)
+      minmax(110px, 0.9fr)
+      minmax(100px, 0.8fr)
+      20px;
+  }
+}
+
+@media (
   max-width: 1000px
 ) {
   .mainContent {
@@ -2461,41 +2603,11 @@ body {
 
   .workflowLine {
     grid-template-columns:
-      minmax(
-        170px,
-        1.4fr
-      )
+      minmax(170px, 1.4fr)
       repeat(
         3,
-        minmax(
-          75px,
-          1fr
-        )
+        minmax(75px, 1fr)
       );
-  }
-}
-
-@media (
-  max-width: 900px
-) {
-  .summaryMetrics {
-    grid-template-columns:
-      1fr;
-  }
-
-  .summaryMetric {
-    min-height: 88px;
-
-    border-right: 0;
-
-    border-bottom:
-      1px
-      solid
-      #edf0f4;
-  }
-
-  .summaryMetric:last-child {
-    border-bottom: 0;
   }
 }
 
@@ -2512,9 +2624,9 @@ body {
   .brandWords,
   .navLabel,
   .navItem
-    > span:not(
-      .navIcon
-    ),
+  > span:not(
+    .navIcon
+  ),
   .sidebarUser,
   .teamSubMenu {
     display: none;
@@ -2566,10 +2678,10 @@ body {
   }
 
   .caseTableRow
-    > div:not(
-      .caseClient,
-      .rowArrow
-    ) {
+  > div:not(
+    .caseClient,
+    .rowArrow
+  ) {
     display: none;
   }
 
@@ -2578,12 +2690,31 @@ body {
       1fr;
   }
 
+  .teamViewToolbar {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .collaboratorFilterBox {
+    width: 100%;
+  }
+
   .calendarCard {
     overflow-x: auto;
   }
 
   .calendarWeekHeader,
   .calendarGrid {
+    min-width: 850px;
+  }
+
+  .teamTableCard {
+    overflow-x: auto;
+  }
+
+  .teamTableHeader,
+  .teamTableBody {
     min-width: 850px;
   }
 
@@ -2611,10 +2742,7 @@ body {
     grid-template-columns:
       repeat(
         3,
-        minmax(
-          0,
-          1fr
-        )
+        minmax(0, 1fr)
       );
 
     gap: 6px;
@@ -2630,10 +2758,6 @@ body {
 
   .workflowMetric {
     padding-left: 6px;
-  }
-
-  .summaryMetric > strong {
-    font-size: 27px;
   }
 
   .pageHeader {
