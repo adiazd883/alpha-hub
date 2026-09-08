@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Role =
   | "ADMIN"
@@ -15,10 +11,9 @@ type Role =
   | "MANAGER"
   | "COORDINATOR";
 
-type CaseRow =
-  Record<string, string> & {
-    __row: string;
-  };
+type CaseRow = Record<string, string> & {
+  __row: string;
+};
 
 type User = {
   authenticated: boolean;
@@ -26,15 +21,9 @@ type User = {
   role: Role | null;
 };
 
-type MainView =
-  | "dashboard"
-  | "cases"
-  | "team";
+type MainView = "dashboard" | "cases" | "team" | "history";
 
-type TeamGroup =
-  | "paralegal"
-  | "psych"
-  | "ea";
+type TeamGroup = "paralegal" | "psych" | "ea";
 
 type TeamCalendar =
   | "caratula"
@@ -44,15 +33,9 @@ type TeamCalendar =
   | "ea"
   | "cvl";
 
-type TeamViewMode =
-  | "calendar"
-  | "table";
+type TeamViewMode = "calendar" | "table";
 
-type KpiType =
-  | "backlog"
-  | "pending"
-  | "future"
-  | "none";
+type KpiType = "backlog" | "pending" | "future" | "none";
 
 type KpiSection =
   | "mgm"
@@ -65,15 +48,10 @@ type KpiSection =
 
 type KpiSelection = {
   section: KpiSection;
-  type: Exclude<
-    KpiType,
-    "none"
-  >;
+  type: Exclude<KpiType, "none">;
 } | null;
 
-type OpenCaseSource =
-  | "cases"
-  | "calendar";
+type OpenCaseSource = "cases" | "calendar";
 
 type Stats = {
   backlog: number;
@@ -81,18 +59,14 @@ type Stats = {
   future: number;
 };
 
-const roleLabels: Record<
-  Role,
-  string
-> = {
+const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
   TL: "Team Leader",
   PARALEGAL: "Paralegal",
   PSYCH: "Psych",
   ANALYST: "Analyst",
   MANAGER: "Manager",
-  COORDINATOR:
-    "Coordinator",
+  COORDINATOR: "Coordinator",
 };
 
 const monthNames = [
@@ -110,61 +84,30 @@ const monthNames = [
   "Diciembre",
 ];
 
-const weekDays = [
-  "LUN",
-  "MAR",
-  "MIÉ",
-  "JUE",
-  "VIE",
-  "SÁB",
-  "DOM",
-];
+const weekDays = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 
-const norm = (
-  value: string
-) =>
-  value
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, " ");
+const norm = (value: string) =>
+  value.trim().toUpperCase().replace(/\s+/g, " ");
 
-const parseDateOnly = (
-  value: string
-): Date | null => {
-  const raw =
-    value?.trim();
+const parseDateOnly = (value: string): Date | null => {
+  const raw = value?.trim();
 
   if (!raw) {
     return null;
   }
 
-  const iso =
-    raw.match(
-      /^(\d{4})-(\d{1,2})-(\d{1,2})/
-    );
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
 
   if (iso) {
-    const year =
-      Number(iso[1]);
+    const year = Number(iso[1]);
+    const month = Number(iso[2]);
+    const day = Number(iso[3]);
 
-    const month =
-      Number(iso[2]);
-
-    const day =
-      Number(iso[3]);
-
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
+    const date = new Date(year, month - 1, day);
 
     if (
-      date.getFullYear() ===
-        year &&
-      date.getMonth() ===
-        month - 1 &&
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
       date.getDate() === day
     ) {
       return date;
@@ -173,44 +116,26 @@ const parseDateOnly = (
     return null;
   }
 
-  const slash =
-    raw.match(
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
-    );
+  const slash = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
 
   if (slash) {
-    const first =
-      Number(slash[1]);
-
-    const second =
-      Number(slash[2]);
-
-    const year =
-      Number(slash[3]);
+    const first = Number(slash[1]);
+    const second = Number(slash[2]);
+    const year = Number(slash[3]);
 
     let month = first;
     let day = second;
 
-    if (
-      first > 12 &&
-      second <= 12
-    ) {
+    if (first > 12 && second <= 12) {
       day = first;
       month = second;
     }
 
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
+    const date = new Date(year, month - 1, day);
 
     if (
-      date.getFullYear() ===
-        year &&
-      date.getMonth() ===
-        month - 1 &&
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
       date.getDate() === day
     ) {
       return date;
@@ -219,14 +144,9 @@ const parseDateOnly = (
     return null;
   }
 
-  const parsed =
-    new Date(raw);
+  const parsed = new Date(raw);
 
-  if (
-    Number.isNaN(
-      parsed.getTime()
-    )
-  ) {
+  if (Number.isNaN(parsed.getTime())) {
     return null;
   }
 
@@ -237,166 +157,97 @@ const parseDateOnly = (
   );
 };
 
-const toInputDate = (
-  value: string
-) => {
-  const parsed =
-    parseDateOnly(value);
+const toInputDate = (value: string) => {
+  const parsed = parseDateOnly(value);
 
   if (!parsed) {
     return "";
   }
 
-  const year =
-    parsed.getFullYear();
-
-  const month =
-    String(
-      parsed.getMonth() + 1
-    ).padStart(2, "0");
-
-  const day =
-    String(
-      parsed.getDate()
-    ).padStart(2, "0");
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-const formatDate = (
-  value: string
-) => {
-  const parsed =
-    parseDateOnly(value);
+const formatDate = (value: string) => {
+  const parsed = parseDateOnly(value);
 
   if (!parsed) {
     return value || "—";
   }
 
-  return parsed.toLocaleDateString(
-    "es-ES",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return parsed.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const startOfWeek = (
-  date: Date
-) => {
-  const result =
-    new Date(
+const startOfWeek = (date: Date) => {
+  const result = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  const day = result.getDay();
+
+  const diff = day === 0 ? -6 : 1 - day;
+
+  result.setDate(result.getDate() + diff);
+
+  return result;
+};
+
+const addDays = (date: Date, days: number) => {
+  const result = new Date(date);
+
+  result.setDate(result.getDate() + days);
+
+  return result;
+};
+
+const sameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const getIsoWeekNumber = (date: Date) => {
+  const tempDate = new Date(
+    Date.UTC(
       date.getFullYear(),
       date.getMonth(),
       date.getDate()
-    );
-
-  const day =
-    result.getDay();
-
-  const diff =
-    day === 0
-      ? -6
-      : 1 - day;
-
-  result.setDate(
-    result.getDate() +
-      diff
+    )
   );
 
-  return result;
-};
-
-const addDays = (
-  date: Date,
-  days: number
-) => {
-  const result =
-    new Date(date);
-
-  result.setDate(
-    result.getDate() +
-      days
-  );
-
-  return result;
-};
-
-const sameDay = (
-  a: Date,
-  b: Date
-) =>
-  a.getFullYear() ===
-    b.getFullYear() &&
-  a.getMonth() ===
-    b.getMonth() &&
-  a.getDate() ===
-    b.getDate();
-
-/*
- * SEMANA ISO
- */
-const getDeliveryWeekLabel = (
-  date: Date
-) => {
-  const tempDate =
-    new Date(
-      Date.UTC(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate()
-      )
-    );
-
-  const dayNumber =
-    tempDate.getUTCDay() ||
-    7;
+  const dayNumber = tempDate.getUTCDay() || 7;
 
   tempDate.setUTCDate(
-    tempDate.getUTCDate() +
-      4 -
-      dayNumber
+    tempDate.getUTCDate() + 4 - dayNumber
   );
 
-  const yearStart =
-    new Date(
-      Date.UTC(
-        tempDate.getUTCFullYear(),
-        0,
-        1
-      )
-    );
+  const yearStart = new Date(
+    Date.UTC(tempDate.getUTCFullYear(), 0, 1)
+  );
 
-  const weekNumber =
-    Math.ceil(
-      (
-        (
-          tempDate.getTime() -
-          yearStart.getTime()
-        ) /
-          86400000 +
-        1
-      ) / 7
-    );
-
-  return `Semana ${weekNumber}`;
+  return Math.ceil(
+    ((tempDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
+  );
 };
 
-const classifyDate = (
-  date: Date
-): KpiType => {
-  const currentWeekStart =
-    startOfWeek(
-      new Date()
-    );
+const getDeliveryWeekLabel = (date: Date) =>
+  `Semana ${getIsoWeekNumber(date)}`;
 
-  const nextWeekStart =
-    addDays(
-      currentWeekStart,
-      7
-    );
+const classifyDate = (date: Date): KpiType => {
+  const currentWeekStart = startOfWeek(new Date());
+
+  const nextWeekStart = addDays(
+    currentWeekStart,
+    7
+  );
 
   if (
     date.getTime() <
@@ -406,10 +257,8 @@ const classifyDate = (
   }
 
   if (
-    date.getTime() >=
-      currentWeekStart.getTime() &&
-    date.getTime() <
-      nextWeekStart.getTime()
+    date.getTime() >= currentWeekStart.getTime() &&
+    date.getTime() < nextWeekStart.getTime()
   ) {
     return "pending";
   }
@@ -417,17 +266,14 @@ const classifyDate = (
   return "future";
 };
 
-/* KPI */
+/* =========================
+   KPI
+   ========================= */
 
-const getMgmKpi = (
-  row: CaseRow
-): KpiType => {
-  const type =
-    norm(
-      row[
-        "DUE DATE/NO DUE DATE"
-      ] || ""
-    );
+const getMgmKpi = (row: CaseRow): KpiType => {
+  const type = norm(
+    row["DUE DATE/NO DUE DATE"] || ""
+  );
 
   if (
     ![
@@ -439,10 +285,9 @@ const getMgmKpi = (
     return "none";
   }
 
-  const status =
-    norm(
-      row["STATUS"] || ""
-    );
+  const status = norm(
+    row["STATUS"] || ""
+  );
 
   if (
     [
@@ -455,12 +300,9 @@ const getMgmKpi = (
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "COMMITMENT"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["COMMITMENT"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -469,15 +311,10 @@ const getMgmKpi = (
   return classifyDate(date);
 };
 
-const getPsychKpi = (
-  row: CaseRow
-): KpiType => {
-  const status =
-    norm(
-      row[
-        "DOE STATUS"
-      ] || ""
-    );
+const getPsychKpi = (row: CaseRow): KpiType => {
+  const status = norm(
+    row["DOE STATUS"] || ""
+  );
 
   if (
     [
@@ -495,21 +332,14 @@ const getPsychKpi = (
   }
 
   if (
-    (
-      row[
-        "DONE (doe)"
-      ] || ""
-    ).trim()
+    (row["DONE (doe)"] || "").trim()
   ) {
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "EXPECTED DONE (doe)"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["EXPECTED DONE (doe)"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -522,21 +352,14 @@ const getCaratulaKpi = (
   row: CaseRow
 ): KpiType => {
   if (
-    (
-      row[
-        "CARATULA DONE"
-      ] || ""
-    ).trim()
+    (row["CARATULA DONE"] || "").trim()
   ) {
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "CARÁTULA EXPECTED DONE"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["CARÁTULA EXPECTED DONE"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -548,12 +371,9 @@ const getCaratulaKpi = (
 const getDraftKpi = (
   row: CaseRow
 ): KpiType => {
-  const status =
-    norm(
-      row[
-        "STATUS 1ST DRAFT"
-      ] || ""
-    );
+  const status = norm(
+    row["STATUS 1ST DRAFT"] || ""
+  );
 
   if (
     [
@@ -570,21 +390,14 @@ const getDraftKpi = (
   }
 
   if (
-    (
-      row[
-        "1ST DRAFT DONE"
-      ] || ""
-    ).trim()
+    (row["1ST DRAFT DONE"] || "").trim()
   ) {
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "1ST DRAFT EXP DONE"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["1ST DRAFT EXP DONE"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -597,21 +410,14 @@ const getPlCvlKpi = (
   row: CaseRow
 ): KpiType => {
   if (
-    (
-      row[
-        "PL CVL DONE"
-      ] || ""
-    ).trim()
+    (row["PL CVL DONE"] || "").trim()
   ) {
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "PL CVL EXPECTED DONE"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["PL CVL EXPECTED DONE"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -623,12 +429,9 @@ const getPlCvlKpi = (
 const getEaKpi = (
   row: CaseRow
 ): KpiType => {
-  const status =
-    norm(
-      row[
-        "EA STATUS"
-      ] || ""
-    );
+  const status = norm(
+    row["EA STATUS"] || ""
+  );
 
   if (
     [
@@ -642,21 +445,14 @@ const getEaKpi = (
   }
 
   if (
-    (
-      row[
-        "EA DONE"
-      ] || ""
-    ).trim()
+    (row["EA DONE"] || "").trim()
   ) {
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "EA EXPECTED DONE"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["EA EXPECTED DONE"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -668,12 +464,9 @@ const getEaKpi = (
 const getCvlKpi = (
   row: CaseRow
 ): KpiType => {
-  const status =
-    norm(
-      row[
-        "CVL STATUS"
-      ] || ""
-    );
+  const status = norm(
+    row["CVL STATUS"] || ""
+  );
 
   if (
     [
@@ -687,21 +480,14 @@ const getCvlKpi = (
   }
 
   if (
-    (
-      row[
-        "DONE CVL"
-      ] || ""
-    ).trim()
+    (row["DONE CVL"] || "").trim()
   ) {
     return "none";
   }
 
-  const date =
-    parseDateOnly(
-      row[
-        "CVL EXPECTED DONE"
-      ] || ""
-    );
+  const date = parseDateOnly(
+    row["CVL EXPECTED DONE"] || ""
+  );
 
   if (!date) {
     return "none";
@@ -713,82 +499,40 @@ const getCvlKpi = (
 const getKpiGetter = (
   section: KpiSection
 ) => {
-  if (
-    section === "mgm"
-  ) {
-    return getMgmKpi;
-  }
-
-  if (
-    section === "psych"
-  ) {
-    return getPsychKpi;
-  }
-
-  if (
-    section ===
-    "caratula"
-  ) {
-    return getCaratulaKpi;
-  }
-
-  if (
-    section === "draft"
-  ) {
-    return getDraftKpi;
-  }
-
-  if (
-    section === "plcvl"
-  ) {
-    return getPlCvlKpi;
-  }
-
-  if (
-    section === "ea"
-  ) {
-    return getEaKpi;
-  }
+  if (section === "mgm") return getMgmKpi;
+  if (section === "psych") return getPsychKpi;
+  if (section === "caratula") return getCaratulaKpi;
+  if (section === "draft") return getDraftKpi;
+  if (section === "plcvl") return getPlCvlKpi;
+  if (section === "ea") return getEaKpi;
 
   return getCvlKpi;
 };
 
-/*
- * AQUÍ ESTÁ LA DIFERENCIA IMPORTANTE.
- *
- * Ya no usamos "PARALEGAL" para las 3 etapas.
- */
+/* =========================
+   TEAM
+   ========================= */
+
 const collaboratorHeader = (
   stage: TeamCalendar
 ) => {
-  if (
-    stage ===
-    "caratula"
-  ) {
+  if (stage === "caratula") {
     return "__PARALEGAL_CARATULA";
   }
 
-  if (
-    stage === "draft"
-  ) {
+  if (stage === "draft") {
     return "__PARALEGAL_DRAFT";
   }
 
-  if (
-    stage === "plcvl"
-  ) {
+  if (stage === "plcvl") {
     return "__PARALEGAL_PLCVL";
   }
 
-  if (
-    stage === "psych"
-  ) {
+  if (stage === "psych") {
     return "PSYCH";
   }
 
-  if (
-    stage === "ea"
-  ) {
+  if (stage === "ea") {
     return "EA MEMBER";
   }
 
@@ -798,63 +542,71 @@ const collaboratorHeader = (
 const calendarDateHeader = (
   stage: TeamCalendar
 ) => {
-  if (
-    stage === "caratula"
-  ) {
+  if (stage === "caratula") {
     return "CARÁTULA EXPECTED DONE";
   }
 
-  if (
-    stage === "draft"
-  ) {
+  if (stage === "draft") {
     return "1ST DRAFT EXP DONE";
   }
 
-  if (
-    stage === "plcvl"
-  ) {
+  if (stage === "plcvl") {
     return "PL CVL EXPECTED DONE";
   }
 
-  if (
-    stage === "psych"
-  ) {
+  if (stage === "psych") {
     return "EXPECTED DONE (doe)";
   }
 
-  if (
-    stage === "ea"
-  ) {
+  if (stage === "ea") {
     return "EA EXPECTED DONE";
   }
 
   return "CVL EXPECTED DONE";
 };
 
+const doneDateHeader = (
+  stage: TeamCalendar
+) => {
+  if (stage === "caratula") {
+    return "CARATULA DONE";
+  }
+
+  if (stage === "draft") {
+    return "1ST DRAFT DONE";
+  }
+
+  if (stage === "plcvl") {
+    return "PL CVL DONE";
+  }
+
+  if (stage === "psych") {
+    return "DONE (doe)";
+  }
+
+  if (stage === "ea") {
+    return "EA DONE";
+  }
+
+  return "DONE CVL";
+};
+
 const calendarStatusHeader = (
   stage: TeamCalendar
 ) => {
-  if (
-    stage === "draft"
-  ) {
+  if (stage === "draft") {
     return "STATUS 1ST DRAFT";
   }
 
-  if (
-    stage === "psych"
-  ) {
+  if (stage === "psych") {
     return "DOE STATUS";
   }
 
-  if (
-    stage === "ea"
-  ) {
+  if (stage === "ea") {
     return "EA STATUS";
   }
 
-  if (
-    stage === "cvl"
-  ) {
+  if (stage === "cvl") {
     return "CVL STATUS";
   }
 
@@ -865,179 +617,276 @@ const calendarActive = (
   row: CaseRow,
   stage: TeamCalendar
 ) => {
-  if (
-    stage ===
-    "caratula"
-  ) {
-    return (
-      getCaratulaKpi(
-        row
-      ) !== "none"
-    );
+  if (stage === "caratula") {
+    return getCaratulaKpi(row) !== "none";
   }
 
-  if (
-    stage === "draft"
-  ) {
-    return (
-      getDraftKpi(row) !==
-      "none"
-    );
+  if (stage === "draft") {
+    return getDraftKpi(row) !== "none";
   }
 
-  if (
-    stage === "plcvl"
-  ) {
-    return (
-      getPlCvlKpi(row) !==
-      "none"
-    );
+  if (stage === "plcvl") {
+    return getPlCvlKpi(row) !== "none";
   }
 
-  if (
-    stage === "psych"
-  ) {
-    return (
-      getPsychKpi(row) !==
-      "none"
-    );
+  if (stage === "psych") {
+    return getPsychKpi(row) !== "none";
   }
 
-  if (
-    stage === "ea"
-  ) {
-    return (
-      getEaKpi(row) !==
-      "none"
-    );
+  if (stage === "ea") {
+    return getEaKpi(row) !== "none";
   }
 
-  return (
-    getCvlKpi(row) !==
-    "none"
+  return getCvlKpi(row) !== "none";
+};
+
+/*
+  IMPORTANTE:
+  carga programada ignora DONE.
+  Así una entrega completada NO desaparece
+  del total que originalmente debía hacerse.
+*/
+
+const scheduledEligible = (
+  row: CaseRow,
+  stage: TeamCalendar
+) => {
+  const expectedDate = parseDateOnly(
+    row[calendarDateHeader(stage)] || ""
   );
+
+  if (!expectedDate) {
+    return false;
+  }
+
+  if (stage === "draft") {
+    const status = norm(
+      row["STATUS 1ST DRAFT"] || ""
+    );
+
+    return ![
+      "NA",
+      "N/A",
+      "UNRESPONSIVE",
+      "CANCELLED/CLOSED",
+      "CANCELLED",
+      "CANCELED",
+      "SPECIAL CASE",
+    ].includes(status);
+  }
+
+  if (stage === "psych") {
+    const status = norm(
+      row["DOE STATUS"] || ""
+    );
+
+    return ![
+      "SPECIAL CASE",
+      "NA",
+      "N/A",
+      "UNRESPONSIVE",
+      "ON HOLD",
+      "CANCELLED",
+      "CANCELED",
+      "CANCELLED/CLOSED",
+    ].includes(status);
+  }
+
+  if (stage === "ea") {
+    const status = norm(
+      row["EA STATUS"] || ""
+    );
+
+    return ![
+      "NA",
+      "N/A",
+      "SPECIAL CASE",
+      "WAITING GMC",
+    ].includes(status);
+  }
+
+  if (stage === "cvl") {
+    const status = norm(
+      row["CVL STATUS"] || ""
+    );
+
+    return ![
+      "NA",
+      "N/A",
+      "CANCELLED",
+      "CANCELED",
+    ].includes(status);
+  }
+
+  return true;
 };
 
 const stageLabel = (
   stage: TeamCalendar
 ) => {
-  if (
-    stage === "caratula"
-  ) {
+  if (stage === "caratula") {
     return "Carátula";
   }
 
-  if (
-    stage === "draft"
-  ) {
+  if (stage === "draft") {
     return "1st Draft";
   }
 
-  if (
-    stage === "plcvl"
-  ) {
+  if (stage === "plcvl") {
     return "Escalación CVL";
   }
 
-  if (
-    stage === "psych"
-  ) {
+  if (stage === "psych") {
     return "Psych · DOE";
   }
 
-  if (
-    stage === "ea"
-  ) {
+  if (stage === "ea") {
     return "EA · Analyst";
   }
 
   return "CVL";
 };
 
+const historyStageOptions: {
+  value: TeamCalendar;
+  label: string;
+}[] = [
+  {
+    value: "caratula",
+    label: "Paralegal · Carátula",
+  },
+  {
+    value: "draft",
+    label: "Paralegal · 1st Draft",
+  },
+  {
+    value: "plcvl",
+    label: "Paralegal · Escalación CVL",
+  },
+  {
+    value: "psych",
+    label: "Psych · DOE",
+  },
+  {
+    value: "ea",
+    label: "EA · Analyst",
+  },
+  {
+    value: "cvl",
+    label: "CVL",
+  },
+];
+
+const monthInputValue = (
+  date: Date
+) =>
+  `${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+const monthFromInput = (
+  value: string
+) => {
+  const [year, month] = value
+    .split("-")
+    .map(Number);
+
+  return new Date(
+    year,
+    month - 1,
+    1
+  );
+};
+
+const weeksIntersectingMonth = (
+  monthDate: Date
+) => {
+  const first = new Date(
+    monthDate.getFullYear(),
+    monthDate.getMonth(),
+    1
+  );
+
+  const last = new Date(
+    monthDate.getFullYear(),
+    monthDate.getMonth() + 1,
+    0
+  );
+
+  const firstWeek = startOfWeek(first);
+
+  const lastWeek = startOfWeek(last);
+
+  const weeks: {
+    week: number;
+    start: Date;
+    label: string;
+  }[] = [];
+
+  let cursor = new Date(firstWeek);
+
+  while (
+    cursor.getTime() <=
+    lastWeek.getTime()
+  ) {
+    weeks.push({
+      week: getIsoWeekNumber(cursor),
+      start: new Date(cursor),
+      label: `Semana ${getIsoWeekNumber(cursor)}`,
+    });
+
+    cursor = addDays(cursor, 7);
+  }
+
+  return weeks;
+};
+
 export default function Home() {
-  const [
-    user,
-    setUser,
-  ] =
-    useState<User | null>(
-      null
-    );
+  const [user, setUser] =
+    useState<User | null>(null);
 
-  const [
-    data,
-    setData,
-  ] = useState<{
-    title: string;
-    headers: string[];
-    rows: CaseRow[];
-  }>({
-    title: "",
-    headers: [],
-    rows: [],
-  });
+  const [data, setData] =
+    useState<{
+      title: string;
+      headers: string[];
+      rows: CaseRow[];
+    }>({
+      title: "",
+      headers: [],
+      rows: [],
+    });
 
-  const [
-    loadingUser,
-    setLoadingUser,
-  ] =
+  const [loadingUser, setLoadingUser] =
     useState(true);
 
-  const [
-    loadingCases,
-    setLoadingCases,
-  ] =
+  const [loadingCases, setLoadingCases] =
     useState(false);
 
-  const [
-    mainView,
-    setMainView,
-  ] =
-    useState<MainView>(
-      "dashboard"
-    );
+  const [mainView, setMainView] =
+    useState<MainView>("dashboard");
 
-  const [
-    teamOpen,
-    setTeamOpen,
-  ] =
+  const [teamOpen, setTeamOpen] =
     useState(false);
 
-  const [
-    teamGroup,
-    setTeamGroup,
-  ] =
-    useState<TeamGroup>(
-      "paralegal"
-    );
+  const [teamGroup, setTeamGroup] =
+    useState<TeamGroup>("paralegal");
 
-  const [
-    teamCalendar,
-    setTeamCalendar,
-  ] =
-    useState<TeamCalendar>(
-      "caratula"
-    );
+  const [teamCalendar, setTeamCalendar] =
+    useState<TeamCalendar>("caratula");
 
-  const [
-    teamViewMode,
-    setTeamViewMode,
-  ] =
-    useState<TeamViewMode>(
-      "calendar"
-    );
+  const [teamViewMode, setTeamViewMode] =
+    useState<TeamViewMode>("calendar");
 
   const [
     collaboratorFilter,
     setCollaboratorFilter,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     calendarMonth,
     setCalendarMonth,
   ] = useState(() => {
-    const now =
-      new Date();
+    const now = new Date();
 
     return new Date(
       now.getFullYear(),
@@ -1047,83 +896,72 @@ export default function Home() {
   });
 
   const [
-    search,
-    setSearch,
-  ] =
+    historyMonth,
+    setHistoryMonth,
+  ] = useState(() =>
+    monthInputValue(new Date())
+  );
+
+  const [
+    historyStage,
+    setHistoryStage,
+  ] = useState<TeamCalendar>("draft");
+
+  const [search, setSearch] =
     useState("");
 
   const [
     statusFilter,
     setStatusFilter,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     selectedCase,
     setSelectedCase,
   ] =
-    useState<CaseRow | null>(
-      null
-    );
+    useState<CaseRow | null>(null);
 
   const [
     openCaseSource,
     setOpenCaseSource,
   ] =
-    useState<OpenCaseSource>(
-      "cases"
-    );
+    useState<OpenCaseSource>("cases");
 
   const [
     selectedStage,
     setSelectedStage,
   ] =
-    useState<TeamCalendar | null>(
-      null
-    );
+    useState<TeamCalendar | null>(null);
 
   const [
     selectedKpi,
     setSelectedKpi,
   ] =
-    useState<KpiSelection>(
-      null
-    );
+    useState<KpiSelection>(null);
 
   const [
     savingField,
     setSavingField,
   ] =
-    useState<string | null>(
-      null
-    );
+    useState<string | null>(null);
 
-  const [
-    message,
-    setMessage,
-  ] =
+  const [message, setMessage] =
     useState("");
 
-  const [
-    error,
-    setError,
-  ] =
+  const [error, setError] =
     useState("");
 
-  const role =
-    user?.role;
+  const role = user?.role;
 
   const canSeeAllTeam =
     role === "ADMIN" ||
     role === "TL" ||
     role === "MANAGER" ||
-    role ===
-      "COORDINATOR";
+    role === "COORDINATOR";
 
   const canSeeParalegal =
     canSeeAllTeam ||
-    role ===
-      "PARALEGAL";
+    role === "PARALEGAL";
 
   const canSeePsych =
     canSeeAllTeam ||
@@ -1141,52 +979,39 @@ export default function Home() {
     role === "ADMIN" ||
     role === "TL" ||
     (
-      role ===
-        "PARALEGAL" &&
+      role === "PARALEGAL" &&
       [
         "caratula",
         "draft",
         "plcvl",
-      ].includes(
-        selectedStage ||
-          ""
-      )
+      ].includes(selectedStage || "")
     ) ||
     (
       role === "PSYCH" &&
-      selectedStage ===
-        "psych"
+      selectedStage === "psych"
     ) ||
     (
-      role ===
-        "ANALYST" &&
-      [
-        "ea",
-        "cvl",
-      ].includes(
-        selectedStage ||
-          ""
+      role === "ANALYST" &&
+      ["ea", "cvl"].includes(
+        selectedStage || ""
       )
     );
 
   async function loadUser() {
     try {
-      const response =
-        await fetch(
-          "/api/auth/me",
-          {
-            cache:
-              "no-store",
-          }
-        );
+      const response = await fetch(
+        "/api/auth/me",
+        {
+          cache: "no-store",
+        }
+      );
 
       setUser(
         await response.json()
       );
     } catch {
       setUser({
-        authenticated:
-          false,
+        authenticated: false,
         email: null,
         role: null,
       });
@@ -1200,14 +1025,12 @@ export default function Home() {
     setError("");
 
     try {
-      const response =
-        await fetch(
-          "/api/cases",
-          {
-            cache:
-              "no-store",
-          }
-        );
+      const response = await fetch(
+        "/api/cases",
+        {
+          cache: "no-store",
+        }
+      );
 
       const json =
         await response.json();
@@ -1236,17 +1059,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (
-      user?.authenticated
-    ) {
+    if (user?.authenticated) {
       loadCases();
     }
   }, [user]);
 
   useEffect(() => {
-    setCollaboratorFilter(
-      ""
-    );
+    setCollaboratorFilter("");
   }, [teamCalendar]);
 
   async function saveField(
@@ -1259,29 +1078,25 @@ export default function Home() {
     setError("");
 
     try {
-      const response =
-        await fetch(
-          "/api/cases/update",
-          {
-            method: "POST",
+      const response = await fetch(
+        "/api/cases/update",
+        {
+          method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            row: rowNumber,
+
+            changes: {
+              [header]: value,
             },
-
-            body:
-              JSON.stringify({
-                row:
-                  rowNumber,
-
-                changes: {
-                  [header]:
-                    value,
-                },
-              }),
-          }
-        );
+          }),
+        }
+      );
 
       const json =
         await response.json();
@@ -1293,37 +1108,29 @@ export default function Home() {
         );
       }
 
-      setData(
-        (prev) => ({
-          ...prev,
+      setData((prev) => ({
+        ...prev,
 
-          rows:
-            prev.rows.map(
-              (row) =>
-                row.__row ===
-                String(
-                  rowNumber
-                )
-                  ? {
-                      ...row,
-                      [header]:
-                        value,
-                    }
-                  : row
-            ),
-        })
-      );
+        rows: prev.rows.map(
+          (row) =>
+            row.__row ===
+            String(rowNumber)
+              ? {
+                  ...row,
+                  [header]: value,
+                }
+              : row
+        ),
+      }));
 
-      setSelectedCase(
-        (prev) =>
-          prev?.__row ===
-          String(rowNumber)
-            ? {
-                ...prev,
-                [header]:
-                  value,
-              }
-            : prev
+      setSelectedCase((prev) =>
+        prev?.__row ===
+        String(rowNumber)
+          ? {
+              ...prev,
+              [header]: value,
+            }
+          : prev
       );
 
       setMessage(
@@ -1331,8 +1138,7 @@ export default function Home() {
       );
 
       window.setTimeout(
-        () =>
-          setMessage(""),
+        () => setMessage(""),
         2200
       );
     } catch (e) {
@@ -1342,55 +1148,40 @@ export default function Home() {
           : "Error"
       );
     } finally {
-      setSavingField(
-        null
-      );
+      setSavingField(null);
     }
   }
 
-  /*
-   * GUARDA POR COLUMNA EXACTA.
-   *
-   * Esta función se usa solamente
-   * para J / S / BN.
-   */
   async function saveExactColumn(
     rowNumber: number,
     column: string,
     localHeader: string,
     value: string
   ) {
-    setSavingField(
-      localHeader
-    );
-
+    setSavingField(localHeader);
     setMessage("");
     setError("");
 
     try {
-      const response =
-        await fetch(
-          "/api/cases/update",
-          {
-            method: "POST",
+      const response = await fetch(
+        "/api/cases/update",
+        {
+          method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            row: rowNumber,
+
+            columnChanges: {
+              [column]: value,
             },
-
-            body:
-              JSON.stringify({
-                row:
-                  rowNumber,
-
-                columnChanges: {
-                  [column]:
-                    value,
-                },
-              }),
-          }
-        );
+          }),
+        }
+      );
 
       const json =
         await response.json();
@@ -1402,37 +1193,31 @@ export default function Home() {
         );
       }
 
-      setData(
-        (prev) => ({
-          ...prev,
+      setData((prev) => ({
+        ...prev,
 
-          rows:
-            prev.rows.map(
-              (row) =>
-                row.__row ===
-                String(
-                  rowNumber
-                )
-                  ? {
-                      ...row,
-                      [localHeader]:
-                        value,
-                    }
-                  : row
-            ),
-        })
-      );
+        rows: prev.rows.map(
+          (row) =>
+            row.__row ===
+            String(rowNumber)
+              ? {
+                  ...row,
+                  [localHeader]:
+                    value,
+                }
+              : row
+        ),
+      }));
 
-      setSelectedCase(
-        (prev) =>
-          prev?.__row ===
-          String(rowNumber)
-            ? {
-                ...prev,
-                [localHeader]:
-                  value,
-              }
-            : prev
+      setSelectedCase((prev) =>
+        prev?.__row ===
+        String(rowNumber)
+          ? {
+              ...prev,
+              [localHeader]:
+                value,
+            }
+          : prev
       );
 
       setMessage(
@@ -1440,8 +1225,7 @@ export default function Home() {
       );
 
       window.setTimeout(
-        () =>
-          setMessage(""),
+        () => setMessage(""),
         2200
       );
     } catch (e) {
@@ -1451,52 +1235,32 @@ export default function Home() {
           : "Error"
       );
     } finally {
-      setSavingField(
-        null
-      );
+      setSavingField(null);
     }
   }
 
   function openGeneralCase(
     row: CaseRow
   ) {
-    setOpenCaseSource(
-      "cases"
-    );
-
-    setSelectedStage(
-      null
-    );
-
-    setSelectedCase(
-      row
-    );
+    setOpenCaseSource("cases");
+    setSelectedStage(null);
+    setSelectedCase(row);
   }
 
   function openTeamCase(
     row: CaseRow,
     stage: TeamCalendar
   ) {
-    setOpenCaseSource(
-      "calendar"
-    );
-
-    setSelectedStage(
-      stage
-    );
-
-    setSelectedCase(
-      row
-    );
+    setOpenCaseSource("calendar");
+    setSelectedStage(stage);
+    setSelectedCase(row);
   }
 
   const calculateStats = (
     section: KpiSection
   ): Stats => {
     const getter =
-      getKpiGetter(
-        section
-      );
+      getKpiGetter(section);
 
     let backlog = 0;
     let pending = 0;
@@ -1508,22 +1272,19 @@ export default function Home() {
           getter(row);
 
         if (
-          result ===
-          "backlog"
+          result === "backlog"
         ) {
           backlog++;
         }
 
         if (
-          result ===
-          "pending"
+          result === "pending"
         ) {
           pending++;
         }
 
         if (
-          result ===
-          "future"
+          result === "future"
         ) {
           future++;
         }
@@ -1539,64 +1300,44 @@ export default function Home() {
 
   const mgmStats =
     useMemo(
-      () =>
-        calculateStats(
-          "mgm"
-        ),
+      () => calculateStats("mgm"),
       [data.rows]
     );
 
   const psychStats =
     useMemo(
-      () =>
-        calculateStats(
-          "psych"
-        ),
+      () => calculateStats("psych"),
       [data.rows]
     );
 
   const caratulaStats =
     useMemo(
       () =>
-        calculateStats(
-          "caratula"
-        ),
+        calculateStats("caratula"),
       [data.rows]
     );
 
   const draftStats =
     useMemo(
-      () =>
-        calculateStats(
-          "draft"
-        ),
+      () => calculateStats("draft"),
       [data.rows]
     );
 
   const plcvlStats =
     useMemo(
-      () =>
-        calculateStats(
-          "plcvl"
-        ),
+      () => calculateStats("plcvl"),
       [data.rows]
     );
 
   const eaStats =
     useMemo(
-      () =>
-        calculateStats(
-          "ea"
-        ),
+      () => calculateStats("ea"),
       [data.rows]
     );
 
   const cvlStats =
     useMemo(
-      () =>
-        calculateStats(
-          "cvl"
-        ),
+      () => calculateStats("cvl"),
       [data.rows]
     );
 
@@ -1612,9 +1353,8 @@ export default function Home() {
           const matchesSearch =
             !q ||
             (
-              row[
-                "CLIENTE"
-              ] || ""
+              row["CLIENTE"] ||
+              ""
             )
               .toLowerCase()
               .includes(q) ||
@@ -1627,7 +1367,8 @@ export default function Home() {
             (
               row[
                 "RECEIPT NUMBER"
-              ] || ""
+              ] ||
+              ""
             )
               .toLowerCase()
               .includes(q);
@@ -1635,9 +1376,8 @@ export default function Home() {
           const matchesStatus =
             !statusFilter ||
             norm(
-              row[
-                "STATUS"
-              ] || ""
+              row["STATUS"] ||
+                ""
             ) ===
               norm(
                 statusFilter
@@ -1657,9 +1397,7 @@ export default function Home() {
 
   const kpiCases =
     useMemo(() => {
-      if (
-        !selectedKpi
-      ) {
+      if (!selectedKpi) {
         return [];
       }
 
@@ -1681,40 +1419,29 @@ export default function Home() {
   const sectionLabel = (
     section: KpiSection
   ) => {
-    if (
-      section === "mgm"
-    ) {
+    if (section === "mgm") {
       return "Entregas MGM";
     }
 
-    if (
-      section === "psych"
-    ) {
+    if (section === "psych") {
       return "Psych";
     }
 
     if (
-      section ===
-      "caratula"
+      section === "caratula"
     ) {
       return "Llenado de Carátula";
     }
 
-    if (
-      section === "draft"
-    ) {
+    if (section === "draft") {
       return "1st Draft";
     }
 
-    if (
-      section === "plcvl"
-    ) {
+    if (section === "plcvl") {
       return "Escalación CVL";
     }
 
-    if (
-      section === "ea"
-    ) {
+    if (section === "ea") {
       return "EA · Analyst";
     }
 
@@ -1752,12 +1479,6 @@ export default function Home() {
       ]
     );
 
-  /*
-   * Opciones para reasignar.
-   *
-   * Paralegal toma nombres de las
-   * 3 columnas independientes.
-   */
   const paralegalOptions =
     useMemo(() => {
       const values =
@@ -1785,9 +1506,8 @@ export default function Home() {
             )
             .filter(Boolean)
         )
-      ).sort(
-        (a, b) =>
-          a.localeCompare(b)
+      ).sort((a, b) =>
+        a.localeCompare(b)
       );
     }, [data.rows]);
 
@@ -1800,18 +1520,14 @@ export default function Home() {
               .map(
                 (row) =>
                   (
-                    row[
-                      "PSYCH"
-                    ] || ""
+                    row["PSYCH"] ||
+                    ""
                   ).trim()
               )
               .filter(Boolean)
           )
-        ).sort(
-          (a, b) =>
-            a.localeCompare(
-              b
-            )
+        ).sort((a, b) =>
+          a.localeCompare(b)
         ),
       [data.rows]
     );
@@ -1832,11 +1548,8 @@ export default function Home() {
               )
               .filter(Boolean)
           )
-        ).sort(
-          (a, b) =>
-            a.localeCompare(
-              b
-            )
+        ).sort((a, b) =>
+          a.localeCompare(b)
         ),
       [data.rows]
     );
@@ -1857,11 +1570,8 @@ export default function Home() {
               )
               .filter(Boolean)
           )
-        ).sort(
-          (a, b) =>
-            a.localeCompare(
-              b
-            )
+        ).sort((a, b) =>
+          a.localeCompare(b)
         ),
       [data.rows]
     );
@@ -1883,11 +1593,8 @@ export default function Home() {
       const uniqueNames =
         Array.from(
           new Set(names)
-        ).sort(
-          (a, b) =>
-            a.localeCompare(
-              b
-            )
+        ).sort((a, b) =>
+          a.localeCompare(b)
         );
 
       const hasUnassigned =
@@ -1948,6 +1655,537 @@ export default function Home() {
       collaboratorFilter,
       currentCollaboratorHeader,
     ]);
+
+  /* =========================
+     CARGA PROGRAMADA
+     ========================= */
+
+  const workloadWeeks =
+    useMemo(
+      () =>
+        weeksIntersectingMonth(
+          calendarMonth
+        ),
+      [calendarMonth]
+    );
+
+  const scheduledWorkload =
+    useMemo(() => {
+      const collaboratorKey =
+        collaboratorHeader(
+          teamCalendar
+        );
+
+      const expectedKey =
+        calendarDateHeader(
+          teamCalendar
+        );
+
+      const rows =
+        data.rows.filter(
+          (row) =>
+            scheduledEligible(
+              row,
+              teamCalendar
+            )
+        );
+
+      const monthStart =
+        new Date(
+          calendarMonth.getFullYear(),
+          calendarMonth.getMonth(),
+          1
+        );
+
+      const monthEnd =
+        new Date(
+          calendarMonth.getFullYear(),
+          calendarMonth.getMonth() +
+            1,
+          0
+        );
+
+      const names =
+        new Set<string>();
+
+      rows.forEach(
+        (row) => {
+          const date =
+            parseDateOnly(
+              row[expectedKey] ||
+                ""
+            );
+
+          if (!date) {
+            return;
+          }
+
+          if (
+            date.getTime() <
+              monthStart.getTime() ||
+            date.getTime() >
+              monthEnd.getTime()
+          ) {
+            return;
+          }
+
+          const name =
+            (
+              row[
+                collaboratorKey
+              ] || ""
+            ).trim() ||
+            "Sin asignar";
+
+          names.add(name);
+        }
+      );
+
+      const sortedNames =
+        Array.from(
+          names
+        ).sort((a, b) => {
+          if (
+            a === "Sin asignar"
+          ) {
+            return 1;
+          }
+
+          if (
+            b === "Sin asignar"
+          ) {
+            return -1;
+          }
+
+          return a.localeCompare(
+            b
+          );
+        });
+
+      return sortedNames.map(
+        (name) => {
+          const counts: Record<
+            number,
+            number
+          > = {};
+
+          workloadWeeks.forEach(
+            (week) => {
+              counts[
+                week.week
+              ] = 0;
+            }
+          );
+
+          rows.forEach(
+            (row) => {
+              const date =
+                parseDateOnly(
+                  row[
+                    expectedKey
+                  ] || ""
+                );
+
+              if (!date) {
+                return;
+              }
+
+              if (
+                date.getTime() <
+                  monthStart.getTime() ||
+                date.getTime() >
+                  monthEnd.getTime()
+              ) {
+                return;
+              }
+
+              const rowName =
+                (
+                  row[
+                    collaboratorKey
+                  ] || ""
+                ).trim() ||
+                "Sin asignar";
+
+              if (
+                rowName !== name
+              ) {
+                return;
+              }
+
+              const week =
+                getIsoWeekNumber(
+                  date
+                );
+
+              counts[week] =
+                (
+                  counts[week] ||
+                  0
+                ) + 1;
+            }
+          );
+
+          return {
+            name,
+            counts,
+
+            total:
+              Object.values(
+                counts
+              ).reduce(
+                (
+                  sum,
+                  value
+                ) =>
+                  sum +
+                  value,
+                0
+              ),
+          };
+        }
+      );
+    }, [
+      data.rows,
+      teamCalendar,
+      calendarMonth,
+      workloadWeeks,
+    ]);
+
+  const scheduledMonthTotal =
+    useMemo(
+      () =>
+        scheduledWorkload.reduce(
+          (sum, item) =>
+            sum +
+            item.total,
+          0
+        ),
+      [scheduledWorkload]
+    );
+
+  /* =========================
+     HISTÓRICO
+     ========================= */
+
+  const historyMonthDate =
+    useMemo(
+      () =>
+        monthFromInput(
+          historyMonth
+        ),
+      [historyMonth]
+    );
+
+  const historyWeeks =
+    useMemo(
+      () =>
+        weeksIntersectingMonth(
+          historyMonthDate
+        ),
+      [historyMonthDate]
+    );
+
+  const historyData =
+    useMemo(() => {
+      const collaboratorKey =
+        collaboratorHeader(
+          historyStage
+        );
+
+      const doneKey =
+        doneDateHeader(
+          historyStage
+        );
+
+      const monthStart =
+        new Date(
+          historyMonthDate.getFullYear(),
+          historyMonthDate.getMonth(),
+          1
+        );
+
+      const monthEnd =
+        new Date(
+          historyMonthDate.getFullYear(),
+          historyMonthDate.getMonth() +
+            1,
+          0
+        );
+
+      const completedRows =
+        data.rows
+          .map(
+            (row) => ({
+              row,
+
+              done:
+                parseDateOnly(
+                  row[doneKey] ||
+                    ""
+                ),
+            })
+          )
+          .filter(
+            (
+              item
+            ): item is {
+              row: CaseRow;
+              done: Date;
+            } => !!item.done
+          )
+          .filter(
+            ({ done }) =>
+              done.getTime() >=
+                monthStart.getTime() &&
+              done.getTime() <=
+                monthEnd.getTime()
+          );
+
+      const collaboratorsSet =
+        new Set<string>();
+
+      completedRows.forEach(
+        ({ row }) => {
+          const collaborator =
+            (
+              row[
+                collaboratorKey
+              ] || ""
+            ).trim() ||
+            "Sin asignar";
+
+          collaboratorsSet.add(
+            collaborator
+          );
+        }
+      );
+
+      const names =
+        Array.from(
+          collaboratorsSet
+        ).sort((a, b) => {
+          if (
+            a === "Sin asignar"
+          ) {
+            return 1;
+          }
+
+          if (
+            b === "Sin asignar"
+          ) {
+            return -1;
+          }
+
+          return a.localeCompare(
+            b
+          );
+        });
+
+      const points =
+        historyWeeks.map(
+          (week) => {
+            const values: Record<
+              string,
+              number
+            > = {};
+
+            names.forEach(
+              (name) => {
+                values[name] = 0;
+              }
+            );
+
+            completedRows.forEach(
+              ({
+                row,
+                done,
+              }) => {
+                const weekNumber =
+                  getIsoWeekNumber(
+                    done
+                  );
+
+                if (
+                  weekNumber !==
+                  week.week
+                ) {
+                  return;
+                }
+
+                const collaborator =
+                  (
+                    row[
+                      collaboratorKey
+                    ] || ""
+                  ).trim() ||
+                  "Sin asignar";
+
+                values[
+                  collaborator
+                ] =
+                  (
+                    values[
+                      collaborator
+                    ] || 0
+                  ) + 1;
+              }
+            );
+
+            return {
+              week:
+                week.week,
+              label:
+                week.label,
+              values,
+            };
+          }
+        );
+
+      const totals =
+        names.map(
+          (name) => ({
+            name,
+
+            total:
+              points.reduce(
+                (
+                  sum,
+                  point
+                ) =>
+                  sum +
+                  (
+                    point
+                      .values[
+                      name
+                    ] || 0
+                  ),
+                0
+              ),
+          })
+        );
+
+      return {
+        names,
+        points,
+        totals,
+        totalCompleted:
+          completedRows.length,
+      };
+    }, [
+      data.rows,
+      historyStage,
+      historyMonthDate,
+      historyWeeks,
+    ]);
+
+  const historyChart =
+    useMemo(() => {
+      const width = 920;
+      const height = 330;
+
+      const left = 48;
+      const right = 24;
+      const top = 28;
+      const bottom = 48;
+
+      const plotWidth =
+        width -
+        left -
+        right;
+
+      const plotHeight =
+        height -
+        top -
+        bottom;
+
+      const maxValue =
+        Math.max(
+          1,
+
+          ...historyData.points.flatMap(
+            (point) =>
+              Object.values(
+                point.values
+              )
+          )
+        );
+
+      const yMax =
+        Math.max(
+          4,
+          Math.ceil(
+            maxValue / 2
+          ) * 2
+        );
+
+      const xForIndex = (
+        index: number
+      ) => {
+        if (
+          historyData.points
+            .length <= 1
+        ) {
+          return (
+            left +
+            plotWidth / 2
+          );
+        }
+
+        return (
+          left +
+          (
+            index /
+            (
+              historyData
+                .points.length -
+              1
+            )
+          ) *
+            plotWidth
+        );
+      };
+
+      const yForValue = (
+        value: number
+      ) =>
+        top +
+        plotHeight -
+        (
+          value /
+          yMax
+        ) *
+          plotHeight;
+
+      const yTicks =
+        Array.from(
+          {
+            length: 5,
+          },
+          (_, index) =>
+            Math.round(
+              (
+                yMax *
+                index
+              ) / 4
+            )
+        );
+
+      return {
+        width,
+        height,
+        left,
+        right,
+        top,
+        bottom,
+        plotWidth,
+        plotHeight,
+        yMax,
+        yTicks,
+        xForIndex,
+        yForValue,
+      };
+    }, [historyData]);
 
   const calendarDays =
     useMemo(() => {
@@ -2023,9 +2261,7 @@ export default function Home() {
       }
 
       return days;
-    }, [
-      calendarMonth,
-    ]);
+    }, [calendarMonth]);
 
   const calendarEvents =
     useMemo(() => {
@@ -2048,8 +2284,7 @@ export default function Home() {
           ): item is {
             row: CaseRow;
             date: Date;
-          } =>
-            !!item.date
+          } => !!item.date
         );
     }, [
       filteredTeamRows,
@@ -2077,8 +2312,7 @@ export default function Home() {
           ): item is {
             row: CaseRow;
             date: Date;
-          } =>
-            !!item.date
+          } => !!item.date
         )
         .sort(
           (a, b) =>
@@ -2168,31 +2402,26 @@ export default function Home() {
   };
 
   function openDashboard() {
-    setMainView(
-      "dashboard"
-    );
-
+    setMainView("dashboard");
     setTeamOpen(false);
   }
 
   function openCases() {
-    setMainView(
-      "cases"
-    );
+    setMainView("cases");
+    setTeamOpen(false);
+  }
 
+  function openHistory() {
+    setMainView("history");
     setTeamOpen(false);
   }
 
   function toggleTeam() {
-    setMainView(
-      "team"
-    );
-
+    setMainView("team");
     setTeamOpen(true);
 
     if (
-      role ===
-      "PARALEGAL"
+      role === "PARALEGAL"
     ) {
       setTeamGroup(
         "paralegal"
@@ -2214,36 +2443,21 @@ export default function Home() {
     } else if (
       role === "ANALYST"
     ) {
-      setTeamGroup(
-        "ea"
-      );
-
-      setTeamCalendar(
-        "ea"
-      );
+      setTeamGroup("ea");
+      setTeamCalendar("ea");
     }
   }
 
   function chooseTeamGroup(
     group: TeamGroup
   ) {
-    setMainView(
-      "team"
-    );
-
+    setMainView("team");
     setTeamOpen(true);
-
-    setTeamGroup(
-      group
-    );
-
-    setCollaboratorFilter(
-      ""
-    );
+    setTeamGroup(group);
+    setCollaboratorFilter("");
 
     if (
-      group ===
-      "paralegal"
+      group === "paralegal"
     ) {
       setTeamCalendar(
         "caratula"
@@ -2251,8 +2465,7 @@ export default function Home() {
     }
 
     if (
-      group ===
-      "psych"
+      group === "psych"
     ) {
       setTeamCalendar(
         "psych"
@@ -2262,9 +2475,7 @@ export default function Home() {
     if (
       group === "ea"
     ) {
-      setTeamCalendar(
-        "ea"
-      );
+      setTeamCalendar("ea");
     }
   }
 
@@ -2294,8 +2505,7 @@ export default function Home() {
           onDoubleClick={() =>
             setSelectedKpi({
               section,
-              type:
-                "backlog",
+              type: "backlog",
             })
           }
         >
@@ -2304,9 +2514,7 @@ export default function Home() {
           </span>
 
           <strong>
-            {
-              stats.backlog
-            }
+            {stats.backlog}
           </strong>
         </button>
 
@@ -2315,8 +2523,7 @@ export default function Home() {
           onDoubleClick={() =>
             setSelectedKpi({
               section,
-              type:
-                "pending",
+              type: "pending",
             })
           }
         >
@@ -2325,9 +2532,7 @@ export default function Home() {
           </span>
 
           <strong>
-            {
-              stats.pending
-            }
+            {stats.pending}
           </strong>
         </button>
 
@@ -2336,8 +2541,7 @@ export default function Home() {
           onDoubleClick={() =>
             setSelectedKpi({
               section,
-              type:
-                "future",
+              type: "future",
             })
           }
         >
@@ -2346,9 +2550,7 @@ export default function Home() {
           </span>
 
           <strong>
-            {
-              stats.future
-            }
+            {stats.future}
           </strong>
         </button>
       </div>
@@ -2372,9 +2574,7 @@ export default function Home() {
     readOnly?: boolean;
     options?: string[];
   }) {
-    if (
-      !selectedCase
-    ) {
+    if (!selectedCase) {
       return null;
     }
 
@@ -2400,8 +2600,7 @@ export default function Home() {
           "calendar" &&
         !canEditStage
       ) ||
-      role ===
-        "MANAGER" ||
+      role === "MANAGER" ||
       role ===
         "COORDINATOR";
 
@@ -2459,16 +2658,11 @@ export default function Home() {
               —
             </option>
 
-            {(options ||
-              []).map(
+            {(options || []).map(
               (option) => (
                 <option
-                  key={
-                    option
-                  }
-                  value={
-                    option
-                  }
+                  key={option}
+                  value={option}
                 >
                   {option}
                 </option>
@@ -2479,8 +2673,7 @@ export default function Home() {
           <input
             type={type}
             value={
-              type ===
-              "date"
+              type === "date"
                 ? toInputDate(
                     value
                   )
@@ -2513,12 +2706,6 @@ export default function Home() {
     );
   }
 
-  /*
-   * CAMPO DE COLABORADOR
-   *
-   * ADMIN / TL => dropdown
-   * Otros => solo lectura
-   */
   function CollaboratorField({
     label,
     header,
@@ -2530,9 +2717,7 @@ export default function Home() {
     options: string[];
     exactColumn?: string;
   }) {
-    if (
-      !selectedCase
-    ) {
+    if (!selectedCase) {
       return null;
     }
 
@@ -2560,13 +2745,13 @@ export default function Home() {
       Array.from(
         new Set([
           ...options,
+
           ...(value
             ? [value]
             : []),
         ])
-      ).sort(
-        (a, b) =>
-          a.localeCompare(b)
+      ).sort((a, b) =>
+        a.localeCompare(b)
       );
 
     return (
@@ -2583,13 +2768,11 @@ export default function Home() {
             const newValue =
               e.target.value;
 
-            setSelectedCase(
-              {
-                ...selectedCase,
-                [header]:
-                  newValue,
-              }
-            );
+            setSelectedCase({
+              ...selectedCase,
+              [header]:
+                newValue,
+            });
 
             if (
               exactColumn
@@ -2644,15 +2827,12 @@ export default function Home() {
   }: {
     stage: TeamCalendar;
   }) {
-    if (
-      !selectedCase
-    ) {
+    if (!selectedCase) {
       return null;
     }
 
     if (
-      stage ===
-      "caratula"
+      stage === "caratula"
     ) {
       return (
         <section className="detailSection">
@@ -3051,9 +3231,7 @@ export default function Home() {
     );
   }
 
-  if (
-    loadingUser
-  ) {
+  if (loadingUser) {
     return (
       <div className="centerScreen">
         Cargando Alpha Hub…
@@ -3061,9 +3239,7 @@ export default function Home() {
     );
   }
 
-  if (
-    !user?.authenticated
-  ) {
+  if (!user?.authenticated) {
     return (
       <div className="loginScreen">
         <div className="loginCard">
@@ -3082,8 +3258,10 @@ export default function Home() {
           <button
             className="primaryButton"
             onClick={() =>
-              (window.location.href =
-                "/api/auth/login")
+              (
+                window.location.href =
+                  "/api/auth/login"
+              )
             }
           >
             Continue with Google
@@ -3240,12 +3418,31 @@ export default function Home() {
               )}
             </div>
           )}
+
+          <button
+            className={`navItem ${
+              mainView ===
+              "history"
+                ? "active"
+                : ""
+            }`}
+            onClick={
+              openHistory
+            }
+          >
+            <span className="navIcon">
+              ⌁
+            </span>
+
+            <span>
+              Histórico KPI
+            </span>
+          </button>
         </nav>
 
         <div className="sidebarBottom">
           <div className="userAvatar">
-            {(user.email ||
-              "A")
+            {(user.email || "A")
               .charAt(0)
               .toUpperCase()}
           </div>
@@ -3267,8 +3464,10 @@ export default function Home() {
           <button
             className="logoutButton"
             onClick={() =>
-              (window.location.href =
-                "/api/auth/logout")
+              (
+                window.location.href =
+                  "/api/auth/logout"
+              )
             }
           >
             ↗
@@ -3949,9 +4148,7 @@ export default function Home() {
                             collaborator
                           }
                         >
-                          {
-                            collaborator
-                          }
+                          {collaborator}
                         </option>
                       )
                     )}
@@ -4139,9 +4336,7 @@ export default function Home() {
                                       </span>
                                     ) : status ? (
                                       <span>
-                                        {
-                                          status
-                                        }
+                                        {status}
                                       </span>
                                     ) : (
                                       <span>
@@ -4165,204 +4360,864 @@ export default function Home() {
 
             {teamViewMode ===
               "table" && (
-              <section className="teamTableCard">
-                <div className="teamTableTop">
-                  <div>
-                    <p className="eyebrow">
-                      {stageLabel(
-                        teamCalendar
+              <>
+                <section className="workloadCard">
+                  <div className="workloadHeader">
+                    <div>
+                      <p className="eyebrow">
+                        CARGA PROGRAMADA
+                      </p>
+
+                      <h2>
+                        Entregas que se deben realizar
+                      </h2>
+
+                      <p>
+                        Se calcula por Expected Done. Si una entrega ya se completó, sigue contando en la carga original de esa semana.
+                      </p>
+                    </div>
+
+                    <div className="workloadHeaderRight">
+                      <div className="workloadTotal">
+                        <span>
+                          TOTAL DEL MES
+                        </span>
+
+                        <strong>
+                          {
+                            scheduledMonthTotal
+                          }
+                        </strong>
+                      </div>
+
+                      <div className="calendarControls">
+                        <button
+                          onClick={
+                            previousMonth
+                          }
+                        >
+                          ‹
+                        </button>
+
+                        <button
+                          className="todayButton workloadMonthButton"
+                          onClick={
+                            goToday
+                          }
+                        >
+                          {
+                            monthNames[
+                              calendarMonth.getMonth()
+                            ]
+                          }{" "}
+                          {
+                            calendarMonth.getFullYear()
+                          }
+                        </button>
+
+                        <button
+                          onClick={
+                            nextMonth
+                          }
+                        >
+                          ›
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="workloadTableWrap">
+                    <div
+                      className="workloadGrid workloadGridHeader"
+                      style={{
+                        gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${workloadWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
+                      }}
+                    >
+                      <div>
+                        COLABORADOR
+                      </div>
+
+                      {workloadWeeks.map(
+                        (week) => (
+                          <div
+                            key={
+                              week.week
+                            }
+                          >
+                            {
+                              week.label
+                            }
+                          </div>
+                        )
                       )}
-                    </p>
 
-                    <h2>
-                      Entregas activas
-                    </h2>
+                      <div>
+                        TOTAL
+                      </div>
+                    </div>
 
-                    <span>
-                      {
-                        teamTableRows.length
-                      }{" "}
-                      resultados
-                    </span>
+                    {scheduledWorkload.map(
+                      (item) => (
+                        <div
+                          key={
+                            item.name
+                          }
+                          className="workloadGrid workloadGridRow"
+                          style={{
+                            gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${workloadWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
+                          }}
+                        >
+                          <div className="workloadPerson">
+                            {item.name ===
+                            "Sin asignar" ? (
+                              <span className="unassignedPill">
+                                Sin asignar
+                              </span>
+                            ) : (
+                              <strong>
+                                {
+                                  item.name
+                                }
+                              </strong>
+                            )}
+                          </div>
+
+                          {workloadWeeks.map(
+                            (
+                              week
+                            ) => (
+                              <div
+                                key={
+                                  week.week
+                                }
+                                className="workloadNumber"
+                              >
+                                {item
+                                  .counts[
+                                  week
+                                    .week
+                                ] ||
+                                  0}
+                              </div>
+                            )
+                          )}
+
+                          <div className="workloadTotalCell">
+                            {
+                              item.total
+                            }
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    {!scheduledWorkload.length && (
+                      <div className="emptyState">
+                        No hay entregas programadas para este mes.
+                      </div>
+                    )}
                   </div>
+                </section>
+
+                <section className="teamTableCard">
+                  <div className="teamTableTop">
+                    <div>
+                      <p className="eyebrow">
+                        {stageLabel(
+                          teamCalendar
+                        )}
+                      </p>
+
+                      <h2>
+                        Entregas activas
+                      </h2>
+
+                      <span>
+                        {
+                          teamTableRows.length
+                        }{" "}
+                        resultados
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="teamTableHeader">
+                    <div>
+                      CLIENTE
+                    </div>
+
+                    <div>
+                      COLABORADOR
+                    </div>
+
+                    <div>
+                      EXPECTED DONE
+                    </div>
+
+                    <div>
+                      SEMANA DE ENTREGA
+                    </div>
+
+                    <div>
+                      STATUS
+                    </div>
+
+                    <div>
+                      ESTADO
+                    </div>
+
+                    <div />
+                  </div>
+
+                  <div className="teamTableBody">
+                    {teamTableRows.map(
+                      ({
+                        row,
+                        date,
+                      }) => {
+                        const status =
+                          currentStatusHeader
+                            ? row[
+                                currentStatusHeader
+                              ] ||
+                              ""
+                            : "";
+
+                        const collaborator =
+                          (
+                            row[
+                              currentCollaboratorHeader
+                            ] || ""
+                          ).trim();
+
+                        const deliveryState =
+                          classifyDate(
+                            date
+                          );
+
+                        return (
+                          <button
+                            key={
+                              row.__row
+                            }
+                            className="teamTableRow"
+                            onClick={() =>
+                              openTeamCase(
+                                row,
+                                teamCalendar
+                              )
+                            }
+                          >
+                            <div className="teamTableClient">
+                              <div className="clientAvatar">
+                                {(row[
+                                  "CLIENTE"
+                                ] || "?")
+                                  .charAt(
+                                    0
+                                  )
+                                  .toUpperCase()}
+                              </div>
+
+                              <div>
+                                <strong>
+                                  {row[
+                                    "CLIENTE"
+                                  ] ||
+                                    "Sin cliente"}
+                                </strong>
+
+                                <span>
+                                  ID{" "}
+                                  {row[
+                                    "ID"
+                                  ] ||
+                                    "—"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="teamTableValue">
+                              {collaborator ? (
+                                collaborator
+                              ) : (
+                                <span className="unassignedPill">
+                                  Sin asignar
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="teamTableValue teamDateValue">
+                              {formatDate(
+                                row[
+                                  currentDateHeader
+                                ] ||
+                                  ""
+                              )}
+                            </div>
+
+                            <div className="teamTableValue teamWeekValue">
+                              {getDeliveryWeekLabel(
+                                date
+                              )}
+                            </div>
+
+                            <div>
+                              {status ? (
+                                <span
+                                  className={statusClass(
+                                    status
+                                  )}
+                                >
+                                  {
+                                    status
+                                  }
+                                </span>
+                              ) : (
+                                <span className="tableDash">
+                                  —
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <span
+                                className={`deliveryState ${
+                                  deliveryState ===
+                                  "backlog"
+                                    ? "deliveryBacklog"
+                                    : deliveryState ===
+                                      "pending"
+                                    ? "deliveryPending"
+                                    : "deliveryFuture"
+                                }`}
+                              >
+                                {deliveryState ===
+                                "backlog"
+                                  ? "Backlog"
+                                  : deliveryState ===
+                                    "pending"
+                                  ? "Esta semana"
+                                  : "Próxima"}
+                              </span>
+                            </div>
+
+                            <div className="rowArrow">
+                              ›
+                            </div>
+                          </button>
+                        );
+                      }
+                    )}
+
+                    {!teamTableRows.length && (
+                      <div className="emptyState">
+                        No hay entregas activas con este filtro.
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+          </>
+        )}
+
+        {mainView ===
+          "history" && (
+          <>
+            <header className="pageHeader">
+              <div>
+                <p className="eyebrow">
+                  PERFORMANCE HISTORY
+                </p>
+
+                <h1>
+                  Histórico KPI
+                </h1>
+
+                <p>
+                  Entregas realmente completadas por colaborador y semana.
+                </p>
+              </div>
+
+              <button
+                className="refreshButton"
+                onClick={
+                  loadCases
+                }
+              >
+                ↻ Refresh
+              </button>
+            </header>
+
+            <section className="historyFilterCard">
+              <div className="historyFilter">
+                <span>
+                  KPI / ETAPA
+                </span>
+
+                <select
+                  value={
+                    historyStage
+                  }
+                  onChange={(
+                    e
+                  ) =>
+                    setHistoryStage(
+                      e.target
+                        .value as TeamCalendar
+                    )
+                  }
+                >
+                  {historyStageOptions.map(
+                    (
+                      option
+                    ) => (
+                      <option
+                        key={
+                          option.value
+                        }
+                        value={
+                          option.value
+                        }
+                      >
+                        {
+                          option.label
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              <div className="historyFilter">
+                <span>
+                  MES
+                </span>
+
+                <input
+                  type="month"
+                  value={
+                    historyMonth
+                  }
+                  onChange={(
+                    e
+                  ) =>
+                    setHistoryMonth(
+                      e
+                        .target
+                        .value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="historySummary">
+                <span>
+                  ENTREGAS COMPLETADAS
+                </span>
+
+                <strong>
+                  {
+                    historyData.totalCompleted
+                  }
+                </strong>
+              </div>
+            </section>
+
+            <section className="historyChartCard">
+              <div className="historyChartHeader">
+                <div>
+                  <p className="eyebrow">
+                    {stageLabel(
+                      historyStage
+                    )}
+                  </p>
+
+                  <h2>
+                    Entregas completadas por semana
+                  </h2>
+
+                  <p>
+                    Se contabiliza usando la fecha DONE real.
+                  </p>
                 </div>
+              </div>
 
-                <div className="teamTableHeader">
-                  <div>
-                    CLIENTE
+              {historyData.names.length ? (
+                <>
+                  <div className="historyLegend">
+                    {historyData.names.map(
+                      (
+                        name,
+                        index
+                      ) => (
+                        <div
+                          className="historyLegendItem"
+                          key={
+                            name
+                          }
+                        >
+                          <span
+                            className={`historyLegendDot historyColor${
+                              index %
+                              8
+                            }`}
+                          />
+
+                          <span>
+                            {name}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
 
+                  <div className="historyChartScroll">
+                    <svg
+                      className="historyChart"
+                      viewBox={`0 0 ${historyChart.width} ${historyChart.height}`}
+                    >
+                      {historyChart.yTicks.map(
+                        (
+                          tick
+                        ) => {
+                          const y =
+                            historyChart.yForValue(
+                              tick
+                            );
+
+                          return (
+                            <g
+                              key={
+                                tick
+                              }
+                            >
+                              <line
+                                x1={
+                                  historyChart.left
+                                }
+                                x2={
+                                  historyChart.width -
+                                  historyChart.right
+                                }
+                                y1={
+                                  y
+                                }
+                                y2={
+                                  y
+                                }
+                                className="historyGridLine"
+                              />
+
+                              <text
+                                x={
+                                  historyChart.left -
+                                  12
+                                }
+                                y={
+                                  y +
+                                  4
+                                }
+                                className="historyAxisText"
+                                textAnchor="end"
+                              >
+                                {
+                                  tick
+                                }
+                              </text>
+                            </g>
+                          );
+                        }
+                      )}
+
+                      {historyData.points.map(
+                        (
+                          point,
+                          index
+                        ) => (
+                          <text
+                            key={
+                              point.week
+                            }
+                            x={
+                              historyChart.xForIndex(
+                                index
+                              )
+                            }
+                            y={
+                              historyChart.height -
+                              18
+                            }
+                            className="historyAxisText"
+                            textAnchor="middle"
+                          >
+                            S
+                            {
+                              point.week
+                            }
+                          </text>
+                        )
+                      )}
+
+                      {historyData.names.map(
+                        (
+                          name,
+                          collaboratorIndex
+                        ) => {
+                          const points =
+                            historyData.points.map(
+                              (
+                                point,
+                                index
+                              ) => ({
+                                x:
+                                  historyChart.xForIndex(
+                                    index
+                                  ),
+
+                                y:
+                                  historyChart.yForValue(
+                                    point
+                                      .values[
+                                      name
+                                    ] ||
+                                      0
+                                  ),
+
+                                value:
+                                  point
+                                    .values[
+                                    name
+                                  ] ||
+                                  0,
+                              })
+                            );
+
+                          const polyline =
+                            points
+                              .map(
+                                (
+                                  point
+                                ) =>
+                                  `${point.x},${point.y}`
+                              )
+                              .join(
+                                " "
+                              );
+
+                          return (
+                            <g
+                              key={
+                                name
+                              }
+                            >
+                              <polyline
+                                points={
+                                  polyline
+                                }
+                                className={`historyLine historyStroke${
+                                  collaboratorIndex %
+                                  8
+                                }`}
+                                fill="none"
+                              />
+
+                              {points.map(
+                                (
+                                  point,
+                                  index
+                                ) => (
+                                  <g
+                                    key={`${name}-${index}`}
+                                  >
+                                    <circle
+                                      cx={
+                                        point.x
+                                      }
+                                      cy={
+                                        point.y
+                                      }
+                                      r="4.5"
+                                      className={`historyPoint historyFill${
+                                        collaboratorIndex %
+                                        8
+                                      }`}
+                                    />
+
+                                    {point.value >
+                                      0 && (
+                                      <text
+                                        x={
+                                          point.x
+                                        }
+                                        y={
+                                          point.y -
+                                          11
+                                        }
+                                        className="historyValueText"
+                                        textAnchor="middle"
+                                      >
+                                        {
+                                          point.value
+                                        }
+                                      </text>
+                                    )}
+                                  </g>
+                                )
+                              )}
+                            </g>
+                          );
+                        }
+                      )}
+                    </svg>
+                  </div>
+                </>
+              ) : (
+                <div className="emptyState historyEmpty">
+                  No hay entregas DONE registradas para este KPI durante el mes seleccionado.
+                </div>
+              )}
+            </section>
+
+            <section className="historyTotalsCard">
+              <div className="historyTotalsHeader">
+                <div>
+                  <p className="eyebrow">
+                    RESUMEN DEL MES
+                  </p>
+
+                  <h2>
+                    Producción por colaborador
+                  </h2>
+                </div>
+              </div>
+
+              <div className="historyTotalsGrid">
+                {historyData.totals.map(
+                  (item) => (
+                    <div
+                      className="historyPersonCard"
+                      key={
+                        item.name
+                      }
+                    >
+                      <span>
+                        {
+                          item.name
+                        }
+                      </span>
+
+                      <strong>
+                        {
+                          item.total
+                        }
+                      </strong>
+
+                      <small>
+                        entregas
+                      </small>
+                    </div>
+                  )
+                )}
+              </div>
+            </section>
+
+            <section className="historyDetailCard">
+              <div className="historyDetailHeader">
+                <div>
+                  <p className="eyebrow">
+                    DETALLE SEMANAL
+                  </p>
+
+                  <h2>
+                    Entregas por semana
+                  </h2>
+                </div>
+              </div>
+
+              <div className="historyDetailWrap">
+                <div
+                  className="historyDetailGrid historyDetailGridHeader"
+                  style={{
+                    gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${historyWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
+                  }}
+                >
                   <div>
                     COLABORADOR
                   </div>
 
-                  <div>
-                    EXPECTED DONE
-                  </div>
+                  {historyWeeks.map(
+                    (week) => (
+                      <div
+                        key={
+                          week.week
+                        }
+                      >
+                        {
+                          week.label
+                        }
+                      </div>
+                    )
+                  )}
 
                   <div>
-                    SEMANA DE ENTREGA
+                    TOTAL
                   </div>
-
-                  <div>
-                    STATUS
-                  </div>
-
-                  <div>
-                    ESTADO
-                  </div>
-
-                  <div />
                 </div>
 
-                <div className="teamTableBody">
-                  {teamTableRows.map(
-                    ({
-                      row,
-                      date,
-                    }) => {
-                      const status =
-                        currentStatusHeader
-                          ? row[
-                              currentStatusHeader
-                            ] ||
-                            ""
-                          : "";
+                {historyData.totals.map(
+                  (item) => (
+                    <div
+                      key={
+                        item.name
+                      }
+                      className="historyDetailGrid historyDetailGridRow"
+                      style={{
+                        gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${historyWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
+                      }}
+                    >
+                      <div className="historyDetailPerson">
+                        {
+                          item.name
+                        }
+                      </div>
 
-                      const collaborator =
+                      {historyData.points.map(
                         (
-                          row[
-                            currentCollaboratorHeader
-                          ] || ""
-                        ).trim();
-
-                      const deliveryState =
-                        classifyDate(
-                          date
-                        );
-
-                      return (
-                        <button
-                          key={
-                            row.__row
-                          }
-                          className="teamTableRow"
-                          onClick={() =>
-                            openTeamCase(
-                              row,
-                              teamCalendar
-                            )
-                          }
-                        >
-                          <div className="teamTableClient">
-                            <div className="clientAvatar">
-                              {(row[
-                                "CLIENTE"
-                              ] || "?")
-                                .charAt(
-                                  0
-                                )
-                                .toUpperCase()}
-                            </div>
-
-                            <div>
-                              <strong>
-                                {row[
-                                  "CLIENTE"
-                                ] ||
-                                  "Sin cliente"}
-                              </strong>
-
-                              <span>
-                                ID{" "}
-                                {row[
-                                  "ID"
-                                ] ||
-                                  "—"}
-                              </span>
-                            </div>
+                          point
+                        ) => (
+                          <div
+                            key={
+                              point.week
+                            }
+                            className="historyDetailNumber"
+                          >
+                            {point
+                              .values[
+                              item.name
+                            ] ||
+                              0}
                           </div>
+                        )
+                      )}
 
-                          <div className="teamTableValue">
-                            {collaborator ? (
-                              collaborator
-                            ) : (
-                              <span className="unassignedPill">
-                                Sin asignar
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="teamTableValue teamDateValue">
-                            {formatDate(
-                              row[
-                                currentDateHeader
-                              ] || ""
-                            )}
-                          </div>
-
-                          <div className="teamTableValue teamWeekValue">
-                            {getDeliveryWeekLabel(
-                              date
-                            )}
-                          </div>
-
-                          <div>
-                            {status ? (
-                              <span
-                                className={statusClass(
-                                  status
-                                )}
-                              >
-                                {
-                                  status
-                                }
-                              </span>
-                            ) : (
-                              <span className="tableDash">
-                                —
-                              </span>
-                            )}
-                          </div>
-
-                          <div>
-                            <span
-                              className={`deliveryState ${
-                                deliveryState ===
-                                "backlog"
-                                  ? "deliveryBacklog"
-                                  : deliveryState ===
-                                    "pending"
-                                  ? "deliveryPending"
-                                  : "deliveryFuture"
-                              }`}
-                            >
-                              {deliveryState ===
-                              "backlog"
-                                ? "Backlog"
-                                : deliveryState ===
-                                  "pending"
-                                ? "Esta semana"
-                                : "Próxima"}
-                            </span>
-                          </div>
-
-                          <div className="rowArrow">
-                            ›
-                          </div>
-                        </button>
-                      );
-                    }
-                  )}
-
-                  {!teamTableRows.length && (
-                    <div className="emptyState">
-                      No hay entregas activas con este filtro.
+                      <div className="historyDetailTotal">
+                        {
+                          item.total
+                        }
+                      </div>
                     </div>
-                  )}
-                </div>
-              </section>
-            )}
+                  )
+                )}
+
+                {!historyData.totals.length && (
+                  <div className="emptyState">
+                    No hay entregas para mostrar.
+                  </div>
+                )}
+              </div>
+            </section>
           </>
         )}
       </main>
@@ -4371,16 +5226,12 @@ export default function Home() {
         <div
           className="drawerOverlay"
           onMouseDown={() =>
-            setSelectedKpi(
-              null
-            )
+            setSelectedKpi(null)
           }
         >
           <aside
             className="drawer"
-            onMouseDown={(
-              e
-            ) =>
+            onMouseDown={(e) =>
               e.stopPropagation()
             }
           >
@@ -4496,9 +5347,7 @@ export default function Home() {
           >
             <div
               className="caseModal stageOnlyModal"
-              onMouseDown={(
-                e
-              ) =>
+              onMouseDown={(e) =>
                 e.stopPropagation()
               }
             >
@@ -4568,9 +5417,7 @@ export default function Home() {
           >
             <div
               className="caseModal"
-              onMouseDown={(
-                e
-              ) =>
+              onMouseDown={(e) =>
                 e.stopPropagation()
               }
             >
