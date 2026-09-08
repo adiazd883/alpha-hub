@@ -774,7 +774,6 @@ button {
 
 .searchBox span {
   color: #919daf;
-
   font-size: 17px;
 }
 
@@ -1160,7 +1159,6 @@ button {
 
 .filterIcon {
   color: #74829a;
-
   font-size: 16px;
 }
 
@@ -1527,8 +1525,6 @@ button {
     translateY(-1px);
 }
 
-/* unassigned delivery */
-
 .calendarEventUnassigned {
   box-shadow:
     inset
@@ -1620,16 +1616,17 @@ button {
   display: grid;
 
   grid-template-columns:
-    minmax(260px, 1.7fr)
+    minmax(230px, 1.65fr)
+    minmax(125px, 0.95fr)
+    minmax(120px, 0.9fr)
     minmax(145px, 1fr)
-    minmax(140px, 0.95fr)
-    minmax(140px, 1fr)
-    minmax(120px, 0.85fr)
-    24px;
+    minmax(115px, 0.9fr)
+    minmax(105px, 0.8fr)
+    22px;
 
   align-items: center;
 
-  gap: 14px;
+  gap: 12px;
 }
 
 .teamTableHeader {
@@ -1646,7 +1643,7 @@ button {
   font-weight: 850;
 
   letter-spacing:
-    0.08em;
+    0.07em;
 }
 
 .teamTableRow {
@@ -1701,6 +1698,15 @@ button {
   font-weight: 650;
 
   color: #526077;
+}
+
+.teamWeekValue {
+  color: #596981;
+
+  font-size: 9px;
+  font-weight: 720;
+
+  white-space: nowrap;
 }
 
 .tableDash {
@@ -2573,17 +2579,15 @@ button {
 ====================================================== */
 
 @media (
-  max-width: 1100px
+  max-width: 1180px
 ) {
+  .teamTableCard {
+    overflow-x: auto;
+  }
+
   .teamTableHeader,
-  .teamTableRow {
-    grid-template-columns:
-      minmax(230px, 1.5fr)
-      minmax(125px, 1fr)
-      minmax(125px, 1fr)
-      minmax(110px, 0.9fr)
-      minmax(100px, 0.8fr)
-      20px;
+  .teamTableBody {
+    min-width: 1050px;
   }
 }
 
@@ -2715,7 +2719,7 @@ button {
 
   .teamTableHeader,
   .teamTableBody {
-    min-width: 850px;
+    min-width: 1050px;
   }
 
   .modalOverlay {
