@@ -57,9 +57,13 @@ type KpiSelection = {
   type: Exclude<KpiType, "none">;
 } | null;
 
-type OpenCaseSource =
-  | "cases"
-  | "calendar";
+type OpenCaseSource = "cases" | "calendar";
+
+type Stats = {
+  backlog: number;
+  pending: number;
+  future: number;
+};
 
 /* =========================================================
    LABELS
@@ -183,6 +187,7 @@ const toInputDate = (value: string) => {
   if (!parsed) return "";
 
   const year = parsed.getFullYear();
+
   const month = String(
     parsed.getMonth() + 1
   ).padStart(2, "0");
@@ -202,41 +207,64 @@ const startOfWeek = (date: Date) => {
   );
 
   const day = result.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
 
-  result.setDate(result.getDate() + diff);
+  const diff =
+    day === 0
+      ? -6
+      : 1 - day;
+
+  result.setDate(
+    result.getDate() + diff
+  );
 
   return result;
 };
 
-const addDays = (date: Date, days: number) => {
+const addDays = (
+  date: Date,
+  days: number
+) => {
   const result = new Date(date);
 
-  result.setDate(result.getDate() + days);
+  result.setDate(
+    result.getDate() + days
+  );
 
   return result;
 };
 
-const sameDay = (a: Date, b: Date) =>
+const sameDay = (
+  a: Date,
+  b: Date
+) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
-const classifyDate = (date: Date): KpiType => {
-  const currentWeekStart = startOfWeek(new Date());
+const classifyDate = (
+  date: Date
+): KpiType => {
+  const currentWeekStart =
+    startOfWeek(new Date());
 
-  const nextWeekStart = addDays(
-    currentWeekStart,
-    7
-  );
+  const nextWeekStart =
+    addDays(
+      currentWeekStart,
+      7
+    );
 
-  if (date.getTime() < currentWeekStart.getTime()) {
+  if (
+    date.getTime() <
+    currentWeekStart.getTime()
+  ) {
     return "backlog";
   }
 
   if (
-    date.getTime() >= currentWeekStart.getTime() &&
-    date.getTime() < nextWeekStart.getTime()
+    date.getTime() >=
+      currentWeekStart.getTime() &&
+    date.getTime() <
+      nextWeekStart.getTime()
   ) {
     return "pending";
   }
@@ -248,18 +276,26 @@ const classifyDate = (date: Date): KpiType => {
    KPI LOGIC
 ========================================================= */
 
-const getMgmKpi = (row: CaseRow): KpiType => {
+const getMgmKpi = (
+  row: CaseRow
+): KpiType => {
   const type = norm(
     row["DUE DATE/NO DUE DATE"] || ""
   );
 
   if (
-    !["DUE DATE", "NO DUE DATE", "NOID"].includes(type)
+    ![
+      "DUE DATE",
+      "NO DUE DATE",
+      "NOID",
+    ].includes(type)
   ) {
     return "none";
   }
 
-  const status = norm(row["STATUS"] || "");
+  const status = norm(
+    row["STATUS"] || ""
+  );
 
   if (
     [
@@ -281,7 +317,9 @@ const getMgmKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getPsychKpi = (row: CaseRow): KpiType => {
+const getPsychKpi = (
+  row: CaseRow
+): KpiType => {
   const status = norm(
     row["DOE STATUS"] || ""
   );
@@ -301,7 +339,9 @@ const getPsychKpi = (row: CaseRow): KpiType => {
     return "none";
   }
 
-  if ((row["DONE (doe)"] || "").trim()) {
+  if (
+    (row["DONE (doe)"] || "").trim()
+  ) {
     return "none";
   }
 
@@ -314,8 +354,12 @@ const getPsychKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getCaratulaKpi = (row: CaseRow): KpiType => {
-  if ((row["CARATULA DONE"] || "").trim()) {
+const getCaratulaKpi = (
+  row: CaseRow
+): KpiType => {
+  if (
+    (row["CARATULA DONE"] || "").trim()
+  ) {
     return "none";
   }
 
@@ -328,7 +372,9 @@ const getCaratulaKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getDraftKpi = (row: CaseRow): KpiType => {
+const getDraftKpi = (
+  row: CaseRow
+): KpiType => {
   const status = norm(
     row["STATUS 1ST DRAFT"] || ""
   );
@@ -347,7 +393,9 @@ const getDraftKpi = (row: CaseRow): KpiType => {
     return "none";
   }
 
-  if ((row["1ST DRAFT DONE"] || "").trim()) {
+  if (
+    (row["1ST DRAFT DONE"] || "").trim()
+  ) {
     return "none";
   }
 
@@ -360,8 +408,12 @@ const getDraftKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getPlCvlKpi = (row: CaseRow): KpiType => {
-  if ((row["PL CVL DONE"] || "").trim()) {
+const getPlCvlKpi = (
+  row: CaseRow
+): KpiType => {
+  if (
+    (row["PL CVL DONE"] || "").trim()
+  ) {
     return "none";
   }
 
@@ -374,7 +426,9 @@ const getPlCvlKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getEaKpi = (row: CaseRow): KpiType => {
+const getEaKpi = (
+  row: CaseRow
+): KpiType => {
   const status = norm(
     row["EA STATUS"] || ""
   );
@@ -390,7 +444,9 @@ const getEaKpi = (row: CaseRow): KpiType => {
     return "none";
   }
 
-  if ((row["EA DONE"] || "").trim()) {
+  if (
+    (row["EA DONE"] || "").trim()
+  ) {
     return "none";
   }
 
@@ -403,20 +459,27 @@ const getEaKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getCvlKpi = (row: CaseRow): KpiType => {
+const getCvlKpi = (
+  row: CaseRow
+): KpiType => {
   const status = norm(
     row["CVL STATUS"] || ""
   );
 
   if (
-    ["NA", "N/A", "CANCELLED", "CANCELED"].includes(
-      status
-    )
+    [
+      "NA",
+      "N/A",
+      "CANCELLED",
+      "CANCELED",
+    ].includes(status)
   ) {
     return "none";
   }
 
-  if ((row["DONE CVL"] || "").trim()) {
+  if (
+    (row["DONE CVL"] || "").trim()
+  ) {
     return "none";
   }
 
@@ -429,13 +492,32 @@ const getCvlKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
-const getKpiGetter = (section: KpiSection) => {
-  if (section === "mgm") return getMgmKpi;
-  if (section === "psych") return getPsychKpi;
-  if (section === "caratula") return getCaratulaKpi;
-  if (section === "draft") return getDraftKpi;
-  if (section === "plcvl") return getPlCvlKpi;
-  if (section === "ea") return getEaKpi;
+const getKpiGetter = (
+  section: KpiSection
+) => {
+  if (section === "mgm") {
+    return getMgmKpi;
+  }
+
+  if (section === "psych") {
+    return getPsychKpi;
+  }
+
+  if (section === "caratula") {
+    return getCaratulaKpi;
+  }
+
+  if (section === "draft") {
+    return getDraftKpi;
+  }
+
+  if (section === "plcvl") {
+    return getPlCvlKpi;
+  }
+
+  if (section === "ea") {
+    return getEaKpi;
+  }
 
   return getCvlKpi;
 };
@@ -527,71 +609,118 @@ export default function Home() {
   const [user, setUser] =
     useState<User | null>(null);
 
-  const [data, setData] = useState<{
-    title: string;
-    headers: string[];
-    rows: CaseRow[];
-  }>({
-    title: "",
-    headers: [],
-    rows: [],
-  });
-
-  const [loadingUser, setLoadingUser] =
-    useState(true);
-
-  const [loadingCases, setLoadingCases] =
-    useState(false);
-
-  const [mainView, setMainView] =
-    useState<MainView>("dashboard");
-
-  const [teamOpen, setTeamOpen] =
-    useState(false);
-
-  const [teamGroup, setTeamGroup] =
-    useState<TeamGroup>("paralegal");
-
-  const [teamCalendar, setTeamCalendar] =
-    useState<TeamCalendar>("caratula");
-
-  const [calendarMonth, setCalendarMonth] =
-    useState(() => {
-      const now = new Date();
-
-      return new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        1
-      );
+  const [data, setData] =
+    useState<{
+      title: string;
+      headers: string[];
+      rows: CaseRow[];
+    }>({
+      title: "",
+      headers: [],
+      rows: [],
     });
 
-  const [search, setSearch] =
-    useState("");
+  const [
+    loadingUser,
+    setLoadingUser,
+  ] = useState(true);
 
-  const [statusFilter, setStatusFilter] =
-    useState("");
+  const [
+    loadingCases,
+    setLoadingCases,
+  ] = useState(false);
 
-  const [selectedCase, setSelectedCase] =
+  const [
+    mainView,
+    setMainView,
+  ] =
+    useState<MainView>("dashboard");
+
+  const [
+    teamOpen,
+    setTeamOpen,
+  ] = useState(false);
+
+  const [
+    teamGroup,
+    setTeamGroup,
+  ] =
+    useState<TeamGroup>("paralegal");
+
+  const [
+    teamCalendar,
+    setTeamCalendar,
+  ] =
+    useState<TeamCalendar>(
+      "caratula"
+    );
+
+  const [
+    calendarMonth,
+    setCalendarMonth,
+  ] = useState(() => {
+    const now = new Date();
+
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+  });
+
+  const [
+    search,
+    setSearch,
+  ] = useState("");
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState("");
+
+  const [
+    selectedCase,
+    setSelectedCase,
+  ] =
     useState<CaseRow | null>(null);
 
-  const [openCaseSource, setOpenCaseSource] =
-    useState<OpenCaseSource>("cases");
+  const [
+    openCaseSource,
+    setOpenCaseSource,
+  ] =
+    useState<OpenCaseSource>(
+      "cases"
+    );
 
-  const [selectedStage, setSelectedStage] =
-    useState<TeamCalendar | null>(null);
+  const [
+    selectedStage,
+    setSelectedStage,
+  ] =
+    useState<TeamCalendar | null>(
+      null
+    );
 
-  const [selectedKpi, setSelectedKpi] =
+  const [
+    selectedKpi,
+    setSelectedKpi,
+  ] =
     useState<KpiSelection>(null);
 
-  const [savingField, setSavingField] =
+  const [
+    savingField,
+    setSavingField,
+  ] =
     useState<string | null>(null);
 
-  const [message, setMessage] =
-    useState("");
+  const [
+    message,
+    setMessage,
+  ] = useState("");
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError,
+  ] = useState("");
 
   /* =====================================================
      ROLE PERMISSIONS
@@ -620,16 +749,26 @@ export default function Home() {
   const canEditStage =
     role === "ADMIN" ||
     role === "TL" ||
-    (role === "PARALEGAL" &&
-      ["caratula", "draft", "plcvl"].includes(
+    (
+      role === "PARALEGAL" &&
+      [
+        "caratula",
+        "draft",
+        "plcvl",
+      ].includes(
         selectedStage || ""
-      )) ||
-    (role === "PSYCH" &&
-      selectedStage === "psych") ||
-    (role === "ANALYST" &&
+      )
+    ) ||
+    (
+      role === "PSYCH" &&
+      selectedStage === "psych"
+    ) ||
+    (
+      role === "ANALYST" &&
       ["ea", "cvl"].includes(
         selectedStage || ""
-      ));
+      )
+    );
 
   /* =====================================================
      LOAD
@@ -637,14 +776,17 @@ export default function Home() {
 
   async function loadUser() {
     try {
-      const response = await fetch(
-        "/api/auth/me",
-        {
-          cache: "no-store",
-        }
-      );
+      const response =
+        await fetch(
+          "/api/auth/me",
+          {
+            cache: "no-store",
+          }
+        );
 
-      setUser(await response.json());
+      setUser(
+        await response.json()
+      );
     } catch {
       setUser({
         authenticated: false,
@@ -661,14 +803,16 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await fetch(
-        "/api/cases",
-        {
-          cache: "no-store",
-        }
-      );
+      const response =
+        await fetch(
+          "/api/cases",
+          {
+            cache: "no-store",
+          }
+        );
 
-      const json = await response.json();
+      const json =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -680,7 +824,9 @@ export default function Home() {
       setData(json);
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Error"
+        e instanceof Error
+          ? e.message
+          : "Error"
       );
     } finally {
       setLoadingCases(false);
@@ -692,7 +838,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (user?.authenticated) {
+    if (
+      user?.authenticated
+    ) {
       loadCases();
     }
   }, [user]);
@@ -711,66 +859,83 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await fetch(
-        "/api/cases/update",
-        {
-          method: "POST",
+      const response =
+        await fetch(
+          "/api/cases/update",
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            row: rowNumber,
-
-            changes: {
-              [header]: value,
+            headers: {
+              "Content-Type":
+                "application/json",
             },
-          }),
-        }
-      );
 
-      const json = await response.json();
+            body:
+              JSON.stringify({
+                row: rowNumber,
+
+                changes: {
+                  [header]:
+                    value,
+                },
+              }),
+          }
+        );
+
+      const json =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          json.error || "No se pudo guardar"
+          json.error ||
+            "No se pudo guardar"
         );
       }
 
       setData((prev) => ({
         ...prev,
 
-        rows: prev.rows.map((row) =>
-          row.__row === String(rowNumber)
-            ? {
-                ...row,
-                [header]: value,
-              }
-            : row
-        ),
+        rows:
+          prev.rows.map(
+            (row) =>
+              row.__row ===
+              String(rowNumber)
+                ? {
+                    ...row,
+                    [header]:
+                      value,
+                  }
+                : row
+          ),
       }));
 
-      setSelectedCase((prev) =>
-        prev?.__row === String(rowNumber)
-          ? {
-              ...prev,
-              [header]: value,
-            }
-          : prev
+      setSelectedCase(
+        (prev) =>
+          prev?.__row ===
+          String(rowNumber)
+            ? {
+                ...prev,
+                [header]:
+                  value,
+              }
+            : prev
       );
 
       setMessage(
         "Cambio guardado en Google Sheets"
       );
 
-      window.setTimeout(() => {
-        setMessage("");
-      }, 2200);
+      window.setTimeout(
+        () => {
+          setMessage("");
+        },
+        2200
+      );
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Error"
+        e instanceof Error
+          ? e.message
+          : "Error"
       );
     } finally {
       setSavingField(null);
@@ -781,9 +946,15 @@ export default function Home() {
      OPEN CASE
   ===================================================== */
 
-  function openGeneralCase(row: CaseRow) {
-    setOpenCaseSource("cases");
+  function openGeneralCase(
+    row: CaseRow
+  ) {
+    setOpenCaseSource(
+      "cases"
+    );
+
     setSelectedStage(null);
+
     setSelectedCase(row);
   }
 
@@ -791,31 +962,56 @@ export default function Home() {
     row: CaseRow,
     stage: TeamCalendar
   ) {
-    setOpenCaseSource("calendar");
+    setOpenCaseSource(
+      "calendar"
+    );
+
     setSelectedStage(stage);
+
     setSelectedCase(row);
   }
 
   /* =====================================================
-     STATS
+     KPI STATS
   ===================================================== */
 
   const calculateStats = (
     section: KpiSection
-  ) => {
-    const getter = getKpiGetter(section);
+  ): Stats => {
+    const getter =
+      getKpiGetter(section);
 
     let backlog = 0;
     let pending = 0;
     let future = 0;
 
-    data.rows.forEach((row) => {
-      const result = getter(row);
+    data.rows.forEach(
+      (row) => {
+        const result =
+          getter(row);
 
-      if (result === "backlog") backlog++;
-      if (result === "pending") pending++;
-      if (result === "future") future++;
-    });
+        if (
+          result ===
+          "backlog"
+        ) {
+          backlog++;
+        }
+
+        if (
+          result ===
+          "pending"
+        ) {
+          pending++;
+        }
+
+        if (
+          result ===
+          "future"
+        ) {
+          future++;
+        }
+      }
+    );
 
     return {
       backlog,
@@ -824,98 +1020,234 @@ export default function Home() {
     };
   };
 
-  const mgmStats = useMemo(
-    () => calculateStats("mgm"),
-    [data.rows]
-  );
+  const mgmStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "mgm"
+        ),
+      [data.rows]
+    );
 
-  const psychStats = useMemo(
-    () => calculateStats("psych"),
-    [data.rows]
-  );
+  const psychStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "psych"
+        ),
+      [data.rows]
+    );
 
-  const caratulaStats = useMemo(
-    () => calculateStats("caratula"),
-    [data.rows]
-  );
+  const caratulaStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "caratula"
+        ),
+      [data.rows]
+    );
 
-  const draftStats = useMemo(
-    () => calculateStats("draft"),
-    [data.rows]
-  );
+  const draftStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "draft"
+        ),
+      [data.rows]
+    );
 
-  const plcvlStats = useMemo(
-    () => calculateStats("plcvl"),
-    [data.rows]
-  );
+  const plcvlStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "plcvl"
+        ),
+      [data.rows]
+    );
 
-  const eaStats = useMemo(
-    () => calculateStats("ea"),
-    [data.rows]
-  );
+  const eaStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "ea"
+        ),
+      [data.rows]
+    );
 
-  const cvlStats = useMemo(
-    () => calculateStats("cvl"),
-    [data.rows]
-  );
+  const cvlStats =
+    useMemo(
+      () =>
+        calculateStats(
+          "cvl"
+        ),
+      [data.rows]
+    );
+
+  const dashboardTotals =
+    useMemo(
+      () => ({
+        backlog:
+          mgmStats.backlog +
+          psychStats.backlog +
+          caratulaStats.backlog +
+          draftStats.backlog +
+          plcvlStats.backlog +
+          eaStats.backlog +
+          cvlStats.backlog,
+
+        pending:
+          mgmStats.pending +
+          psychStats.pending +
+          caratulaStats.pending +
+          draftStats.pending +
+          plcvlStats.pending +
+          eaStats.pending +
+          cvlStats.pending,
+
+        future:
+          mgmStats.future +
+          psychStats.future +
+          caratulaStats.future +
+          draftStats.future +
+          plcvlStats.future +
+          eaStats.future +
+          cvlStats.future,
+      }),
+      [
+        mgmStats,
+        psychStats,
+        caratulaStats,
+        draftStats,
+        plcvlStats,
+        eaStats,
+        cvlStats,
+      ]
+    );
 
   /* =====================================================
      CASE FILTER
   ===================================================== */
 
-  const filteredCases = useMemo(() => {
-    const q = search.trim().toLowerCase();
+  const filteredCases =
+    useMemo(() => {
+      const q =
+        search
+          .trim()
+          .toLowerCase();
 
-    return data.rows.filter((row) => {
-      const matchesSearch =
-        !q ||
-        (row["CLIENTE"] || "")
-          .toLowerCase()
-          .includes(q) ||
-        (row["ID"] || "")
-          .toLowerCase()
-          .includes(q) ||
-        (row["RECEIPT NUMBER"] || "")
-          .toLowerCase()
-          .includes(q);
+      return data.rows.filter(
+        (row) => {
+          const matchesSearch =
+            !q ||
+            (
+              row[
+                "CLIENTE"
+              ] || ""
+            )
+              .toLowerCase()
+              .includes(q) ||
+            (
+              row[
+                "ID"
+              ] || ""
+            )
+              .toLowerCase()
+              .includes(q) ||
+            (
+              row[
+                "RECEIPT NUMBER"
+              ] || ""
+            )
+              .toLowerCase()
+              .includes(q);
 
-      const matchesStatus =
-        !statusFilter ||
-        norm(row["STATUS"] || "") ===
-          norm(statusFilter);
+          const matchesStatus =
+            !statusFilter ||
+            norm(
+              row[
+                "STATUS"
+              ] || ""
+            ) ===
+              norm(
+                statusFilter
+              );
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [data.rows, search, statusFilter]);
+          return (
+            matchesSearch &&
+            matchesStatus
+          );
+        }
+      );
+    }, [
+      data.rows,
+      search,
+      statusFilter,
+    ]);
 
   /* =====================================================
      KPI DETAILS
   ===================================================== */
 
-  const kpiCases = useMemo(() => {
-    if (!selectedKpi) return [];
+  const kpiCases =
+    useMemo(() => {
+      if (!selectedKpi) {
+        return [];
+      }
 
-    const getter = getKpiGetter(
-      selectedKpi.section
-    );
+      const getter =
+        getKpiGetter(
+          selectedKpi.section
+        );
 
-    return data.rows.filter(
-      (row) =>
-        getter(row) === selectedKpi.type
-    );
-  }, [data.rows, selectedKpi]);
+      return data.rows.filter(
+        (row) =>
+          getter(row) ===
+          selectedKpi.type
+      );
+    }, [
+      data.rows,
+      selectedKpi,
+    ]);
 
   const sectionLabel = (
     section: KpiSection
   ) => {
-    if (section === "mgm") return "Entregas MGM";
-    if (section === "psych") return "Psych";
-    if (section === "caratula")
+    if (
+      section === "mgm"
+    ) {
+      return "Entregas MGM";
+    }
+
+    if (
+      section === "psych"
+    ) {
+      return "Psych";
+    }
+
+    if (
+      section ===
+      "caratula"
+    ) {
       return "Llenado de Carátula";
-    if (section === "draft") return "1st Draft";
-    if (section === "plcvl")
+    }
+
+    if (
+      section === "draft"
+    ) {
+      return "1st Draft";
+    }
+
+    if (
+      section === "plcvl"
+    ) {
       return "Escalación CVL";
-    if (section === "ea") return "EA · Analyst";
+    }
+
+    if (
+      section === "ea"
+    ) {
+      return "EA · Analyst";
+    }
 
     return "CVL";
   };
@@ -924,95 +1256,129 @@ export default function Home() {
      CALENDAR
   ===================================================== */
 
-  const calendarDays = useMemo(() => {
-    const year =
-      calendarMonth.getFullYear();
+  const calendarDays =
+    useMemo(() => {
+      const year =
+        calendarMonth.getFullYear();
 
-    const month =
-      calendarMonth.getMonth();
+      const month =
+        calendarMonth.getMonth();
 
-    const firstDay = new Date(
-      year,
-      month,
-      1
-    );
+      const firstDay =
+        new Date(
+          year,
+          month,
+          1
+        );
 
-    const lastDay = new Date(
-      year,
-      month + 1,
-      0
-    );
+      const lastDay =
+        new Date(
+          year,
+          month + 1,
+          0
+        );
 
-    const mondayIndex =
-      firstDay.getDay() === 0
-        ? 6
-        : firstDay.getDay() - 1;
+      const mondayIndex =
+        firstDay.getDay() ===
+        0
+          ? 6
+          : firstDay.getDay() -
+            1;
 
-    const startDate = addDays(
-      firstDay,
-      -mondayIndex
-    );
+      const startDate =
+        addDays(
+          firstDay,
+          -mondayIndex
+        );
 
-    const lastDayMondayIndex =
-      lastDay.getDay() === 0
-        ? 6
-        : lastDay.getDay() - 1;
+      const lastDayMondayIndex =
+        lastDay.getDay() ===
+        0
+          ? 6
+          : lastDay.getDay() -
+            1;
 
-    const remaining =
-      6 - lastDayMondayIndex;
+      const remaining =
+        6 -
+        lastDayMondayIndex;
 
-    const endDate = addDays(
-      lastDay,
-      remaining
-    );
+      const endDate =
+        addDays(
+          lastDay,
+          remaining
+        );
 
-    const days: Date[] = [];
+      const days: Date[] =
+        [];
 
-    let cursor = new Date(startDate);
+      let cursor =
+        new Date(startDate);
 
-    while (
-      cursor.getTime() <= endDate.getTime()
-    ) {
-      days.push(new Date(cursor));
-      cursor = addDays(cursor, 1);
-    }
+      while (
+        cursor.getTime() <=
+        endDate.getTime()
+      ) {
+        days.push(
+          new Date(cursor)
+        );
 
-    return days;
-  }, [calendarMonth]);
+        cursor =
+          addDays(
+            cursor,
+            1
+          );
+      }
 
-  const calendarEvents = useMemo(() => {
-    const header =
-      calendarDateHeader(teamCalendar);
+      return days;
+    }, [calendarMonth]);
 
-    return data.rows
-      .filter((row) =>
-        calendarActive(
-          row,
+  const calendarEvents =
+    useMemo(() => {
+      const header =
+        calendarDateHeader(
           teamCalendar
-        )
-      )
-      .map((row) => ({
-        row,
+        );
 
-        date: parseDateOnly(
-          row[header] || ""
-        ),
-      }))
-      .filter(
-        (
-          item
-        ): item is {
-          row: CaseRow;
-          date: Date;
-        } => !!item.date
-      );
-  }, [data.rows, teamCalendar]);
+      return data.rows
+        .filter(
+          (row) =>
+            calendarActive(
+              row,
+              teamCalendar
+            )
+        )
+        .map(
+          (row) => ({
+            row,
+
+            date:
+              parseDateOnly(
+                row[
+                  header
+                ] || ""
+              ),
+          })
+        )
+        .filter(
+          (
+            item
+          ): item is {
+            row: CaseRow;
+            date: Date;
+          } =>
+            !!item.date
+        );
+    }, [
+      data.rows,
+      teamCalendar,
+    ]);
 
   function previousMonth() {
     setCalendarMonth(
       new Date(
         calendarMonth.getFullYear(),
-        calendarMonth.getMonth() - 1,
+        calendarMonth.getMonth() -
+          1,
         1
       )
     );
@@ -1022,14 +1388,16 @@ export default function Home() {
     setCalendarMonth(
       new Date(
         calendarMonth.getFullYear(),
-        calendarMonth.getMonth() + 1,
+        calendarMonth.getMonth() +
+          1,
         1
       )
     );
   }
 
   function goToday() {
-    const today = new Date();
+    const today =
+      new Date();
 
     setCalendarMonth(
       new Date(
@@ -1041,29 +1409,40 @@ export default function Home() {
   }
 
   /* =====================================================
-     STYLE
+     STATUS STYLE
   ===================================================== */
 
-  const statusClass = (status: string) => {
-    const value = norm(status);
+  const statusClass = (
+    status: string
+  ) => {
+    const value =
+      norm(status);
 
     if (
       value === "DONE" ||
-      value === "SENT TO USCIS"
+      value ===
+        "SENT TO USCIS"
     ) {
       return "statusPill statusGreen";
     }
 
     if (
-      value.includes("REVIEW") ||
-      value.includes("CORRECTION")
+      value.includes(
+        "REVIEW"
+      ) ||
+      value.includes(
+        "CORRECTION"
+      )
     ) {
       return "statusPill statusPurple";
     }
 
     if (
-      value.includes("CANCEL") ||
-      value === "SPECIAL CASE"
+      value.includes(
+        "CANCEL"
+      ) ||
+      value ===
+        "SPECIAL CASE"
     ) {
       return "statusPill statusRed";
     }
@@ -1080,27 +1459,49 @@ export default function Home() {
   ===================================================== */
 
   function openDashboard() {
-    setMainView("dashboard");
+    setMainView(
+      "dashboard"
+    );
+
     setTeamOpen(false);
   }
 
   function openCases() {
     setMainView("cases");
+
     setTeamOpen(false);
   }
 
   function toggleTeam() {
     setMainView("team");
+
     setTeamOpen(true);
 
-    if (role === "PARALEGAL") {
-      setTeamGroup("paralegal");
-      setTeamCalendar("caratula");
-    } else if (role === "PSYCH") {
-      setTeamGroup("psych");
-      setTeamCalendar("psych");
-    } else if (role === "ANALYST") {
+    if (
+      role === "PARALEGAL"
+    ) {
+      setTeamGroup(
+        "paralegal"
+      );
+
+      setTeamCalendar(
+        "caratula"
+      );
+    } else if (
+      role === "PSYCH"
+    ) {
+      setTeamGroup(
+        "psych"
+      );
+
+      setTeamCalendar(
+        "psych"
+      );
+    } else if (
+      role === "ANALYST"
+    ) {
       setTeamGroup("ea");
+
       setTeamCalendar("ea");
     }
   }
@@ -1109,103 +1510,120 @@ export default function Home() {
     group: TeamGroup
   ) {
     setMainView("team");
+
     setTeamOpen(true);
+
     setTeamGroup(group);
 
-    if (group === "paralegal") {
-      setTeamCalendar("caratula");
+    if (
+      group ===
+      "paralegal"
+    ) {
+      setTeamCalendar(
+        "caratula"
+      );
     }
 
-    if (group === "psych") {
-      setTeamCalendar("psych");
+    if (
+      group === "psych"
+    ) {
+      setTeamCalendar(
+        "psych"
+      );
     }
 
-    if (group === "ea") {
-      setTeamCalendar("ea");
+    if (
+      group === "ea"
+    ) {
+      setTeamCalendar(
+        "ea"
+      );
     }
   }
 
   /* =====================================================
-     KPI COMPONENTS
+     DASHBOARD ROW
   ===================================================== */
 
-  function KpiCard({
-    title,
-    value,
-    type,
-    section,
-  }: {
-    title: string;
-    value: number;
-    type: Exclude<KpiType, "none">;
-    section: KpiSection;
-  }) {
-    return (
-      <button
-        className={`metricCard metric-${type}`}
-        onDoubleClick={() =>
-          setSelectedKpi({
-            section,
-            type,
-          })
-        }
-      >
-        <div className="metricTop">
-          <span>{title}</span>
-          <span className="metricDot">•</span>
-        </div>
-
-        <strong>{value}</strong>
-
-        <small>
-          Doble clic para ver casos
-        </small>
-      </button>
-    );
-  }
-
-  function KpiRow({
+  function DashboardWorkflowRow({
     title,
     section,
     stats,
   }: {
     title: string;
     section: KpiSection;
-    stats: {
-      backlog: number;
-      pending: number;
-      future: number;
-    };
+    stats: Stats;
   }) {
     return (
-      <section className="workflowSection">
-        <div className="workflowTitle">
-          <h2>{title}</h2>
+      <div className="workflowLine">
+        <div className="workflowLineName">
+          <strong>
+            {title}
+          </strong>
         </div>
 
-        <div className="metricGrid">
-          <KpiCard
-            title="Backlog"
-            value={stats.backlog}
-            type="backlog"
-            section={section}
-          />
+        <button
+          className={`workflowMetric ${
+            stats.backlog >
+            0
+              ? "hasBacklog"
+              : ""
+          }`}
+          onDoubleClick={() =>
+            setSelectedKpi({
+              section,
+              type: "backlog",
+            })
+          }
+          title="Doble clic para ver casos"
+        >
+          <span>
+            Backlog
+          </span>
 
-          <KpiCard
-            title="Pendientes"
-            value={stats.pending}
-            type="pending"
-            section={section}
-          />
+          <strong>
+            {stats.backlog}
+          </strong>
+        </button>
 
-          <KpiCard
-            title="Próximas entregas"
-            value={stats.future}
-            type="future"
-            section={section}
-          />
-        </div>
-      </section>
+        <button
+          className="workflowMetric"
+          onDoubleClick={() =>
+            setSelectedKpi({
+              section,
+              type: "pending",
+            })
+          }
+          title="Doble clic para ver casos"
+        >
+          <span>
+            Esta semana
+          </span>
+
+          <strong>
+            {stats.pending}
+          </strong>
+        </button>
+
+        <button
+          className="workflowMetric"
+          onDoubleClick={() =>
+            setSelectedKpi({
+              section,
+              type: "future",
+            })
+          }
+          title="Doble clic para ver casos"
+        >
+          <span>
+            Próximas
+          </span>
+
+          <strong>
+            {stats.future}
+          </strong>
+        </button>
+      </div>
     );
   }
 
@@ -1230,59 +1648,87 @@ export default function Home() {
     readOnly?: boolean;
     options?: string[];
   }) {
-    if (!selectedCase) return null;
+    if (!selectedCase) {
+      return null;
+    }
 
     const value =
-      selectedCase[header] || "";
+      selectedCase[
+        header
+      ] || "";
 
     const updateLocal = (
       newValue: string
     ) => {
       setSelectedCase({
         ...selectedCase,
-        [header]: newValue,
+
+        [header]:
+          newValue,
       });
     };
 
     const locked =
       readOnly ||
-      (openCaseSource === "calendar" &&
-        !canEditStage) ||
-      role === "MANAGER" ||
-      role === "COORDINATOR";
+      (
+        openCaseSource ===
+          "calendar" &&
+        !canEditStage
+      ) ||
+      role ===
+        "MANAGER" ||
+      role ===
+        "COORDINATOR";
 
     return (
       <div className="detailField">
-        <label>{label}</label>
+        <label>
+          {label}
+        </label>
 
         {locked ? (
           <div className="readValue">
             {value || "—"}
           </div>
-        ) : type === "textarea" ? (
+        ) : type ===
+          "textarea" ? (
           <textarea
             value={value}
-            onChange={(e) =>
-              updateLocal(e.target.value)
+            onChange={(
+              e
+            ) =>
+              updateLocal(
+                e.target
+                  .value
+              )
             }
-            onBlur={(e) =>
+            onBlur={(
+              e
+            ) =>
               saveField(
                 Number(
                   selectedCase.__row
                 ),
                 header,
-                e.target.value
+                e.target
+                  .value
               )
             }
           />
-        ) : type === "select" ? (
+        ) : type ===
+            "select" ? (
           <select
             value={value}
-            onChange={(e) => {
+            onChange={(
+              e
+            ) => {
               const newValue =
-                e.target.value;
+                e.target
+                  .value;
 
-              updateLocal(newValue);
+              updateLocal(
+                newValue
+              );
 
               saveField(
                 Number(
@@ -1293,15 +1739,28 @@ export default function Home() {
               );
             }}
           >
-            <option value="">—</option>
+            <option value="">
+              —
+            </option>
 
-            {(options || []).map(
-              (option) => (
+            {(
+              options ||
+              []
+            ).map(
+              (
+                option
+              ) => (
                 <option
-                  key={option}
-                  value={option}
+                  key={
+                    option
+                  }
+                  value={
+                    option
+                  }
                 >
-                  {option}
+                  {
+                    option
+                  }
                 </option>
               )
             )}
@@ -1310,26 +1769,38 @@ export default function Home() {
           <input
             type={type}
             value={
-              type === "date"
-                ? toInputDate(value)
+              type ===
+              "date"
+                ? toInputDate(
+                    value
+                  )
                 : value
             }
-            onChange={(e) =>
-              updateLocal(e.target.value)
+            onChange={(
+              e
+            ) =>
+              updateLocal(
+                e.target
+                  .value
+              )
             }
-            onBlur={(e) =>
+            onBlur={(
+              e
+            ) =>
               saveField(
                 Number(
                   selectedCase.__row
                 ),
                 header,
-                e.target.value
+                e.target
+                  .value
               )
             }
           />
         )}
 
-        {savingField === header && (
+        {savingField ===
+          header && (
           <span className="savingText">
             Guardando…
           </span>
@@ -1347,13 +1818,20 @@ export default function Home() {
   }: {
     stage: TeamCalendar;
   }) {
-    if (!selectedCase) return null;
+    if (!selectedCase) {
+      return null;
+    }
 
-    if (stage === "caratula") {
+    if (
+      stage ===
+      "caratula"
+    ) {
       return (
         <section className="detailSection">
           <div className="detailSectionHeader">
-            <div className="stageIcon">PL</div>
+            <div className="stageIcon">
+              PL
+            </div>
 
             <div>
               <h3>
@@ -1402,11 +1880,16 @@ export default function Home() {
       );
     }
 
-    if (stage === "draft") {
+    if (
+      stage ===
+      "draft"
+    ) {
       return (
         <section className="detailSection">
           <div className="detailSectionHeader">
-            <div className="stageIcon">PL</div>
+            <div className="stageIcon">
+              PL
+            </div>
 
             <div>
               <h3>
@@ -1462,11 +1945,16 @@ export default function Home() {
       );
     }
 
-    if (stage === "plcvl") {
+    if (
+      stage ===
+      "plcvl"
+    ) {
       return (
         <section className="detailSection">
           <div className="detailSectionHeader">
-            <div className="stageIcon">PL</div>
+            <div className="stageIcon">
+              PL
+            </div>
 
             <div>
               <h3>
@@ -1503,14 +1991,21 @@ export default function Home() {
       );
     }
 
-    if (stage === "psych") {
+    if (
+      stage ===
+      "psych"
+    ) {
       return (
         <section className="detailSection">
           <div className="detailSectionHeader">
-            <div className="stageIcon">PS</div>
+            <div className="stageIcon">
+              PS
+            </div>
 
             <div>
-              <h3>Psych · DOE</h3>
+              <h3>
+                Psych · DOE
+              </h3>
 
               <p>
                 Entrega de Psych
@@ -1569,14 +2064,20 @@ export default function Home() {
       );
     }
 
-    if (stage === "ea") {
+    if (
+      stage === "ea"
+    ) {
       return (
         <section className="detailSection">
           <div className="detailSectionHeader">
-            <div className="stageIcon">EA</div>
+            <div className="stageIcon">
+              EA
+            </div>
 
             <div>
-              <h3>EA · Analyst</h3>
+              <h3>
+                EA · Analyst
+              </h3>
 
               <p>
                 Evidence Analysis
@@ -1661,10 +2162,14 @@ export default function Home() {
     return (
       <section className="detailSection">
         <div className="detailSectionHeader">
-          <div className="stageIcon">CV</div>
+          <div className="stageIcon">
+            CV
+          </div>
 
           <div>
-            <h3>CVL</h3>
+            <h3>
+              CVL
+            </h3>
 
             <p>
               Entrega CVL
@@ -1718,7 +2223,9 @@ export default function Home() {
     );
   }
 
-  if (!user?.authenticated) {
+  if (
+    !user?.authenticated
+  ) {
     return (
       <div className="loginScreen">
         <div className="loginCard">
@@ -1726,7 +2233,9 @@ export default function Home() {
             A
           </div>
 
-          <h1>Alpha Hub</h1>
+          <h1>
+            Alpha Hub
+          </h1>
 
           <p>
             Case operations workspace
@@ -1735,8 +2244,10 @@ export default function Home() {
           <button
             className="primaryButton"
             onClick={() =>
-              (window.location.href =
-                "/api/auth/login")
+              (
+                window.location.href =
+                  "/api/auth/login"
+              )
             }
           >
             Continue with Google
@@ -1752,7 +2263,9 @@ export default function Home() {
 
   return (
     <div className="appLayout">
-      {/* SIDEBAR */}
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
 
       <aside className="sidebar">
         <div className="sidebarBrand">
@@ -1761,8 +2274,13 @@ export default function Home() {
           </div>
 
           <div className="brandWords">
-            <strong>ALPHA</strong>
-            <span>HUB</span>
+            <strong>
+              ALPHA
+            </strong>
+
+            <span>
+              HUB
+            </span>
           </div>
         </div>
 
@@ -1773,41 +2291,54 @@ export default function Home() {
         <nav className="sidebarNav">
           <button
             className={`navItem ${
-              mainView === "dashboard"
+              mainView ===
+              "dashboard"
                 ? "active"
                 : ""
             }`}
-            onClick={openDashboard}
+            onClick={
+              openDashboard
+            }
           >
             <span className="navIcon">
               ⌂
             </span>
 
-            <span>Dashboard</span>
+            <span>
+              Dashboard
+            </span>
           </button>
 
           <button
             className={`navItem ${
-              mainView === "cases"
+              mainView ===
+              "cases"
                 ? "active"
                 : ""
             }`}
-            onClick={openCases}
+            onClick={
+              openCases
+            }
           >
             <span className="navIcon">
               ▦
             </span>
 
-            <span>Cases</span>
+            <span>
+              Cases
+            </span>
           </button>
 
           <button
             className={`navItem ${
-              mainView === "team"
+              mainView ===
+              "team"
                 ? "active"
                 : ""
             }`}
-            onClick={toggleTeam}
+            onClick={
+              toggleTeam
+            }
           >
             <span className="navIcon">
               ◉
@@ -1818,7 +2349,9 @@ export default function Home() {
             </span>
 
             <span className="teamChevron">
-              {teamOpen ? "⌃" : "⌄"}
+              {teamOpen
+                ? "⌃"
+                : "⌄"}
             </span>
           </button>
 
@@ -1827,7 +2360,8 @@ export default function Home() {
               {canSeeParalegal && (
                 <button
                   className={
-                    teamGroup === "paralegal"
+                    teamGroup ===
+                    "paralegal"
                       ? "teamSub active"
                       : "teamSub"
                   }
@@ -1844,7 +2378,8 @@ export default function Home() {
               {canSeePsych && (
                 <button
                   className={
-                    teamGroup === "psych"
+                    teamGroup ===
+                    "psych"
                       ? "teamSub active"
                       : "teamSub"
                   }
@@ -1861,12 +2396,15 @@ export default function Home() {
               {canSeeEa && (
                 <button
                   className={
-                    teamGroup === "ea"
+                    teamGroup ===
+                    "ea"
                       ? "teamSub active"
                       : "teamSub"
                   }
                   onClick={() =>
-                    chooseTeamGroup("ea")
+                    chooseTeamGroup(
+                      "ea"
+                    )
                   }
                 >
                   EA
@@ -1885,20 +2423,26 @@ export default function Home() {
 
           <div className="sidebarUser">
             <strong>
-              {roleLabels[
-                user.role as Role
-              ]}
+              {
+                roleLabels[
+                  user.role as Role
+                ]
+              }
             </strong>
 
-            <span>{user.email}</span>
+            <span>
+              {user.email}
+            </span>
           </div>
 
           <button
             className="logoutButton"
             title="Log out"
             onClick={() =>
-              (window.location.href =
-                "/api/auth/logout")
+              (
+                window.location.href =
+                  "/api/auth/logout"
+              )
             }
           >
             ↗
@@ -1906,7 +2450,9 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* =================================================
+          MAIN CONTENT
+      ================================================= */}
 
       <main className="mainContent">
         {message && (
@@ -1921,9 +2467,12 @@ export default function Home() {
           </div>
         )}
 
-        {/* DASHBOARD */}
+        {/* =================================================
+            DASHBOARD
+        ================================================= */}
 
-        {mainView === "dashboard" && (
+        {mainView ===
+          "dashboard" && (
           <>
             <header className="pageHeader">
               <div>
@@ -1931,17 +2480,20 @@ export default function Home() {
                   CASE OPERATIONS
                 </p>
 
-                <h1>Dashboard</h1>
+                <h1>
+                  Dashboard
+                </h1>
 
                 <p>
-                  Overview of current workflow
-                  and case activity.
+                  Estado general de las entregas activas.
                 </p>
               </div>
 
               <button
                 className="refreshButton"
-                onClick={loadCases}
+                onClick={
+                  loadCases
+                }
               >
                 ↻ Refresh
               </button>
@@ -1953,55 +2505,244 @@ export default function Home() {
               </div>
             ) : (
               <div className="dashboardContent">
-                <KpiRow
-                  title="Entregas MGM"
-                  section="mgm"
-                  stats={mgmStats}
-                />
+                {/* =========================================
+                    SUMMARY
+                ========================================= */}
 
-                <KpiRow
-                  title="Psych"
-                  section="psych"
-                  stats={psychStats}
-                />
+                <section className="dashboardSummary">
+                  <div className="dashboardSummaryHeader">
+                    <div>
+                      <p className="dashboardSectionEyebrow">
+                        RESUMEN GENERAL
+                      </p>
 
-                <KpiRow
-                  title="Paralegal · Llenado de Carátula"
-                  section="caratula"
-                  stats={caratulaStats}
-                />
+                      <h2>
+                        Estado de entregas
+                      </h2>
+                    </div>
 
-                <KpiRow
-                  title="Paralegal · 1st Draft"
-                  section="draft"
-                  stats={draftStats}
-                />
+                    <span className="dashboardUpdated">
+                      Vista actual
+                    </span>
+                  </div>
 
-                <KpiRow
-                  title="Paralegal · Escalación a CVL"
-                  section="plcvl"
-                  stats={plcvlStats}
-                />
+                  <div className="summaryMetrics">
+                    <div className="summaryMetric summaryMetric-backlog">
+                      <div className="summaryMetricTop">
+                        <span className="summaryIndicator" />
 
-                <KpiRow
-                  title="EA · Analyst"
-                  section="ea"
-                  stats={eaStats}
-                />
+                        <span>
+                          Backlog
+                        </span>
+                      </div>
 
-                <KpiRow
-                  title="CVL"
-                  section="cvl"
-                  stats={cvlStats}
-                />
+                      <strong>
+                        {
+                          dashboardTotals.backlog
+                        }
+                      </strong>
+
+                      <small>
+                        Entregas vencidas
+                      </small>
+                    </div>
+
+                    <div className="summaryMetric summaryMetric-pending">
+                      <div className="summaryMetricTop">
+                        <span className="summaryIndicator" />
+
+                        <span>
+                          Esta semana
+                        </span>
+                      </div>
+
+                      <strong>
+                        {
+                          dashboardTotals.pending
+                        }
+                      </strong>
+
+                      <small>
+                        Entregas programadas esta semana
+                      </small>
+                    </div>
+
+                    <div className="summaryMetric summaryMetric-future">
+                      <div className="summaryMetricTop">
+                        <span className="summaryIndicator" />
+
+                        <span>
+                          Próximas
+                        </span>
+                      </div>
+
+                      <strong>
+                        {
+                          dashboardTotals.future
+                        }
+                      </strong>
+
+                      <small>
+                        Entregas posteriores
+                      </small>
+                    </div>
+                  </div>
+                </section>
+
+                {/* =========================================
+                    MGM
+                ========================================= */}
+
+                <section className="workflowGroup">
+                  <div className="workflowGroupHeader">
+                    <p className="dashboardSectionEyebrow">
+                      CASE DELIVERY
+                    </p>
+
+                    <h2>
+                      MGM
+                    </h2>
+
+                    <p>
+                      Entregas generales del caso
+                    </p>
+                  </div>
+
+                  <div className="workflowGroupBody">
+                    <DashboardWorkflowRow
+                      title="Entregas MGM"
+                      section="mgm"
+                      stats={
+                        mgmStats
+                      }
+                    />
+                  </div>
+                </section>
+
+                {/* =========================================
+                    PARALEGAL
+                ========================================= */}
+
+                <section className="workflowGroup">
+                  <div className="workflowGroupHeader">
+                    <p className="dashboardSectionEyebrow">
+                      PARALEGAL WORKFLOW
+                    </p>
+
+                    <h2>
+                      Paralegal
+                    </h2>
+
+                    <p>
+                      Preparación y avance del caso
+                    </p>
+                  </div>
+
+                  <div className="workflowGroupBody">
+                    <DashboardWorkflowRow
+                      title="Llenado de Carátula"
+                      section="caratula"
+                      stats={
+                        caratulaStats
+                      }
+                    />
+
+                    <DashboardWorkflowRow
+                      title="1st Draft"
+                      section="draft"
+                      stats={
+                        draftStats
+                      }
+                    />
+
+                    <DashboardWorkflowRow
+                      title="Escalación a CVL"
+                      section="plcvl"
+                      stats={
+                        plcvlStats
+                      }
+                    />
+                  </div>
+                </section>
+
+                {/* =========================================
+                    PSYCH
+                ========================================= */}
+
+                <section className="workflowGroup">
+                  <div className="workflowGroupHeader">
+                    <p className="dashboardSectionEyebrow">
+                      PSYCH WORKFLOW
+                    </p>
+
+                    <h2>
+                      Psych
+                    </h2>
+
+                    <p>
+                      DOE
+                    </p>
+                  </div>
+
+                  <div className="workflowGroupBody">
+                    <DashboardWorkflowRow
+                      title="Psych · DOE"
+                      section="psych"
+                      stats={
+                        psychStats
+                      }
+                    />
+                  </div>
+                </section>
+
+                {/* =========================================
+                    EA
+                ========================================= */}
+
+                <section className="workflowGroup">
+                  <div className="workflowGroupHeader">
+                    <p className="dashboardSectionEyebrow">
+                      ANALYST WORKFLOW
+                    </p>
+
+                    <h2>
+                      EA
+                    </h2>
+
+                    <p>
+                      Evidence Analysis y CVL
+                    </p>
+                  </div>
+
+                  <div className="workflowGroupBody">
+                    <DashboardWorkflowRow
+                      title="EA / Analyst"
+                      section="ea"
+                      stats={
+                        eaStats
+                      }
+                    />
+
+                    <DashboardWorkflowRow
+                      title="CVL"
+                      section="cvl"
+                      stats={
+                        cvlStats
+                      }
+                    />
+                  </div>
+                </section>
               </div>
             )}
           </>
         )}
 
-        {/* CASES */}
+        {/* =================================================
+            CASES
+        ================================================= */}
 
-        {mainView === "cases" && (
+        {mainView ===
+          "cases" && (
           <>
             <header className="pageHeader">
               <div>
@@ -2009,17 +2750,20 @@ export default function Home() {
                   CASE MANAGEMENT
                 </p>
 
-                <h1>Cases</h1>
+                <h1>
+                  Cases
+                </h1>
 
                 <p>
-                  Search, review and manage
-                  all cases.
+                  Search, review and manage all cases.
                 </p>
               </div>
 
               <button
                 className="refreshButton"
-                onClick={loadCases}
+                onClick={
+                  loadCases
+                }
               >
                 ↻ Refresh
               </button>
@@ -2028,13 +2772,20 @@ export default function Home() {
             <section className="casesPanel">
               <div className="casesToolbar">
                 <div className="searchBox">
-                  <span>⌕</span>
+                  <span>
+                    ⌕
+                  </span>
 
                   <input
-                    value={search}
-                    onChange={(e) =>
+                    value={
+                      search
+                    }
+                    onChange={(
+                      e
+                    ) =>
                       setSearch(
-                        e.target.value
+                        e.target
+                          .value
                       )
                     }
                     placeholder="Buscar cliente, ID o receipt..."
@@ -2043,10 +2794,15 @@ export default function Home() {
 
                 <select
                   className="filterSelect"
-                  value={statusFilter}
-                  onChange={(e) =>
+                  value={
+                    statusFilter
+                  }
+                  onChange={(
+                    e
+                  ) =>
                     setStatusFilter(
-                      e.target.value
+                      e.target
+                        .value
                     )
                   }
                 >
@@ -2076,88 +2832,129 @@ export default function Home() {
                 </select>
 
                 <div className="caseCount">
-                  {filteredCases.length} casos
+                  {
+                    filteredCases.length
+                  }{" "}
+                  casos
                 </div>
               </div>
 
               <div className="casesTable">
                 <div className="casesTableHeader">
-                  <div>CLIENTE</div>
-                  <div>TIPO</div>
-                  <div>COMMITMENT</div>
-                  <div>PARALEGAL</div>
-                  <div>STATUS</div>
+                  <div>
+                    CLIENTE
+                  </div>
+
+                  <div>
+                    TIPO
+                  </div>
+
+                  <div>
+                    COMMITMENT
+                  </div>
+
+                  <div>
+                    PARALEGAL
+                  </div>
+
+                  <div>
+                    STATUS
+                  </div>
+
                   <div />
                 </div>
 
-                {filteredCases.map((row) => (
-                  <button
-                    key={row.__row}
-                    className="caseTableRow"
-                    onClick={() =>
-                      openGeneralCase(row)
-                    }
-                  >
-                    <div className="caseClient">
-                      <div className="clientAvatar">
-                        {(row["CLIENTE"] || "?")
-                          .charAt(0)
-                          .toUpperCase()}
+                {filteredCases.map(
+                  (row) => (
+                    <button
+                      key={
+                        row.__row
+                      }
+                      className="caseTableRow"
+                      onClick={() =>
+                        openGeneralCase(
+                          row
+                        )
+                      }
+                    >
+                      <div className="caseClient">
+                        <div className="clientAvatar">
+                          {(row[
+                            "CLIENTE"
+                          ] || "?")
+                            .charAt(
+                              0
+                            )
+                            .toUpperCase()}
+                        </div>
+
+                        <div>
+                          <strong>
+                            {row[
+                              "CLIENTE"
+                            ] ||
+                              "Sin cliente"}
+                          </strong>
+
+                          <span>
+                            ID{" "}
+                            {row[
+                              "ID"
+                            ] ||
+                              "—"}
+                            {" · "}
+                            {row[
+                              "RECEIPT NUMBER"
+                            ] ||
+                              "No receipt"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="tableValue">
+                        {row[
+                          "DUE DATE/NO DUE DATE"
+                        ] || "—"}
+                      </div>
+
+                      <div className="tableValue">
+                        {row[
+                          "COMMITMENT"
+                        ] || "—"}
+                      </div>
+
+                      <div className="tableValue">
+                        {row[
+                          "PARALEGAL"
+                        ] || "—"}
                       </div>
 
                       <div>
-                        <strong>
-                          {row["CLIENTE"] ||
-                            "Sin cliente"}
-                        </strong>
-
-                        <span>
-                          ID {row["ID"] || "—"}
-                          {" · "}
+                        <span
+                          className={statusClass(
+                            row[
+                              "STATUS"
+                            ] ||
+                              ""
+                          )}
+                        >
                           {row[
-                            "RECEIPT NUMBER"
-                          ] || "No receipt"}
+                            "STATUS"
+                          ] ||
+                            "NO STATUS"}
                         </span>
                       </div>
-                    </div>
 
-                    <div className="tableValue">
-                      {row[
-                        "DUE DATE/NO DUE DATE"
-                      ] || "—"}
-                    </div>
-
-                    <div className="tableValue">
-                      {row["COMMITMENT"] ||
-                        "—"}
-                    </div>
-
-                    <div className="tableValue">
-                      {row["PARALEGAL"] ||
-                        "—"}
-                    </div>
-
-                    <div>
-                      <span
-                        className={statusClass(
-                          row["STATUS"] || ""
-                        )}
-                      >
-                        {row["STATUS"] ||
-                          "NO STATUS"}
-                      </span>
-                    </div>
-
-                    <div className="rowArrow">
-                      ›
-                    </div>
-                  </button>
-                ))}
+                      <div className="rowArrow">
+                        ›
+                      </div>
+                    </button>
+                  )
+                )}
 
                 {!filteredCases.length && (
                   <div className="emptyState">
-                    No encontramos casos con
-                    esos filtros.
+                    No encontramos casos con esos filtros.
                   </div>
                 )}
               </div>
@@ -2165,9 +2962,12 @@ export default function Home() {
           </>
         )}
 
-        {/* TEAM */}
+        {/* =================================================
+            TEAM
+        ================================================= */}
 
-        {mainView === "team" && (
+        {mainView ===
+          "team" && (
           <>
             <header className="pageHeader teamPageHeader">
               <div>
@@ -2175,17 +2975,20 @@ export default function Home() {
                   TEAM WORKLOAD
                 </p>
 
-                <h1>Team</h1>
+                <h1>
+                  Team
+                </h1>
 
                 <p>
-                  Calendario de entregas del
-                  equipo.
+                  Calendario de entregas del equipo.
                 </p>
               </div>
 
               <button
                 className="refreshButton"
-                onClick={loadCases}
+                onClick={
+                  loadCases
+                }
               >
                 ↻ Refresh
               </button>
@@ -2196,7 +2999,8 @@ export default function Home() {
                 {canSeeParalegal && (
                   <button
                     className={
-                      teamGroup === "paralegal"
+                      teamGroup ===
+                      "paralegal"
                         ? "teamGroupTab active"
                         : "teamGroupTab"
                     }
@@ -2213,7 +3017,8 @@ export default function Home() {
                 {canSeePsych && (
                   <button
                     className={
-                      teamGroup === "psych"
+                      teamGroup ===
+                      "psych"
                         ? "teamGroupTab active"
                         : "teamGroupTab"
                     }
@@ -2230,12 +3035,15 @@ export default function Home() {
                 {canSeeEa && (
                   <button
                     className={
-                      teamGroup === "ea"
+                      teamGroup ===
+                      "ea"
                         ? "teamGroupTab active"
                         : "teamGroupTab"
                     }
                     onClick={() =>
-                      chooseTeamGroup("ea")
+                      chooseTeamGroup(
+                        "ea"
+                      )
                     }
                   >
                     EA
@@ -2245,7 +3053,8 @@ export default function Home() {
             )}
 
             <div className="teamStageTabs">
-              {teamGroup === "paralegal" &&
+              {teamGroup ===
+                "paralegal" &&
                 canSeeParalegal && (
                   <>
                     <button
@@ -2298,24 +3107,29 @@ export default function Home() {
                   </>
                 )}
 
-              {teamGroup === "psych" &&
+              {teamGroup ===
+                "psych" &&
                 canSeePsych && (
                   <button className="stageTab active">
                     DOE
                   </button>
                 )}
 
-              {teamGroup === "ea" &&
+              {teamGroup ===
+                "ea" &&
                 canSeeEa && (
                   <>
                     <button
                       className={
-                        teamCalendar === "ea"
+                        teamCalendar ===
+                        "ea"
                           ? "stageTab active"
                           : "stageTab"
                       }
                       onClick={() =>
-                        setTeamCalendar("ea")
+                        setTeamCalendar(
+                          "ea"
+                        )
                       }
                     >
                       EA / Analyst
@@ -2323,12 +3137,15 @@ export default function Home() {
 
                     <button
                       className={
-                        teamCalendar === "cvl"
+                        teamCalendar ===
+                        "cvl"
                           ? "stageTab active"
                           : "stageTab"
                       }
                       onClick={() =>
-                        setTeamCalendar("cvl")
+                        setTeamCalendar(
+                          "cvl"
+                        )
                       }
                     >
                       CVL
@@ -2346,31 +3163,41 @@ export default function Home() {
                         calendarMonth.getMonth()
                       ]
                     }{" "}
-                    {calendarMonth.getFullYear()}
+                    {
+                      calendarMonth.getFullYear()
+                    }
                   </h2>
 
                   <span>
-                    {calendarEvents.length}{" "}
+                    {
+                      calendarEvents.length
+                    }{" "}
                     entregas activas
                   </span>
                 </div>
 
                 <div className="calendarControls">
                   <button
-                    onClick={previousMonth}
+                    onClick={
+                      previousMonth
+                    }
                   >
                     ‹
                   </button>
 
                   <button
                     className="todayButton"
-                    onClick={goToday}
+                    onClick={
+                      goToday
+                    }
                   >
                     Hoy
                   </button>
 
                   <button
-                    onClick={nextMonth}
+                    onClick={
+                      nextMonth
+                    }
                   >
                     ›
                   </button>
@@ -2378,130 +3205,159 @@ export default function Home() {
               </div>
 
               <div className="calendarWeekHeader">
-                {weekDays.map((day) => (
-                  <div key={day}>
-                    {day}
-                  </div>
-                ))}
+                {weekDays.map(
+                  (day) => (
+                    <div
+                      key={
+                        day
+                      }
+                    >
+                      {day}
+                    </div>
+                  )
+                )}
               </div>
 
               <div className="calendarGrid">
-                {calendarDays.map((day) => {
-                  const isCurrentMonth =
-                    day.getMonth() ===
-                    calendarMonth.getMonth();
+                {calendarDays.map(
+                  (day) => {
+                    const isCurrentMonth =
+                      day.getMonth() ===
+                      calendarMonth.getMonth();
 
-                  const isToday =
-                    sameDay(
-                      day,
-                      new Date()
-                    );
+                    const isToday =
+                      sameDay(
+                        day,
+                        new Date()
+                      );
 
-                  const dayEvents =
-                    calendarEvents.filter(
-                      (event) =>
-                        sameDay(
-                          event.date,
-                          day
-                        )
-                    );
+                    const dayEvents =
+                      calendarEvents.filter(
+                        (
+                          event
+                        ) =>
+                          sameDay(
+                            event.date,
+                            day
+                          )
+                      );
 
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`calendarDay ${
-                        !isCurrentMonth
-                          ? "outsideMonth"
-                          : ""
-                      }`}
-                    >
-                      <div className="calendarDayNumber">
-                        <span
-                          className={
-                            isToday
-                              ? "todayNumber"
-                              : ""
-                          }
-                        >
-                          {day.getDate()}
-                        </span>
-                      </div>
+                    return (
+                      <div
+                        key={
+                          day.toISOString()
+                        }
+                        className={`calendarDay ${
+                          !isCurrentMonth
+                            ? "outsideMonth"
+                            : ""
+                        }`}
+                      >
+                        <div className="calendarDayNumber">
+                          <span
+                            className={
+                              isToday
+                                ? "todayNumber"
+                                : ""
+                            }
+                          >
+                            {
+                              day.getDate()
+                            }
+                          </span>
+                        </div>
 
-                      <div className="calendarEvents">
-                        {dayEvents.map(
-                          ({ row }) => {
-                            const statusHeader =
-                              calendarStatusHeader(
-                                teamCalendar
+                        <div className="calendarEvents">
+                          {dayEvents.map(
+                            ({
+                              row,
+                            }) => {
+                              const statusHeader =
+                                calendarStatusHeader(
+                                  teamCalendar
+                                );
+
+                              const status =
+                                statusHeader
+                                  ? row[
+                                      statusHeader
+                                    ] ||
+                                    ""
+                                  : "";
+
+                              const deliveryType =
+                                classifyDate(
+                                  day
+                                );
+
+                              return (
+                                <button
+                                  key={
+                                    row.__row
+                                  }
+                                  className={`calendarEvent ${
+                                    deliveryType ===
+                                    "backlog"
+                                      ? "calendarEventBacklog"
+                                      : deliveryType ===
+                                        "pending"
+                                      ? "calendarEventPending"
+                                      : "calendarEventFuture"
+                                  }`}
+                                  onClick={() =>
+                                    openCalendarCase(
+                                      row,
+                                      teamCalendar
+                                    )
+                                  }
+                                >
+                                  <strong>
+                                    {row[
+                                      "CLIENTE"
+                                    ] ||
+                                      "Sin cliente"}
+                                  </strong>
+
+                                  {status && (
+                                    <span>
+                                      {
+                                        status
+                                      }
+                                    </span>
+                                  )}
+                                </button>
                               );
-
-                            const status =
-                              statusHeader
-                                ? row[
-                                    statusHeader
-                                  ] || ""
-                                : "";
-
-                            return (
-                              <button
-                                key={row.__row}
-                                className={`calendarEvent ${
-                                  classifyDate(
-                                    day
-                                  ) === "backlog"
-                                    ? "calendarEventBacklog"
-                                    : classifyDate(
-                                        day
-                                      ) ===
-                                      "pending"
-                                    ? "calendarEventPending"
-                                    : "calendarEventFuture"
-                                }`}
-                                onClick={() =>
-                                  openCalendarCase(
-                                    row,
-                                    teamCalendar
-                                  )
-                                }
-                              >
-                                <strong>
-                                  {row[
-                                    "CLIENTE"
-                                  ] ||
-                                    "Sin cliente"}
-                                </strong>
-
-                                {status && (
-                                  <span>
-                                    {status}
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          }
-                        )}
+                            }
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             </section>
           </>
         )}
       </main>
 
-      {/* KPI DRAWER */}
+      {/* =================================================
+          KPI DRAWER
+      ================================================= */}
 
       {selectedKpi && (
         <div
           className="drawerOverlay"
           onMouseDown={() =>
-            setSelectedKpi(null)
+            setSelectedKpi(
+              null
+            )
           }
         >
           <aside
             className="drawer"
-            onMouseDown={(e) =>
+            onMouseDown={(
+              e
+            ) =>
               e.stopPropagation()
             }
           >
@@ -2524,14 +3380,19 @@ export default function Home() {
                 </h2>
 
                 <p>
-                  {kpiCases.length} casos
+                  {
+                    kpiCases.length
+                  }{" "}
+                  casos
                 </p>
               </div>
 
               <button
                 className="closeButton"
                 onClick={() =>
-                  setSelectedKpi(null)
+                  setSelectedKpi(
+                    null
+                  )
                 }
               >
                 ×
@@ -2539,67 +3400,88 @@ export default function Home() {
             </div>
 
             <div className="drawerCases">
-              {kpiCases.map((row) => (
-                <button
-                  key={row.__row}
-                  className="drawerCase"
-                  onClick={() => {
-                    setSelectedKpi(null);
-                    openGeneralCase(row);
-                  }}
-                >
-                  <div>
-                    <strong>
-                      {row["CLIENTE"] ||
-                        "Sin cliente"}
-                    </strong>
+              {kpiCases.map(
+                (row) => (
+                  <button
+                    key={
+                      row.__row
+                    }
+                    className="drawerCase"
+                    onClick={() => {
+                      setSelectedKpi(
+                        null
+                      );
 
-                    <span>
-                      ID {row["ID"] || "—"}
-                    </span>
-                  </div>
-
-                  <span
-                    className={statusClass(
-                      row["STATUS"] || ""
-                    )}
+                      openGeneralCase(
+                        row
+                      );
+                    }}
                   >
-                    {row["STATUS"] ||
-                      "NO STATUS"}
-                  </span>
+                    <div>
+                      <strong>
+                        {row[
+                          "CLIENTE"
+                        ] ||
+                          "Sin cliente"}
+                      </strong>
 
-                  <b>›</b>
-                </button>
-              ))}
+                      <span>
+                        ID{" "}
+                        {row[
+                          "ID"
+                        ] ||
+                          "—"}
+                      </span>
+                    </div>
+
+                    <span
+                      className={statusClass(
+                        row[
+                          "STATUS"
+                        ] ||
+                          ""
+                      )}
+                    >
+                      {row[
+                        "STATUS"
+                      ] ||
+                        "NO STATUS"}
+                    </span>
+
+                    <b>
+                      ›
+                    </b>
+                  </button>
+                )
+              )}
             </div>
           </aside>
         </div>
       )}
 
       {/* =================================================
-          MODAL FROM TEAM
-          SOLO MUESTRA LA ETAPA
+          TEAM DELIVERY MODAL
       ================================================= */}
 
       {selectedCase &&
-        openCaseSource === "calendar" &&
+        openCaseSource ===
+          "calendar" &&
         selectedStage && (
           <div
             className="modalOverlay"
             onMouseDown={() =>
-              setSelectedCase(null)
+              setSelectedCase(
+                null
+              )
             }
           >
             <div
-              className="caseModal"
-              onMouseDown={(e) =>
+              className="caseModal stageOnlyModal"
+              onMouseDown={(
+                e
+              ) =>
                 e.stopPropagation()
               }
-              style={{
-                height: "auto",
-                maxHeight: "90vh",
-                maxWidth: "760px",
-              }}
             >
               <div className="modalHeader">
                 <div>
@@ -2610,35 +3492,36 @@ export default function Home() {
                   <h2>
                     {selectedCase[
                       "CLIENTE"
-                    ] || "Sin cliente"}
+                    ] ||
+                      "Sin cliente"}
                   </h2>
 
                   <div className="caseMeta">
                     <span>
                       ID{" "}
-                      {selectedCase["ID"] ||
+                      {selectedCase[
+                        "ID"
+                      ] ||
                         "—"}
                     </span>
 
                     <span>
-                      {sectionLabel(
-                        selectedStage ===
-                          "caratula"
-                          ? "caratula"
-                          : selectedStage ===
-                            "draft"
-                          ? "draft"
-                          : selectedStage ===
-                            "plcvl"
-                          ? "plcvl"
-                          : selectedStage ===
-                            "psych"
-                          ? "psych"
-                          : selectedStage ===
-                            "ea"
-                          ? "ea"
-                          : "cvl"
-                      )}
+                      {selectedStage ===
+                      "caratula"
+                        ? "Llenado de Carátula"
+                        : selectedStage ===
+                          "draft"
+                        ? "1st Draft"
+                        : selectedStage ===
+                          "plcvl"
+                        ? "Escalación CVL"
+                        : selectedStage ===
+                          "psych"
+                        ? "Psych · DOE"
+                        : selectedStage ===
+                          "ea"
+                        ? "EA · Analyst"
+                        : "CVL"}
                     </span>
                   </div>
                 </div>
@@ -2646,23 +3529,20 @@ export default function Home() {
                 <button
                   className="closeButton"
                   onClick={() =>
-                    setSelectedCase(null)
+                    setSelectedCase(
+                      null
+                    )
                   }
                 >
                   ×
                 </button>
               </div>
 
-              <div
-                className="modalBody"
-                style={{
-                  height: "auto",
-                  maxHeight:
-                    "calc(90vh - 105px)",
-                }}
-              >
+              <div className="modalBody">
                 <StageContent
-                  stage={selectedStage}
+                  stage={
+                    selectedStage
+                  }
                 />
               </div>
             </div>
@@ -2671,20 +3551,24 @@ export default function Home() {
 
       {/* =================================================
           GENERAL CASE MODAL
-          SOLO CUANDO VIENE DE CASES/KPI
       ================================================= */}
 
       {selectedCase &&
-        openCaseSource === "cases" && (
+        openCaseSource ===
+          "cases" && (
           <div
             className="modalOverlay"
             onMouseDown={() =>
-              setSelectedCase(null)
+              setSelectedCase(
+                null
+              )
             }
           >
             <div
               className="caseModal"
-              onMouseDown={(e) =>
+              onMouseDown={(
+                e
+              ) =>
                 e.stopPropagation()
               }
             >
@@ -2697,13 +3581,16 @@ export default function Home() {
                   <h2>
                     {selectedCase[
                       "CLIENTE"
-                    ] || "Sin cliente"}
+                    ] ||
+                      "Sin cliente"}
                   </h2>
 
                   <div className="caseMeta">
                     <span>
                       ID{" "}
-                      {selectedCase["ID"] ||
+                      {selectedCase[
+                        "ID"
+                      ] ||
                         "—"}
                     </span>
 
@@ -2717,12 +3604,14 @@ export default function Home() {
                       className={statusClass(
                         selectedCase[
                           "STATUS"
-                        ] || ""
+                        ] ||
+                          ""
                       )}
                     >
                       {selectedCase[
                         "STATUS"
-                      ] || "NO STATUS"}
+                      ] ||
+                        "NO STATUS"}
                     </span>
                   </div>
                 </div>
@@ -2730,7 +3619,9 @@ export default function Home() {
                 <button
                   className="closeButton"
                   onClick={() =>
-                    setSelectedCase(null)
+                    setSelectedCase(
+                      null
+                    )
                   }
                 >
                   ×
@@ -2745,10 +3636,12 @@ export default function Home() {
                     </div>
 
                     <div>
-                      <h3>General</h3>
+                      <h3>
+                        General
+                      </h3>
+
                       <p>
-                        Información principal
-                        del caso
+                        Información principal del caso
                       </p>
                     </div>
                   </div>
@@ -2805,12 +3698,29 @@ export default function Home() {
                   />
                 </section>
 
-                <StageContent stage="psych" />
-                <StageContent stage="caratula" />
-                <StageContent stage="draft" />
-                <StageContent stage="plcvl" />
-                <StageContent stage="ea" />
-                <StageContent stage="cvl" />
+                <StageContent
+                  stage="psych"
+                />
+
+                <StageContent
+                  stage="caratula"
+                />
+
+                <StageContent
+                  stage="draft"
+                />
+
+                <StageContent
+                  stage="plcvl"
+                />
+
+                <StageContent
+                  stage="ea"
+                />
+
+                <StageContent
+                  stage="cvl"
+                />
               </div>
             </div>
           </div>
