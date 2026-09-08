@@ -7,6 +7,7 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+
   font-family:
     Inter,
     ui-sans-serif,
@@ -15,6 +16,7 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+
   background: #f5f7fb;
   color: #162033;
 }
@@ -45,8 +47,13 @@ body {
 
 .mainContent {
   width: calc(100% - 240px);
+
   margin-left: 240px;
-  padding: 34px 42px 70px;
+
+  padding:
+    34px
+    42px
+    70px;
 }
 
 /* ======================================================
@@ -55,13 +62,21 @@ body {
 
 .sidebar {
   position: fixed;
-  inset: 0 auto 0 0;
+
+  inset:
+    0
+    auto
+    0
+    0;
+
   z-index: 50;
 
   width: 240px;
   height: 100vh;
 
-  padding: 23px 16px;
+  padding:
+    23px
+    16px;
 
   display: flex;
   flex-direction: column;
@@ -79,9 +94,13 @@ body {
 .sidebarBrand {
   display: flex;
   align-items: center;
+
   gap: 11px;
 
-  padding: 0 8px;
+  padding:
+    0
+    8px;
+
   margin-bottom: 36px;
 }
 
@@ -92,14 +111,18 @@ body {
 
 .brandWords strong {
   font-size: 15px;
-  letter-spacing: 0.15em;
+
+  letter-spacing:
+    0.15em;
 }
 
 .brandWords span {
   margin-top: 3px;
 
   font-size: 10px;
-  letter-spacing: 0.24em;
+
+  letter-spacing:
+    0.24em;
 
   color: #8290aa;
 }
@@ -126,8 +149,15 @@ body {
   font-weight: 900;
 
   box-shadow:
-    0 12px 30px
-    rgba(65, 110, 231, 0.24);
+    0
+    12px
+    30px
+    rgba(
+      65,
+      110,
+      231,
+      0.24
+    );
 }
 
 .logoMark.small {
@@ -140,15 +170,19 @@ body {
 }
 
 .navLabel {
-  padding: 0 12px;
+  padding:
+    0
+    12px;
+
   margin-bottom: 8px;
+
+  color: #697994;
 
   font-size: 9px;
   font-weight: 800;
 
-  letter-spacing: 0.16em;
-
-  color: #697994;
+  letter-spacing:
+    0.16em;
 }
 
 .sidebarNav {
@@ -161,7 +195,9 @@ body {
 .navItem {
   width: 100%;
 
-  padding: 11px 12px;
+  padding:
+    11px
+    12px;
 
   display: flex;
   align-items: center;
@@ -207,7 +243,7 @@ body {
       0.18
     );
 
-  color: #fff;
+  color: white;
 }
 
 .navIcon {
@@ -243,7 +279,9 @@ body {
 }
 
 .teamSub {
-  padding: 7px 10px;
+  padding:
+    7px
+    10px;
 
   text-align: left;
 
@@ -264,6 +302,7 @@ body {
 
 .teamSub.active {
   color: #aebfff;
+
   background:
     rgba(
       83,
@@ -278,10 +317,14 @@ body {
 .sidebarBottom {
   margin-top: auto;
 
-  padding: 18px 4px 0;
+  padding:
+    18px
+    4px
+    0;
 
   border-top:
-    1px solid
+    1px
+    solid
     rgba(
       255,
       255,
@@ -316,6 +359,7 @@ body {
 
 .sidebarUser {
   min-width: 0;
+
   flex: 1;
 
   display: flex;
@@ -334,7 +378,9 @@ body {
   font-size: 9px;
 
   white-space: nowrap;
+
   overflow: hidden;
+
   text-overflow: ellipsis;
 }
 
@@ -378,12 +424,18 @@ body {
 }
 
 .pageHeader h1 {
-  margin: 3px 0 4px;
+  margin:
+    3px
+    0
+    4px;
+
+  color: #1f2b42;
 
   font-size: 30px;
   font-weight: 780;
 
-  letter-spacing: -0.035em;
+  letter-spacing:
+    -0.035em;
 }
 
 .pageHeader > div > p:last-child {
@@ -402,14 +454,19 @@ body {
   font-size: 9px !important;
   font-weight: 850 !important;
 
-  letter-spacing: 0.17em !important;
+  letter-spacing:
+    0.17em !important;
 }
 
 .refreshButton {
-  padding: 9px 14px;
+  padding:
+    9px
+    14px;
 
   border:
-    1px solid #dfe4ec;
+    1px
+    solid
+    #dfe4ec;
 
   border-radius: 9px;
 
@@ -424,10 +481,13 @@ body {
 }
 
 .refreshButton:hover {
-  border-color: #c8d0dc;
+  border-color:
+    #c8d0dc;
 
   box-shadow:
-    0 3px 12px
+    0
+    3px
+    12px
     rgba(
       30,
       44,
@@ -441,142 +501,400 @@ body {
 ====================================================== */
 
 .dashboardContent {
-  max-width: 1280px;
+  width: 100%;
+
+  max-width: 1180px;
 }
 
-.workflowSection {
-  margin-bottom: 27px;
+/* ======================================================
+   DASHBOARD SUMMARY
+====================================================== */
+
+.dashboardSummary {
+  margin-bottom: 34px;
+
+  overflow: hidden;
+
+  border:
+    1px
+    solid
+    #e3e7ed;
+
+  border-radius: 16px;
+
+  background: white;
+
+  box-shadow:
+    0
+    4px
+    18px
+    rgba(
+      25,
+      40,
+      70,
+      0.03
+    );
 }
 
-.workflowTitle {
-  margin-bottom: 10px;
+.dashboardSummaryHeader {
+  min-height: 65px;
+
+  padding:
+    16px
+    20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom:
+    1px
+    solid
+    #edf0f4;
 }
 
-.workflowTitle h2 {
-  margin: 0;
+.dashboardSummaryHeader h2 {
+  margin:
+    3px
+    0
+    0;
+
+  color: #26334a;
 
   font-size: 15px;
   font-weight: 760;
 
-  letter-spacing: -0.01em;
-
-  color: #26324a;
+  letter-spacing:
+    -0.015em;
 }
 
-.metricGrid {
+.dashboardSectionEyebrow {
+  margin: 0;
+
+  color: #9aa4b3;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing:
+    0.14em;
+}
+
+.dashboardUpdated {
+  padding:
+    5px
+    9px;
+
+  border-radius:
+    999px;
+
+  background:
+    #f3f5f8;
+
+  color:
+    #8994a5;
+
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.summaryMetrics {
   display: grid;
 
   grid-template-columns:
     repeat(
       3,
-      minmax(0, 1fr)
+      minmax(
+        0,
+        1fr
+      )
     );
-
-  gap: 13px;
 }
 
-.metricCard {
-  position: relative;
+.summaryMetric {
+  min-height: 116px;
 
+  padding:
+    20px
+    22px;
+
+  border-right:
+    1px
+    solid
+    #edf0f4;
+}
+
+.summaryMetric:last-child {
+  border-right: 0;
+}
+
+.summaryMetricTop {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  color: #7c8798;
+
+  font-size: 10px;
+  font-weight: 720;
+}
+
+.summaryIndicator {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+}
+
+.summaryMetric-backlog
+  .summaryIndicator {
+  background: #d66b6b;
+}
+
+.summaryMetric-pending
+  .summaryIndicator {
+  background: #dda344;
+}
+
+.summaryMetric-future
+  .summaryIndicator {
+  background: #6681d6;
+}
+
+.summaryMetric > strong {
+  display: block;
+
+  margin-top: 8px;
+
+  color: #202d44;
+
+  font-size: 31px;
+  font-weight: 800;
+
+  line-height: 1;
+
+  letter-spacing:
+    -0.045em;
+}
+
+.summaryMetric small {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #a0a9b7;
+
+  font-size: 8px;
+}
+
+/* ======================================================
+   DASHBOARD WORKFLOW GROUPS
+====================================================== */
+
+.workflowGroup {
+  margin-bottom: 25px;
+}
+
+.workflowGroupHeader {
+  padding:
+    0
+    4px
+    10px;
+}
+
+.workflowGroupHeader h2 {
+  margin:
+    3px
+    0
+    0;
+
+  color: #29364d;
+
+  font-size: 14px;
+  font-weight: 780;
+
+  letter-spacing:
+    -0.015em;
+}
+
+.workflowGroupHeader p:not(
+    .dashboardSectionEyebrow
+  ) {
+  margin:
+    3px
+    0
+    0;
+
+  color: #9aa4b3;
+
+  font-size: 8px;
+}
+
+.workflowGroupBody {
   overflow: hidden;
 
-  min-height: 113px;
-
-  padding: 17px 18px;
-
   border:
-    1px solid #e2e7ee;
+    1px
+    solid
+    #e2e7ee;
 
-  border-radius: 14px;
+  border-radius: 13px;
 
   background: white;
+
+  box-shadow:
+    0
+    3px
+    14px
+    rgba(
+      24,
+      38,
+      66,
+      0.025
+    );
+}
+
+/* ======================================================
+   DASHBOARD WORKFLOW ROW
+====================================================== */
+
+.workflowLine {
+  min-height: 67px;
+
+  padding:
+    8px
+    17px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(
+      240px,
+      1.8fr
+    )
+    minmax(
+      110px,
+      0.75fr
+    )
+    minmax(
+      110px,
+      0.75fr
+    )
+    minmax(
+      110px,
+      0.75fr
+    );
+
+  align-items: center;
+
+  gap: 8px;
+
+  border-bottom:
+    1px
+    solid
+    #edf0f4;
+
+  transition:
+    background
+    0.14s
+    ease;
+}
+
+.workflowLine:last-child {
+  border-bottom: 0;
+}
+
+.workflowLine:hover {
+  background: #fafbfe;
+}
+
+.workflowLineName {
+  min-width: 0;
+}
+
+.workflowLineName strong {
+  color: #354158;
+
+  font-size: 10px;
+  font-weight: 740;
+}
+
+.workflowMetric {
+  min-height: 45px;
+
+  padding:
+    6px
+    10px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: transparent;
 
   text-align: left;
 
   cursor: pointer;
 
   transition:
-    transform 0.14s ease,
-    box-shadow 0.14s ease,
-    border-color 0.14s ease;
+    background 0.13s ease,
+    transform 0.13s ease;
 }
 
-.metricCard::before {
-  content: "";
+.workflowMetric:hover {
+  background:
+    #f3f6fb;
 
-  position: absolute;
-
-  inset: 0 auto 0 0;
-
-  width: 4px;
-}
-
-.metric-backlog::before {
-  background: #df6d6d;
-}
-
-.metric-pending::before {
-  background: #e0a23e;
-}
-
-.metric-future::before {
-  background: #5379df;
-}
-
-.metricCard:hover {
   transform:
-    translateY(-2px);
-
-  border-color: #d1d8e3;
-
-  box-shadow:
-    0 10px 28px
-    rgba(
-      31,
-      44,
-      73,
-      0.07
+    translateY(
+      -1px
     );
 }
 
-.metricTop {
-  display: flex;
-  justify-content: space-between;
+.workflowMetric span {
+  color: #9aa4b3;
 
-  color: #718096;
+  font-size: 7px;
+  font-weight: 760;
 
-  font-size: 11px;
-  font-weight: 720;
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    0.045em;
 }
 
-.metricDot {
-  font-size: 18px;
-  line-height: 7px;
+.workflowMetric strong {
+  margin-top: 3px;
 
-  color: #d9dee7;
+  color: #455267;
+
+  font-size: 17px;
+  font-weight: 790;
+
+  line-height: 1;
 }
 
-.metricCard strong {
-  display: block;
-
-  margin-top: 6px;
-
-  color: #1c2941;
-
-  font-size: 29px;
-  font-weight: 800;
-
-  letter-spacing: -0.04em;
+.workflowMetric.hasBacklog {
+  background:
+    #fffafa;
 }
 
-.metricCard small {
-  display: block;
+.workflowMetric.hasBacklog span {
+  color: #b87575;
+}
 
-  margin-top: 1px;
+.workflowMetric.hasBacklog strong {
+  color: #bd5a5a;
+}
 
-  color: #a0a9b8;
-
-  font-size: 9px;
+.workflowMetric.hasBacklog:hover {
+  background:
+    #fff4f4;
 }
 
 /* ======================================================
@@ -589,12 +907,16 @@ body {
   background: white;
 
   border:
-    1px solid #e1e6ee;
+    1px
+    solid
+    #e1e6ee;
 
   border-radius: 17px;
 
   box-shadow:
-    0 5px 22px
+    0
+    5px
+    22px
     rgba(
       25,
       40,
@@ -604,7 +926,9 @@ body {
 }
 
 .casesToolbar {
-  padding: 17px 20px;
+  padding:
+    17px
+    20px;
 
   display: flex;
   align-items: center;
@@ -612,12 +936,13 @@ body {
   gap: 10px;
 
   border-bottom:
-    1px solid #edf0f4;
+    1px
+    solid
+    #edf0f4;
 }
 
 .searchBox {
   width: 350px;
-
   height: 40px;
 
   display: flex;
@@ -625,14 +950,19 @@ body {
 
   gap: 7px;
 
-  padding: 0 11px;
+  padding:
+    0
+    11px;
 
   border:
-    1px solid #dfe4eb;
+    1px
+    solid
+    #dfe4eb;
 
   border-radius: 9px;
 
-  background: #fafbfc;
+  background:
+    #fafbfc;
 }
 
 .searchBox span {
@@ -648,7 +978,8 @@ body {
 
   outline: none;
 
-  background: transparent;
+  background:
+    transparent;
 
   color: #28354c;
 
@@ -658,10 +989,14 @@ body {
 .filterSelect {
   height: 40px;
 
-  padding: 0 12px;
+  padding:
+    0
+    12px;
 
   border:
-    1px solid #dfe4eb;
+    1px
+    solid
+    #dfe4eb;
 
   border-radius: 9px;
 
@@ -687,11 +1022,26 @@ body {
   display: grid;
 
   grid-template-columns:
-    minmax(270px, 2fr)
-    minmax(130px, 1fr)
-    minmax(130px, 1fr)
-    minmax(130px, 1fr)
-    minmax(145px, 1fr)
+    minmax(
+      270px,
+      2fr
+    )
+    minmax(
+      130px,
+      1fr
+    )
+    minmax(
+      130px,
+      1fr
+    )
+    minmax(
+      130px,
+      1fr
+    )
+    minmax(
+      145px,
+      1fr
+    )
     24px;
 
   align-items: center;
@@ -700,25 +1050,33 @@ body {
 }
 
 .casesTableHeader {
-  padding: 11px 20px;
+  padding:
+    11px
+    20px;
 
-  background: #fafbfc;
+  background:
+    #fafbfc;
 
   color: #8e99aa;
 
   font-size: 9px;
   font-weight: 850;
 
-  letter-spacing: 0.08em;
+  letter-spacing:
+    0.08em;
 }
 
 .caseTableRow {
   width: 100%;
 
-  padding: 13px 20px;
+  padding:
+    13px
+    20px;
 
   border-top:
-    1px solid #edf0f4;
+    1px
+    solid
+    #edf0f4;
 
   background: white;
 
@@ -730,7 +1088,8 @@ body {
 }
 
 .caseTableRow:hover {
-  background: #f8faff;
+  background:
+    #f8faff;
 }
 
 .caseClient {
@@ -751,9 +1110,11 @@ body {
 
   border-radius: 10px;
 
-  background: #edf2ff;
+  background:
+    #edf2ff;
 
-  color: #4d6dc8;
+  color:
+    #4d6dc8;
 
   font-size: 11px;
   font-weight: 850;
@@ -774,7 +1135,9 @@ body {
   font-size: 11px;
 
   white-space: nowrap;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 .caseClient span {
@@ -787,7 +1150,9 @@ body {
   font-size: 9px;
 
   white-space: nowrap;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 .tableValue {
@@ -824,7 +1189,9 @@ body {
   margin-bottom: 13px;
 
   border:
-    1px solid #e1e6ee;
+    1px
+    solid
+    #e1e6ee;
 
   border-radius: 10px;
 
@@ -832,11 +1199,14 @@ body {
 }
 
 .teamGroupTab {
-  padding: 8px 14px;
+  padding:
+    8px
+    14px;
 
   border-radius: 7px;
 
-  background: transparent;
+  background:
+    transparent;
 
   color: #7a8799;
 
@@ -847,7 +1217,8 @@ body {
 }
 
 .teamGroupTab.active {
-  background: #1a2946;
+  background:
+    #1a2946;
 
   color: white;
 }
@@ -862,12 +1233,17 @@ body {
 }
 
 .stageTab {
-  padding: 7px 12px;
+  padding:
+    7px
+    12px;
 
   border:
-    1px solid #e0e5ed;
+    1px
+    solid
+    #e0e5ed;
 
-  border-radius: 999px;
+  border-radius:
+    999px;
 
   background: white;
 
@@ -880,15 +1256,19 @@ body {
 }
 
 .stageTab:hover {
-  border-color: #cbd3e0;
+  border-color:
+    #cbd3e0;
 }
 
 .stageTab.active {
-  border-color: #cad6ff;
+  border-color:
+    #cad6ff;
 
-  background: #edf2ff;
+  background:
+    #edf2ff;
 
-  color: #4263c1;
+  color:
+    #4263c1;
 }
 
 /* ======================================================
@@ -899,14 +1279,18 @@ body {
   overflow: hidden;
 
   border:
-    1px solid #dfe5ed;
+    1px
+    solid
+    #dfe5ed;
 
   border-radius: 16px;
 
   background: white;
 
   box-shadow:
-    0 5px 20px
+    0
+    5px
+    20px
     rgba(
       24,
       38,
@@ -918,14 +1302,18 @@ body {
 .calendarToolbar {
   min-height: 70px;
 
-  padding: 15px 19px;
+  padding:
+    15px
+    19px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   border-bottom:
-    1px solid #e9edf2;
+    1px
+    solid
+    #e9edf2;
 }
 
 .calendarTitle h2 {
@@ -936,7 +1324,8 @@ body {
   font-size: 18px;
   font-weight: 760;
 
-  letter-spacing: -0.02em;
+  letter-spacing:
+    -0.02em;
 }
 
 .calendarTitle span {
@@ -963,7 +1352,9 @@ body {
   place-items: center;
 
   border:
-    1px solid #dfe5ed;
+    1px
+    solid
+    #dfe5ed;
 
   border-radius: 8px;
 
@@ -977,13 +1368,17 @@ body {
 }
 
 .calendarControls button:hover {
-  background: #f7f9fc;
+  background:
+    #f7f9fc;
 }
 
-.calendarControls .todayButton {
+.calendarControls
+  .todayButton {
   width: auto;
 
-  padding: 0 13px;
+  padding:
+    0
+    13px;
 
   font-size: 10px;
   font-weight: 700;
@@ -995,24 +1390,33 @@ body {
   grid-template-columns:
     repeat(
       7,
-      minmax(0, 1fr)
+      minmax(
+        0,
+        1fr
+      )
     );
 
   border-bottom:
-    1px solid #e8ecf1;
+    1px
+    solid
+    #e8ecf1;
 
-  background: #fafbfc;
+  background:
+    #fafbfc;
 }
 
 .calendarWeekHeader div {
-  padding: 9px 10px;
+  padding:
+    9px
+    10px;
 
   color: #8d98a9;
 
   font-size: 8px;
   font-weight: 850;
 
-  letter-spacing: 0.09em;
+  letter-spacing:
+    0.09em;
 }
 
 .calendarGrid {
@@ -1021,7 +1425,10 @@ body {
   grid-template-columns:
     repeat(
       7,
-      minmax(0, 1fr)
+      minmax(
+        0,
+        1fr
+      )
     );
 }
 
@@ -1031,10 +1438,14 @@ body {
   padding: 8px;
 
   border-right:
-    1px solid #edf0f4;
+    1px
+    solid
+    #edf0f4;
 
   border-bottom:
-    1px solid #edf0f4;
+    1px
+    solid
+    #edf0f4;
 
   background: white;
 }
@@ -1044,7 +1455,8 @@ body {
 }
 
 .calendarDay.outsideMonth {
-  background: #fafbfc;
+  background:
+    #fafbfc;
 }
 
 .calendarDay.outsideMonth
@@ -1075,7 +1487,8 @@ body {
 }
 
 .todayNumber {
-  background: #365fd3;
+  background:
+    #365fd3;
 
   color: white;
 }
@@ -1090,7 +1503,9 @@ body {
 .calendarEvent {
   width: 100%;
 
-  padding: 6px 7px;
+  padding:
+    6px
+    7px;
 
   border-radius: 6px;
 
@@ -1101,7 +1516,17 @@ body {
   overflow: hidden;
 
   border-left:
-    3px solid transparent;
+    3px
+    solid
+    transparent;
+
+  transition:
+    transform
+    0.12s
+    ease,
+    filter
+    0.12s
+    ease;
 }
 
 .calendarEvent strong {
@@ -1113,7 +1538,9 @@ body {
   font-weight: 750;
 
   white-space: nowrap;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 .calendarEvent span {
@@ -1128,37 +1555,54 @@ body {
   opacity: 0.75;
 
   white-space: nowrap;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 .calendarEventBacklog {
-  border-left-color: #d96767;
+  border-left-color:
+    #d96767;
 
-  background: #fff1f1;
+  background:
+    #fff1f1;
 
-  color: #9d4545;
+  color:
+    #9d4545;
 }
 
 .calendarEventPending {
-  border-left-color: #dfa13e;
+  border-left-color:
+    #dfa13e;
 
-  background: #fff6e8;
+  background:
+    #fff6e8;
 
-  color: #93651e;
+  color:
+    #93651e;
 }
 
 .calendarEventFuture {
-  border-left-color: #5678dc;
+  border-left-color:
+    #5678dc;
 
-  background: #eef3ff;
+  background:
+    #eef3ff;
 
-  color: #405dab;
+  color:
+    #405dab;
 }
 
 .calendarEvent:hover {
-  filter: brightness(0.98);
+  filter:
+    brightness(
+      0.98
+    );
 
-  transform: translateY(-1px);
+  transform:
+    translateY(
+      -1px
+    );
 }
 
 /* ======================================================
@@ -1173,49 +1617,65 @@ body {
 
   max-width: 100%;
 
-  padding: 4px 8px;
+  padding:
+    4px
+    8px;
 
-  border-radius: 999px;
+  border-radius:
+    999px;
 
   overflow: hidden;
 
   font-size: 8px;
   font-weight: 850;
 
-  letter-spacing: 0.035em;
+  letter-spacing:
+    0.035em;
 
   white-space: nowrap;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 .statusBlue {
-  background: #edf3ff;
+  background:
+    #edf3ff;
 
-  color: #365bc0;
+  color:
+    #365bc0;
 }
 
 .statusGreen {
-  background: #e9f7f0;
+  background:
+    #e9f7f0;
 
-  color: #287353;
+  color:
+    #287353;
 }
 
 .statusPurple {
-  background: #f3edff;
+  background:
+    #f3edff;
 
-  color: #7049ae;
+  color:
+    #7049ae;
 }
 
 .statusRed {
-  background: #fff0f0;
+  background:
+    #fff0f0;
 
-  color: #a54c4c;
+  color:
+    #a54c4c;
 }
 
 .statusGray {
-  background: #f0f2f5;
+  background:
+    #f0f2f5;
 
-  color: #7d8797;
+  color:
+    #7d8797;
 }
 
 /* ======================================================
@@ -1241,21 +1701,27 @@ body {
     );
 
   backdrop-filter:
-    blur(3px);
+    blur(
+      3px
+    );
 }
 
 .drawer {
-  width: min(
-    460px,
-    94vw
-  );
+  width:
+    min(
+      460px,
+      94vw
+    );
 
   height: 100vh;
 
-  background: #f7f9fc;
+  background:
+    #f7f9fc;
 
   box-shadow:
-    -20px 0 55px
+    -20px
+    0
+    55px
     rgba(
       17,
       27,
@@ -1264,20 +1730,26 @@ body {
     );
 
   animation:
-    drawerIn 0.18s ease;
+    drawerIn
+    0.18s
+    ease;
 }
 
 @keyframes drawerIn {
   from {
     transform:
-      translateX(25px);
+      translateX(
+        25px
+      );
 
     opacity: 0;
   }
 
   to {
     transform:
-      translateX(0);
+      translateX(
+        0
+      );
 
     opacity: 1;
   }
@@ -1294,11 +1766,15 @@ body {
   background: white;
 
   border-bottom:
-    1px solid #e3e8ef;
+    1px
+    solid
+    #e3e8ef;
 }
 
 .drawerHeader h2 {
-  margin: 3px 0;
+  margin:
+    3px
+    0;
 
   color: #27344a;
 
@@ -1316,7 +1792,8 @@ body {
 .drawerCases {
   height:
     calc(
-      100vh - 104px
+      100vh -
+      104px
     );
 
   overflow-y: auto;
@@ -1327,21 +1804,27 @@ body {
 .drawerCase {
   width: 100%;
 
-  padding: 12px 13px;
+  padding:
+    12px
+    13px;
 
   margin-bottom: 7px;
 
   display: grid;
 
   grid-template-columns:
-    1fr auto 15px;
+    1fr
+    auto
+    15px;
 
   align-items: center;
 
   gap: 8px;
 
   border:
-    1px solid #e2e7ee;
+    1px
+    solid
+    #e2e7ee;
 
   border-radius: 10px;
 
@@ -1353,7 +1836,8 @@ body {
 }
 
 .drawerCase:hover {
-  border-color: #c9d2df;
+  border-color:
+    #c9d2df;
 }
 
 .drawerCase > div {
@@ -1371,7 +1855,9 @@ body {
   font-size: 10px;
 
   white-space: nowrap;
-  text-overflow: ellipsis;
+
+  text-overflow:
+    ellipsis;
 }
 
 .drawerCase div span {
@@ -1411,28 +1897,35 @@ body {
     );
 
   backdrop-filter:
-    blur(4px);
+    blur(
+      4px
+    );
 }
 
 .caseModal {
-  width: min(
-    1000px,
-    96vw
-  );
+  width:
+    min(
+      1000px,
+      96vw
+    );
 
-  height: min(
-    850px,
-    93vh
-  );
+  height:
+    min(
+      850px,
+      93vh
+    );
 
   overflow: hidden;
 
   border-radius: 18px;
 
-  background: #f6f8fb;
+  background:
+    #f6f8fb;
 
   box-shadow:
-    0 32px 90px
+    0
+    32px
+    90px
     rgba(
       14,
       23,
@@ -1441,29 +1934,60 @@ body {
     );
 }
 
+.stageOnlyModal {
+  width:
+    min(
+      760px,
+      96vw
+    );
+
+  height: auto;
+
+  max-height: 90vh;
+}
+
+.stageOnlyModal
+  .modalBody {
+  height: auto;
+
+  max-height:
+    calc(
+      90vh -
+      105px
+    );
+}
+
 .modalHeader {
   min-height: 105px;
 
-  padding: 21px 25px;
+  padding:
+    21px
+    25px;
 
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
 
   border-bottom:
-    1px solid #e5e9ef;
+    1px
+    solid
+    #e5e9ef;
 
   background: white;
 }
 
 .modalHeader h2 {
-  margin: 3px 0 9px;
+  margin:
+    3px
+    0
+    9px;
 
   color: #233047;
 
   font-size: 23px;
 
-  letter-spacing: -0.025em;
+  letter-spacing:
+    -0.025em;
 }
 
 .caseMeta {
@@ -1478,13 +2002,18 @@ body {
 .caseMeta > span:not(
     .statusPill
   ) {
-  padding: 4px 8px;
+  padding:
+    4px
+    8px;
 
-  border-radius: 999px;
+  border-radius:
+    999px;
 
-  background: #f0f3f6;
+  background:
+    #f0f3f6;
 
-  color: #6e7a8c;
+  color:
+    #6e7a8c;
 
   font-size: 8px;
   font-weight: 700;
@@ -1499,9 +2028,11 @@ body {
 
   border-radius: 9px;
 
-  background: #f1f3f6;
+  background:
+    #f1f3f6;
 
-  color: #69788c;
+  color:
+    #69788c;
 
   font-size: 20px;
 
@@ -1509,13 +2040,15 @@ body {
 }
 
 .closeButton:hover {
-  background: #e9edf2;
+  background:
+    #e9edf2;
 }
 
 .modalBody {
   height:
     calc(
-      100% - 105px
+      100% -
+      105px
     );
 
   overflow-y: auto;
@@ -1533,7 +2066,9 @@ body {
   margin-bottom: 13px;
 
   border:
-    1px solid #e2e7ee;
+    1px
+    solid
+    #e2e7ee;
 
   border-radius: 13px;
 
@@ -1558,9 +2093,11 @@ body {
 
   border-radius: 9px;
 
-  background: #edf2ff;
+  background:
+    #edf2ff;
 
-  color: #4c68bc;
+  color:
+    #4c68bc;
 
   font-size: 9px;
   font-weight: 900;
@@ -1575,7 +2112,10 @@ body {
 }
 
 .detailSectionHeader p {
-  margin: 2px 0 0;
+  margin:
+    2px
+    0
+    0;
 
   color: #949ead;
 
@@ -1588,20 +2128,27 @@ body {
   margin-top: 15px;
 
   border-top:
-    1px solid #edf0f4;
+    1px
+    solid
+    #edf0f4;
 }
 
 .subStage h4 {
-  margin: 0 0 12px;
+  margin:
+    0
+    0
+    12px;
 
   color: #56637a;
 
   font-size: 10px;
   font-weight: 800;
 
-  text-transform: uppercase;
+  text-transform:
+    uppercase;
 
-  letter-spacing: 0.04em;
+  letter-spacing:
+    0.04em;
 }
 
 .fieldGrid {
@@ -1610,10 +2157,15 @@ body {
   grid-template-columns:
     repeat(
       2,
-      minmax(0, 1fr)
+      minmax(
+        0,
+        1fr
+      )
     );
 
-  gap: 10px 14px;
+  gap:
+    10px
+    14px;
 }
 
 .detailField {
@@ -1633,9 +2185,11 @@ body {
   font-size: 8px;
   font-weight: 850;
 
-  letter-spacing: 0.055em;
+  letter-spacing:
+    0.055em;
 
-  text-transform: uppercase;
+  text-transform:
+    uppercase;
 }
 
 .detailField input,
@@ -1646,16 +2200,21 @@ body {
 
   min-height: 37px;
 
-  padding: 9px 10px;
+  padding:
+    9px
+    10px;
 
   border:
-    1px solid #dce2ea;
+    1px
+    solid
+    #dce2ea;
 
   border-radius: 8px;
 
   outline: none;
 
-  background: #fafbfc;
+  background:
+    #fafbfc;
 
   color: #29364c;
 
@@ -1665,12 +2224,17 @@ body {
 .detailField input:focus,
 .detailField textarea:focus,
 .detailField select:focus {
-  border-color: #7690e4;
+  border-color:
+    #7690e4;
 
-  background: white;
+  background:
+    white;
 
   box-shadow:
-    0 0 0 3px
+    0
+    0
+    0
+    3px
     rgba(
       82,
       112,
@@ -1686,9 +2250,11 @@ body {
 }
 
 .readValue {
-  background: #f4f6f8;
+  background:
+    #f4f6f8;
 
-  color: #6b778a;
+  color:
+    #6b778a;
 }
 
 .savingText {
@@ -1714,19 +2280,27 @@ body {
 
   z-index: 200;
 
-  padding: 9px 13px;
+  padding:
+    9px
+    13px;
 
   border:
-    1px solid #d8eee2;
+    1px
+    solid
+    #d8eee2;
 
   border-radius: 9px;
 
-  background: #edf9f2;
+  background:
+    #edf9f2;
 
-  color: #28704e;
+  color:
+    #28704e;
 
   box-shadow:
-    0 8px 25px
+    0
+    8px
+    25px
     rgba(
       27,
       79,
@@ -1739,15 +2313,19 @@ body {
 }
 
 .errorBanner {
-  padding: 10px 13px;
+  padding:
+    10px
+    13px;
 
   margin-bottom: 15px;
 
   border-radius: 9px;
 
-  background: #fff0f0;
+  background:
+    #fff0f0;
 
-  color: #9f4545;
+  color:
+    #9f4545;
 
   font-size: 10px;
 }
@@ -1756,7 +2334,9 @@ body {
   padding: 70px;
 
   border:
-    1px solid #e1e6ed;
+    1px
+    solid
+    #e1e6ed;
 
   border-radius: 14px;
 
@@ -1780,26 +2360,32 @@ body {
   display: grid;
   place-items: center;
 
-  background: #f4f6fa;
+  background:
+    #f4f6fa;
 }
 
 .loginCard {
-  width: min(
-    410px,
-    92vw
-  );
+  width:
+    min(
+      410px,
+      92vw
+    );
 
   padding: 38px;
 
   border:
-    1px solid #e2e7ee;
+    1px
+    solid
+    #e2e7ee;
 
   border-radius: 19px;
 
   background: white;
 
   box-shadow:
-    0 25px 70px
+    0
+    25px
+    70px
     rgba(
       25,
       40,
@@ -1811,11 +2397,16 @@ body {
 }
 
 .loginCard .logoMark {
-  margin: 0 auto;
+  margin:
+    0
+    auto;
 }
 
 .loginCard h1 {
-  margin: 18px 0 4px;
+  margin:
+    18px
+    0
+    4px;
 
   color: #223047;
 
@@ -1839,7 +2430,8 @@ body {
 
   border-radius: 9px;
 
-  background: #365ed3;
+  background:
+    #365ed3;
 
   color: white;
 
@@ -1866,6 +2458,45 @@ body {
   .calendarDay {
     min-height: 115px;
   }
+
+  .workflowLine {
+    grid-template-columns:
+      minmax(
+        170px,
+        1.4fr
+      )
+      repeat(
+        3,
+        minmax(
+          75px,
+          1fr
+        )
+      );
+  }
+}
+
+@media (
+  max-width: 900px
+) {
+  .summaryMetrics {
+    grid-template-columns:
+      1fr;
+  }
+
+  .summaryMetric {
+    min-height: 88px;
+
+    border-right: 0;
+
+    border-bottom:
+      1px
+      solid
+      #edf0f4;
+  }
+
+  .summaryMetric:last-child {
+    border-bottom: 0;
+  }
 }
 
 @media (
@@ -1880,7 +2511,8 @@ body {
 
   .brandWords,
   .navLabel,
-  .navItem > span:not(
+  .navItem
+    > span:not(
       .navIcon
     ),
   .sidebarUser,
@@ -1901,15 +2533,12 @@ body {
   .mainContent {
     width:
       calc(
-        100% - 70px
+        100% -
+        70px
       );
 
-    margin-left: 70px;
-  }
-
-  .metricGrid {
-    grid-template-columns:
-      1fr;
+    margin-left:
+      70px;
   }
 
   .casesToolbar {
@@ -1932,7 +2561,8 @@ body {
 
   .caseTableRow {
     grid-template-columns:
-      1fr 25px;
+      1fr
+      25px;
   }
 
   .caseTableRow
@@ -1965,5 +2595,52 @@ body {
     width: 100%;
 
     height: 96vh;
+  }
+
+  .stageOnlyModal {
+    height: auto;
+  }
+}
+
+@media (
+  max-width: 650px
+) {
+  .workflowLine {
+    padding: 12px;
+
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(
+          0,
+          1fr
+        )
+      );
+
+    gap: 6px;
+  }
+
+  .workflowLineName {
+    grid-column:
+      1 /
+      -1;
+
+    padding-bottom: 5px;
+  }
+
+  .workflowMetric {
+    padding-left: 6px;
+  }
+
+  .summaryMetric > strong {
+    font-size: 27px;
+  }
+
+  .pageHeader {
+    align-items: flex-start;
+  }
+
+  .pageHeader h1 {
+    font-size: 26px;
   }
 }
