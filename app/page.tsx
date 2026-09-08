@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
-/* =========================================================
-   TYPES
-========================================================= */
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type Role =
   | "ADMIN"
@@ -15,9 +15,10 @@ type Role =
   | "MANAGER"
   | "COORDINATOR";
 
-type CaseRow = Record<string, string> & {
-  __row: string;
-};
+type CaseRow =
+  Record<string, string> & {
+    __row: string;
+  };
 
 type User = {
   authenticated: boolean;
@@ -25,9 +26,15 @@ type User = {
   role: Role | null;
 };
 
-type MainView = "dashboard" | "cases" | "team";
+type MainView =
+  | "dashboard"
+  | "cases"
+  | "team";
 
-type TeamGroup = "paralegal" | "psych" | "ea";
+type TeamGroup =
+  | "paralegal"
+  | "psych"
+  | "ea";
 
 type TeamCalendar =
   | "caratula"
@@ -37,7 +44,9 @@ type TeamCalendar =
   | "ea"
   | "cvl";
 
-type TeamViewMode = "calendar" | "table";
+type TeamViewMode =
+  | "calendar"
+  | "table";
 
 type KpiType =
   | "backlog"
@@ -56,10 +65,15 @@ type KpiSection =
 
 type KpiSelection = {
   section: KpiSection;
-  type: Exclude<KpiType, "none">;
+  type: Exclude<
+    KpiType,
+    "none"
+  >;
 } | null;
 
-type OpenCaseSource = "cases" | "calendar";
+type OpenCaseSource =
+  | "cases"
+  | "calendar";
 
 type Stats = {
   backlog: number;
@@ -67,18 +81,18 @@ type Stats = {
   future: number;
 };
 
-/* =========================================================
-   LABELS
-========================================================= */
-
-const roleLabels: Record<Role, string> = {
+const roleLabels: Record<
+  Role,
+  string
+> = {
   ADMIN: "Admin",
   TL: "Team Leader",
   PARALEGAL: "Paralegal",
   PSYCH: "Psych",
   ANALYST: "Analyst",
   MANAGER: "Manager",
-  COORDINATOR: "Coordinator",
+  COORDINATOR:
+    "Coordinator",
 };
 
 const monthNames = [
@@ -106,36 +120,51 @@ const weekDays = [
   "DOM",
 ];
 
-/* =========================================================
-   HELPERS
-========================================================= */
+const norm = (
+  value: string
+) =>
+  value
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, " ");
 
-const norm = (value: string) =>
-  value.trim().toUpperCase().replace(/\s+/g, " ");
+const parseDateOnly = (
+  value: string
+): Date | null => {
+  const raw =
+    value?.trim();
 
-const parseDateOnly = (value: string): Date | null => {
-  const raw = value?.trim();
+  if (!raw) {
+    return null;
+  }
 
-  if (!raw) return null;
-
-  const iso = raw.match(
-    /^(\d{4})-(\d{1,2})-(\d{1,2})/
-  );
-
-  if (iso) {
-    const year = Number(iso[1]);
-    const month = Number(iso[2]);
-    const day = Number(iso[3]);
-
-    const date = new Date(
-      year,
-      month - 1,
-      day
+  const iso =
+    raw.match(
+      /^(\d{4})-(\d{1,2})-(\d{1,2})/
     );
 
+  if (iso) {
+    const year =
+      Number(iso[1]);
+
+    const month =
+      Number(iso[2]);
+
+    const day =
+      Number(iso[3]);
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+
     if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month - 1 &&
       date.getDate() === day
     ) {
       return date;
@@ -144,32 +173,44 @@ const parseDateOnly = (value: string): Date | null => {
     return null;
   }
 
-  const slash = raw.match(
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
-  );
+  const slash =
+    raw.match(
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+    );
 
   if (slash) {
-    const first = Number(slash[1]);
-    const second = Number(slash[2]);
-    const year = Number(slash[3]);
+    const first =
+      Number(slash[1]);
+
+    const second =
+      Number(slash[2]);
+
+    const year =
+      Number(slash[3]);
 
     let month = first;
     let day = second;
 
-    if (first > 12 && second <= 12) {
+    if (
+      first > 12 &&
+      second <= 12
+    ) {
       day = first;
       month = second;
     }
 
-    const date = new Date(
-      year,
-      month - 1,
-      day
-    );
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
 
     if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month - 1 &&
       date.getDate() === day
     ) {
       return date;
@@ -178,9 +219,14 @@ const parseDateOnly = (value: string): Date | null => {
     return null;
   }
 
-  const parsed = new Date(raw);
+  const parsed =
+    new Date(raw);
 
-  if (Number.isNaN(parsed.getTime())) {
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
     return null;
   }
 
@@ -191,50 +237,73 @@ const parseDateOnly = (value: string): Date | null => {
   );
 };
 
-const toInputDate = (value: string) => {
-  const parsed = parseDateOnly(value);
+const toInputDate = (
+  value: string
+) => {
+  const parsed =
+    parseDateOnly(value);
 
-  if (!parsed) return "";
+  if (!parsed) {
+    return "";
+  }
 
-  const year = parsed.getFullYear();
+  const year =
+    parsed.getFullYear();
 
-  const month = String(
-    parsed.getMonth() + 1
-  ).padStart(2, "0");
+  const month =
+    String(
+      parsed.getMonth() + 1
+    ).padStart(2, "0");
 
-  const day = String(
-    parsed.getDate()
-  ).padStart(2, "0");
+  const day =
+    String(
+      parsed.getDate()
+    ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-const formatDate = (value: string) => {
-  const parsed = parseDateOnly(value);
+const formatDate = (
+  value: string
+) => {
+  const parsed =
+    parseDateOnly(value);
 
-  if (!parsed) return value || "—";
+  if (!parsed) {
+    return value || "—";
+  }
 
-  return parsed.toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return parsed.toLocaleDateString(
+    "es-ES",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 };
 
-const startOfWeek = (date: Date) => {
-  const result = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
+const startOfWeek = (
+  date: Date
+) => {
+  const result =
+    new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
 
-  const day = result.getDay();
+  const day =
+    result.getDay();
 
   const diff =
-    day === 0 ? -6 : 1 - day;
+    day === 0
+      ? -6
+      : 1 - day;
 
   result.setDate(
-    result.getDate() + diff
+    result.getDate() +
+      diff
   );
 
   return result;
@@ -244,10 +313,12 @@ const addDays = (
   date: Date,
   days: number
 ) => {
-  const result = new Date(date);
+  const result =
+    new Date(date);
 
   result.setDate(
-    result.getDate() + days
+    result.getDate() +
+      days
   );
 
   return result;
@@ -257,43 +328,58 @@ const sameDay = (
   a: Date,
   b: Date
 ) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
+  a.getFullYear() ===
+    b.getFullYear() &&
+  a.getMonth() ===
+    b.getMonth() &&
+  a.getDate() ===
+    b.getDate();
 
+/*
+ * SEMANA ISO
+ */
 const getDeliveryWeekLabel = (
   date: Date
 ) => {
-  const tempDate = new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    )
-  );
+  const tempDate =
+    new Date(
+      Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      )
+    );
 
   const dayNumber =
-    tempDate.getUTCDay() || 7;
+    tempDate.getUTCDay() ||
+    7;
 
   tempDate.setUTCDate(
-    tempDate.getUTCDate() + 4 - dayNumber
+    tempDate.getUTCDate() +
+      4 -
+      dayNumber
   );
 
-  const yearStart = new Date(
-    Date.UTC(
-      tempDate.getUTCFullYear(),
-      0,
-      1
-    )
-  );
+  const yearStart =
+    new Date(
+      Date.UTC(
+        tempDate.getUTCFullYear(),
+        0,
+        1
+      )
+    );
 
-  const weekNumber = Math.ceil(
-    (
-      (tempDate.getTime() - yearStart.getTime()) /
-        86400000 +
-      1
-    ) / 7
-  );
+  const weekNumber =
+    Math.ceil(
+      (
+        (
+          tempDate.getTime() -
+          yearStart.getTime()
+        ) /
+          86400000 +
+        1
+      ) / 7
+    );
 
   return `Semana ${weekNumber}`;
 };
@@ -302,7 +388,9 @@ const classifyDate = (
   date: Date
 ): KpiType => {
   const currentWeekStart =
-    startOfWeek(new Date());
+    startOfWeek(
+      new Date()
+    );
 
   const nextWeekStart =
     addDays(
@@ -329,16 +417,17 @@ const classifyDate = (
   return "future";
 };
 
-/* =========================================================
-   KPI LOGIC
-========================================================= */
+/* KPI */
 
 const getMgmKpi = (
   row: CaseRow
 ): KpiType => {
-  const type = norm(
-    row["DUE DATE/NO DUE DATE"] || ""
-  );
+  const type =
+    norm(
+      row[
+        "DUE DATE/NO DUE DATE"
+      ] || ""
+    );
 
   if (
     ![
@@ -350,9 +439,10 @@ const getMgmKpi = (
     return "none";
   }
 
-  const status = norm(
-    row["STATUS"] || ""
-  );
+  const status =
+    norm(
+      row["STATUS"] || ""
+    );
 
   if (
     [
@@ -365,11 +455,16 @@ const getMgmKpi = (
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["COMMITMENT"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "COMMITMENT"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -377,9 +472,12 @@ const getMgmKpi = (
 const getPsychKpi = (
   row: CaseRow
 ): KpiType => {
-  const status = norm(
-    row["DOE STATUS"] || ""
-  );
+  const status =
+    norm(
+      row[
+        "DOE STATUS"
+      ] || ""
+    );
 
   if (
     [
@@ -397,16 +495,25 @@ const getPsychKpi = (
   }
 
   if (
-    (row["DONE (doe)"] || "").trim()
+    (
+      row[
+        "DONE (doe)"
+      ] || ""
+    ).trim()
   ) {
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["EXPECTED DONE (doe)"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "EXPECTED DONE (doe)"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -415,16 +522,25 @@ const getCaratulaKpi = (
   row: CaseRow
 ): KpiType => {
   if (
-    (row["CARATULA DONE"] || "").trim()
+    (
+      row[
+        "CARATULA DONE"
+      ] || ""
+    ).trim()
   ) {
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["CARÁTULA EXPECTED DONE"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "CARÁTULA EXPECTED DONE"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -432,9 +548,12 @@ const getCaratulaKpi = (
 const getDraftKpi = (
   row: CaseRow
 ): KpiType => {
-  const status = norm(
-    row["STATUS 1ST DRAFT"] || ""
-  );
+  const status =
+    norm(
+      row[
+        "STATUS 1ST DRAFT"
+      ] || ""
+    );
 
   if (
     [
@@ -451,16 +570,25 @@ const getDraftKpi = (
   }
 
   if (
-    (row["1ST DRAFT DONE"] || "").trim()
+    (
+      row[
+        "1ST DRAFT DONE"
+      ] || ""
+    ).trim()
   ) {
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["1ST DRAFT EXP DONE"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "1ST DRAFT EXP DONE"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -469,16 +597,25 @@ const getPlCvlKpi = (
   row: CaseRow
 ): KpiType => {
   if (
-    (row["PL CVL DONE"] || "").trim()
+    (
+      row[
+        "PL CVL DONE"
+      ] || ""
+    ).trim()
   ) {
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["PL CVL EXPECTED DONE"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "PL CVL EXPECTED DONE"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -486,9 +623,12 @@ const getPlCvlKpi = (
 const getEaKpi = (
   row: CaseRow
 ): KpiType => {
-  const status = norm(
-    row["EA STATUS"] || ""
-  );
+  const status =
+    norm(
+      row[
+        "EA STATUS"
+      ] || ""
+    );
 
   if (
     [
@@ -502,16 +642,25 @@ const getEaKpi = (
   }
 
   if (
-    (row["EA DONE"] || "").trim()
+    (
+      row[
+        "EA DONE"
+      ] || ""
+    ).trim()
   ) {
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["EA EXPECTED DONE"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "EA EXPECTED DONE"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -519,9 +668,12 @@ const getEaKpi = (
 const getCvlKpi = (
   row: CaseRow
 ): KpiType => {
-  const status = norm(
-    row["CVL STATUS"] || ""
-  );
+  const status =
+    norm(
+      row[
+        "CVL STATUS"
+      ] || ""
+    );
 
   if (
     [
@@ -535,16 +687,25 @@ const getCvlKpi = (
   }
 
   if (
-    (row["DONE CVL"] || "").trim()
+    (
+      row[
+        "DONE CVL"
+      ] || ""
+    ).trim()
   ) {
     return "none";
   }
 
-  const date = parseDateOnly(
-    row["CVL EXPECTED DONE"] || ""
-  );
+  const date =
+    parseDateOnly(
+      row[
+        "CVL EXPECTED DONE"
+      ] || ""
+    );
 
-  if (!date) return "none";
+  if (!date) {
+    return "none";
+  }
 
   return classifyDate(date);
 };
@@ -552,57 +713,118 @@ const getCvlKpi = (
 const getKpiGetter = (
   section: KpiSection
 ) => {
-  if (section === "mgm") {
+  if (
+    section === "mgm"
+  ) {
     return getMgmKpi;
   }
 
-  if (section === "psych") {
+  if (
+    section === "psych"
+  ) {
     return getPsychKpi;
   }
 
-  if (section === "caratula") {
+  if (
+    section ===
+    "caratula"
+  ) {
     return getCaratulaKpi;
   }
 
-  if (section === "draft") {
+  if (
+    section === "draft"
+  ) {
     return getDraftKpi;
   }
 
-  if (section === "plcvl") {
+  if (
+    section === "plcvl"
+  ) {
     return getPlCvlKpi;
   }
 
-  if (section === "ea") {
+  if (
+    section === "ea"
+  ) {
     return getEaKpi;
   }
 
   return getCvlKpi;
 };
 
-/* =========================================================
-   TEAM CONFIG
-========================================================= */
+/*
+ * AQUÍ ESTÁ LA DIFERENCIA IMPORTANTE.
+ *
+ * Ya no usamos "PARALEGAL" para las 3 etapas.
+ */
+const collaboratorHeader = (
+  stage: TeamCalendar
+) => {
+  if (
+    stage ===
+    "caratula"
+  ) {
+    return "__PARALEGAL_CARATULA";
+  }
+
+  if (
+    stage === "draft"
+  ) {
+    return "__PARALEGAL_DRAFT";
+  }
+
+  if (
+    stage === "plcvl"
+  ) {
+    return "__PARALEGAL_PLCVL";
+  }
+
+  if (
+    stage === "psych"
+  ) {
+    return "PSYCH";
+  }
+
+  if (
+    stage === "ea"
+  ) {
+    return "EA MEMBER";
+  }
+
+  return "CVL MEMBER";
+};
 
 const calendarDateHeader = (
-  type: TeamCalendar
+  stage: TeamCalendar
 ) => {
-  if (type === "caratula") {
+  if (
+    stage === "caratula"
+  ) {
     return "CARÁTULA EXPECTED DONE";
   }
 
-  if (type === "draft") {
+  if (
+    stage === "draft"
+  ) {
     return "1ST DRAFT EXP DONE";
   }
 
-  if (type === "plcvl") {
+  if (
+    stage === "plcvl"
+  ) {
     return "PL CVL EXPECTED DONE";
   }
 
-  if (type === "psych") {
+  if (
+    stage === "psych"
+  ) {
     return "EXPECTED DONE (doe)";
   }
 
-  if (type === "ea") {
+  if (
+    stage === "ea"
+  ) {
     return "EA EXPECTED DONE";
   }
 
@@ -610,155 +832,183 @@ const calendarDateHeader = (
 };
 
 const calendarStatusHeader = (
-  type: TeamCalendar
+  stage: TeamCalendar
 ) => {
-  if (type === "draft") {
+  if (
+    stage === "draft"
+  ) {
     return "STATUS 1ST DRAFT";
   }
 
-  if (type === "psych") {
+  if (
+    stage === "psych"
+  ) {
     return "DOE STATUS";
   }
 
-  if (type === "ea") {
+  if (
+    stage === "ea"
+  ) {
     return "EA STATUS";
   }
 
-  if (type === "cvl") {
+  if (
+    stage === "cvl"
+  ) {
     return "CVL STATUS";
   }
 
   return "";
 };
 
-const collaboratorHeader = (
-  type: TeamCalendar
-) => {
-  if (type === "psych") {
-    return "PSYCH";
-  }
-
-  if (type === "ea") {
-    return "EA MEMBER";
-  }
-
-  if (type === "cvl") {
-    return "CVL MEMBER";
-  }
-
-  return "PARALEGAL";
-};
-
 const calendarActive = (
   row: CaseRow,
-  type: TeamCalendar
+  stage: TeamCalendar
 ) => {
-  if (type === "caratula") {
+  if (
+    stage ===
+    "caratula"
+  ) {
     return (
-      getCaratulaKpi(row) !== "none"
+      getCaratulaKpi(
+        row
+      ) !== "none"
     );
   }
 
-  if (type === "draft") {
+  if (
+    stage === "draft"
+  ) {
     return (
-      getDraftKpi(row) !== "none"
+      getDraftKpi(row) !==
+      "none"
     );
   }
 
-  if (type === "plcvl") {
+  if (
+    stage === "plcvl"
+  ) {
     return (
-      getPlCvlKpi(row) !== "none"
+      getPlCvlKpi(row) !==
+      "none"
     );
   }
 
-  if (type === "psych") {
+  if (
+    stage === "psych"
+  ) {
     return (
-      getPsychKpi(row) !== "none"
+      getPsychKpi(row) !==
+      "none"
     );
   }
 
-  if (type === "ea") {
+  if (
+    stage === "ea"
+  ) {
     return (
-      getEaKpi(row) !== "none"
+      getEaKpi(row) !==
+      "none"
     );
   }
 
   return (
-    getCvlKpi(row) !== "none"
+    getCvlKpi(row) !==
+    "none"
   );
 };
 
 const stageLabel = (
   stage: TeamCalendar
 ) => {
-  if (stage === "caratula") {
+  if (
+    stage === "caratula"
+  ) {
     return "Carátula";
   }
 
-  if (stage === "draft") {
+  if (
+    stage === "draft"
+  ) {
     return "1st Draft";
   }
 
-  if (stage === "plcvl") {
+  if (
+    stage === "plcvl"
+  ) {
     return "Escalación CVL";
   }
 
-  if (stage === "psych") {
+  if (
+    stage === "psych"
+  ) {
     return "Psych · DOE";
   }
 
-  if (stage === "ea") {
+  if (
+    stage === "ea"
+  ) {
     return "EA · Analyst";
   }
 
   return "CVL";
 };
 
-/* =========================================================
-   MAIN
-========================================================= */
-
 export default function Home() {
-  const [user, setUser] =
-    useState<User | null>(null);
+  const [
+    user,
+    setUser,
+  ] =
+    useState<User | null>(
+      null
+    );
 
-  const [data, setData] =
-    useState<{
-      title: string;
-      headers: string[];
-      rows: CaseRow[];
-    }>({
-      title: "",
-      headers: [],
-      rows: [],
-    });
+  const [
+    data,
+    setData,
+  ] = useState<{
+    title: string;
+    headers: string[];
+    rows: CaseRow[];
+  }>({
+    title: "",
+    headers: [],
+    rows: [],
+  });
 
   const [
     loadingUser,
     setLoadingUser,
-  ] = useState(true);
+  ] =
+    useState(true);
 
   const [
     loadingCases,
     setLoadingCases,
-  ] = useState(false);
+  ] =
+    useState(false);
 
   const [
     mainView,
     setMainView,
   ] =
-    useState<MainView>("dashboard");
+    useState<MainView>(
+      "dashboard"
+    );
 
   const [
     teamOpen,
     setTeamOpen,
-  ] = useState(false);
+  ] =
+    useState(false);
 
   const [
     teamGroup,
     setTeamGroup,
   ] =
-    useState<TeamGroup>("paralegal");
+    useState<TeamGroup>(
+      "paralegal"
+    );
 
   const [
     teamCalendar,
@@ -779,13 +1029,15 @@ export default function Home() {
   const [
     collaboratorFilter,
     setCollaboratorFilter,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     calendarMonth,
     setCalendarMonth,
   ] = useState(() => {
-    const now = new Date();
+    const now =
+      new Date();
 
     return new Date(
       now.getFullYear(),
@@ -797,18 +1049,22 @@ export default function Home() {
   const [
     search,
     setSearch,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     statusFilter,
     setStatusFilter,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     selectedCase,
     setSelectedCase,
   ] =
-    useState<CaseRow | null>(null);
+    useState<CaseRow | null>(
+      null
+    );
 
   const [
     openCaseSource,
@@ -830,39 +1086,44 @@ export default function Home() {
     selectedKpi,
     setSelectedKpi,
   ] =
-    useState<KpiSelection>(null);
+    useState<KpiSelection>(
+      null
+    );
 
   const [
     savingField,
     setSavingField,
   ] =
-    useState<string | null>(null);
+    useState<string | null>(
+      null
+    );
 
   const [
     message,
     setMessage,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     error,
     setError,
-  ] = useState("");
+  ] =
+    useState("");
 
-  /* =====================================================
-     PERMISSIONS
-  ===================================================== */
-
-  const role = user?.role;
+  const role =
+    user?.role;
 
   const canSeeAllTeam =
     role === "ADMIN" ||
     role === "TL" ||
     role === "MANAGER" ||
-    role === "COORDINATOR";
+    role ===
+      "COORDINATOR";
 
   const canSeeParalegal =
     canSeeAllTeam ||
-    role === "PARALEGAL";
+    role ===
+      "PARALEGAL";
 
   const canSeePsych =
     canSeeAllTeam ||
@@ -872,33 +1133,41 @@ export default function Home() {
     canSeeAllTeam ||
     role === "ANALYST";
 
+  const canReassign =
+    role === "ADMIN" ||
+    role === "TL";
+
   const canEditStage =
     role === "ADMIN" ||
     role === "TL" ||
     (
-      role === "PARALEGAL" &&
+      role ===
+        "PARALEGAL" &&
       [
         "caratula",
         "draft",
         "plcvl",
       ].includes(
-        selectedStage || ""
+        selectedStage ||
+          ""
       )
     ) ||
     (
       role === "PSYCH" &&
-      selectedStage === "psych"
+      selectedStage ===
+        "psych"
     ) ||
     (
-      role === "ANALYST" &&
-      ["ea", "cvl"].includes(
-        selectedStage || ""
+      role ===
+        "ANALYST" &&
+      [
+        "ea",
+        "cvl",
+      ].includes(
+        selectedStage ||
+          ""
       )
     );
-
-  /* =====================================================
-     LOAD
-  ===================================================== */
 
   async function loadUser() {
     try {
@@ -906,7 +1175,8 @@ export default function Home() {
         await fetch(
           "/api/auth/me",
           {
-            cache: "no-store",
+            cache:
+              "no-store",
           }
         );
 
@@ -915,7 +1185,8 @@ export default function Home() {
       );
     } catch {
       setUser({
-        authenticated: false,
+        authenticated:
+          false,
         email: null,
         role: null,
       });
@@ -933,7 +1204,8 @@ export default function Home() {
         await fetch(
           "/api/cases",
           {
-            cache: "no-store",
+            cache:
+              "no-store",
           }
         );
 
@@ -972,12 +1244,10 @@ export default function Home() {
   }, [user]);
 
   useEffect(() => {
-    setCollaboratorFilter("");
+    setCollaboratorFilter(
+      ""
+    );
   }, [teamCalendar]);
-
-  /* =====================================================
-     SAVE
-  ===================================================== */
 
   async function saveField(
     rowNumber: number,
@@ -1002,10 +1272,12 @@ export default function Home() {
 
             body:
               JSON.stringify({
-                row: rowNumber,
+                row:
+                  rowNumber,
 
                 changes: {
-                  [header]: value,
+                  [header]:
+                    value,
                 },
               }),
           }
@@ -1021,20 +1293,26 @@ export default function Home() {
         );
       }
 
-      setData((prev) => ({
-        ...prev,
+      setData(
+        (prev) => ({
+          ...prev,
 
-        rows: prev.rows.map(
-          (row) =>
-            row.__row ===
-            String(rowNumber)
-              ? {
-                  ...row,
-                  [header]: value,
-                }
-              : row
-        ),
-      }));
+          rows:
+            prev.rows.map(
+              (row) =>
+                row.__row ===
+                String(
+                  rowNumber
+                )
+                  ? {
+                      ...row,
+                      [header]:
+                        value,
+                    }
+                  : row
+            ),
+        })
+      );
 
       setSelectedCase(
         (prev) =>
@@ -1042,7 +1320,8 @@ export default function Home() {
           String(rowNumber)
             ? {
                 ...prev,
-                [header]: value,
+                [header]:
+                  value,
               }
             : prev
       );
@@ -1052,9 +1331,8 @@ export default function Home() {
       );
 
       window.setTimeout(
-        () => {
-          setMessage("");
-        },
+        () =>
+          setMessage(""),
         2200
       );
     } catch (e) {
@@ -1064,40 +1342,161 @@ export default function Home() {
           : "Error"
       );
     } finally {
-      setSavingField(null);
+      setSavingField(
+        null
+      );
     }
   }
 
-  /* =====================================================
-     OPEN CASE
-  ===================================================== */
+  /*
+   * GUARDA POR COLUMNA EXACTA.
+   *
+   * Esta función se usa solamente
+   * para J / S / BN.
+   */
+  async function saveExactColumn(
+    rowNumber: number,
+    column: string,
+    localHeader: string,
+    value: string
+  ) {
+    setSavingField(
+      localHeader
+    );
+
+    setMessage("");
+    setError("");
+
+    try {
+      const response =
+        await fetch(
+          "/api/cases/update",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                row:
+                  rowNumber,
+
+                columnChanges: {
+                  [column]:
+                    value,
+                },
+              }),
+          }
+        );
+
+      const json =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          json.error ||
+            "No se pudo reasignar"
+        );
+      }
+
+      setData(
+        (prev) => ({
+          ...prev,
+
+          rows:
+            prev.rows.map(
+              (row) =>
+                row.__row ===
+                String(
+                  rowNumber
+                )
+                  ? {
+                      ...row,
+                      [localHeader]:
+                        value,
+                    }
+                  : row
+            ),
+        })
+      );
+
+      setSelectedCase(
+        (prev) =>
+          prev?.__row ===
+          String(rowNumber)
+            ? {
+                ...prev,
+                [localHeader]:
+                  value,
+              }
+            : prev
+      );
+
+      setMessage(
+        "Colaborador reasignado"
+      );
+
+      window.setTimeout(
+        () =>
+          setMessage(""),
+        2200
+      );
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Error"
+      );
+    } finally {
+      setSavingField(
+        null
+      );
+    }
+  }
 
   function openGeneralCase(
     row: CaseRow
   ) {
-    setOpenCaseSource("cases");
-    setSelectedStage(null);
-    setSelectedCase(row);
+    setOpenCaseSource(
+      "cases"
+    );
+
+    setSelectedStage(
+      null
+    );
+
+    setSelectedCase(
+      row
+    );
   }
 
   function openTeamCase(
     row: CaseRow,
     stage: TeamCalendar
   ) {
-    setOpenCaseSource("calendar");
-    setSelectedStage(stage);
-    setSelectedCase(row);
-  }
+    setOpenCaseSource(
+      "calendar"
+    );
 
-  /* =====================================================
-     KPI STATS
-  ===================================================== */
+    setSelectedStage(
+      stage
+    );
+
+    setSelectedCase(
+      row
+    );
+  }
 
   const calculateStats = (
     section: KpiSection
   ): Stats => {
     const getter =
-      getKpiGetter(section);
+      getKpiGetter(
+        section
+      );
 
     let backlog = 0;
     let pending = 0;
@@ -1109,19 +1508,22 @@ export default function Home() {
           getter(row);
 
         if (
-          result === "backlog"
+          result ===
+          "backlog"
         ) {
           backlog++;
         }
 
         if (
-          result === "pending"
+          result ===
+          "pending"
         ) {
           pending++;
         }
 
         if (
-          result === "future"
+          result ===
+          "future"
         ) {
           future++;
         }
@@ -1138,55 +1540,65 @@ export default function Home() {
   const mgmStats =
     useMemo(
       () =>
-        calculateStats("mgm"),
+        calculateStats(
+          "mgm"
+        ),
       [data.rows]
     );
 
   const psychStats =
     useMemo(
       () =>
-        calculateStats("psych"),
+        calculateStats(
+          "psych"
+        ),
       [data.rows]
     );
 
   const caratulaStats =
     useMemo(
       () =>
-        calculateStats("caratula"),
+        calculateStats(
+          "caratula"
+        ),
       [data.rows]
     );
 
   const draftStats =
     useMemo(
       () =>
-        calculateStats("draft"),
+        calculateStats(
+          "draft"
+        ),
       [data.rows]
     );
 
   const plcvlStats =
     useMemo(
       () =>
-        calculateStats("plcvl"),
+        calculateStats(
+          "plcvl"
+        ),
       [data.rows]
     );
 
   const eaStats =
     useMemo(
       () =>
-        calculateStats("ea"),
+        calculateStats(
+          "ea"
+        ),
       [data.rows]
     );
 
   const cvlStats =
     useMemo(
       () =>
-        calculateStats("cvl"),
+        calculateStats(
+          "cvl"
+        ),
       [data.rows]
     );
-
-  /* =====================================================
-     CASE FILTER
-  ===================================================== */
 
   const filteredCases =
     useMemo(() => {
@@ -1200,12 +1612,15 @@ export default function Home() {
           const matchesSearch =
             !q ||
             (
-              row["CLIENTE"] || ""
+              row[
+                "CLIENTE"
+              ] || ""
             )
               .toLowerCase()
               .includes(q) ||
             (
-              row["ID"] || ""
+              row["ID"] ||
+              ""
             )
               .toLowerCase()
               .includes(q) ||
@@ -1220,7 +1635,9 @@ export default function Home() {
           const matchesStatus =
             !statusFilter ||
             norm(
-              row["STATUS"] || ""
+              row[
+                "STATUS"
+              ] || ""
             ) ===
               norm(
                 statusFilter
@@ -1238,13 +1655,11 @@ export default function Home() {
       statusFilter,
     ]);
 
-  /* =====================================================
-     KPI DETAILS
-  ===================================================== */
-
   const kpiCases =
     useMemo(() => {
-      if (!selectedKpi) {
+      if (
+        !selectedKpi
+      ) {
         return [];
       }
 
@@ -1266,38 +1681,45 @@ export default function Home() {
   const sectionLabel = (
     section: KpiSection
   ) => {
-    if (section === "mgm") {
+    if (
+      section === "mgm"
+    ) {
       return "Entregas MGM";
     }
 
-    if (section === "psych") {
+    if (
+      section === "psych"
+    ) {
       return "Psych";
     }
 
     if (
-      section === "caratula"
+      section ===
+      "caratula"
     ) {
       return "Llenado de Carátula";
     }
 
-    if (section === "draft") {
+    if (
+      section === "draft"
+    ) {
       return "1st Draft";
     }
 
-    if (section === "plcvl") {
+    if (
+      section === "plcvl"
+    ) {
       return "Escalación CVL";
     }
 
-    if (section === "ea") {
+    if (
+      section === "ea"
+    ) {
       return "EA · Analyst";
     }
 
     return "CVL";
   };
-
-  /* =====================================================
-     TEAM ACTIVE ROWS
-  ===================================================== */
 
   const currentCollaboratorHeader =
     collaboratorHeader(
@@ -1330,9 +1752,119 @@ export default function Home() {
       ]
     );
 
-  /* =====================================================
-     COLLABORATORS
-  ===================================================== */
+  /*
+   * Opciones para reasignar.
+   *
+   * Paralegal toma nombres de las
+   * 3 columnas independientes.
+   */
+  const paralegalOptions =
+    useMemo(() => {
+      const values =
+        data.rows.flatMap(
+          (row) => [
+            row[
+              "__PARALEGAL_CARATULA"
+            ] || "",
+
+            row[
+              "__PARALEGAL_DRAFT"
+            ] || "",
+
+            row[
+              "__PARALEGAL_PLCVL"
+            ] || "",
+          ]
+        );
+
+      return Array.from(
+        new Set(
+          values
+            .map((v) =>
+              v.trim()
+            )
+            .filter(Boolean)
+        )
+      ).sort(
+        (a, b) =>
+          a.localeCompare(b)
+      );
+    }, [data.rows]);
+
+  const psychOptions =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            data.rows
+              .map(
+                (row) =>
+                  (
+                    row[
+                      "PSYCH"
+                    ] || ""
+                  ).trim()
+              )
+              .filter(Boolean)
+          )
+        ).sort(
+          (a, b) =>
+            a.localeCompare(
+              b
+            )
+        ),
+      [data.rows]
+    );
+
+  const eaOptions =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            data.rows
+              .map(
+                (row) =>
+                  (
+                    row[
+                      "EA MEMBER"
+                    ] || ""
+                  ).trim()
+              )
+              .filter(Boolean)
+          )
+        ).sort(
+          (a, b) =>
+            a.localeCompare(
+              b
+            )
+        ),
+      [data.rows]
+    );
+
+  const cvlOptions =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            data.rows
+              .map(
+                (row) =>
+                  (
+                    row[
+                      "CVL MEMBER"
+                    ] || ""
+                  ).trim()
+              )
+              .filter(Boolean)
+          )
+        ).sort(
+          (a, b) =>
+            a.localeCompare(
+              b
+            )
+        ),
+      [data.rows]
+    );
 
   const collaborators =
     useMemo(() => {
@@ -1353,7 +1885,9 @@ export default function Home() {
           new Set(names)
         ).sort(
           (a, b) =>
-            a.localeCompare(b)
+            a.localeCompare(
+              b
+            )
         );
 
       const hasUnassigned =
@@ -1367,7 +1901,8 @@ export default function Home() {
         );
 
       return {
-        names: uniqueNames,
+        names:
+          uniqueNames,
         hasUnassigned,
       };
     }, [
@@ -1414,10 +1949,6 @@ export default function Home() {
       currentCollaboratorHeader,
     ]);
 
-  /* =====================================================
-     CALENDAR
-  ===================================================== */
-
   const calendarDays =
     useMemo(() => {
       const year =
@@ -1441,9 +1972,11 @@ export default function Home() {
         );
 
       const mondayIndex =
-        firstDay.getDay() === 0
+        firstDay.getDay() ===
+        0
           ? 6
-          : firstDay.getDay() - 1;
+          : firstDay.getDay() -
+            1;
 
       const startDate =
         addDays(
@@ -1452,9 +1985,11 @@ export default function Home() {
         );
 
       const lastDayMondayIndex =
-        lastDay.getDay() === 0
+        lastDay.getDay() ===
+        0
           ? 6
-          : lastDay.getDay() - 1;
+          : lastDay.getDay() -
+            1;
 
       const remaining =
         6 -
@@ -1578,7 +2113,8 @@ export default function Home() {
   }
 
   function goToday() {
-    const today = new Date();
+    const today =
+      new Date();
 
     setCalendarMonth(
       new Date(
@@ -1589,32 +2125,37 @@ export default function Home() {
     );
   }
 
-  /* =====================================================
-     STATUS
-  ===================================================== */
-
   const statusClass = (
     status: string
   ) => {
-    const value = norm(status);
+    const value =
+      norm(status);
 
     if (
       value === "DONE" ||
-      value === "SENT TO USCIS"
+      value ===
+        "SENT TO USCIS"
     ) {
       return "statusPill statusGreen";
     }
 
     if (
-      value.includes("REVIEW") ||
-      value.includes("CORRECTION")
+      value.includes(
+        "REVIEW"
+      ) ||
+      value.includes(
+        "CORRECTION"
+      )
     ) {
       return "statusPill statusPurple";
     }
 
     if (
-      value.includes("CANCEL") ||
-      value === "SPECIAL CASE"
+      value.includes(
+        "CANCEL"
+      ) ||
+      value ===
+        "SPECIAL CASE"
     ) {
       return "statusPill statusRed";
     }
@@ -1626,52 +2167,83 @@ export default function Home() {
     return "statusPill statusBlue";
   };
 
-  /* =====================================================
-     NAVIGATION
-  ===================================================== */
-
   function openDashboard() {
-    setMainView("dashboard");
+    setMainView(
+      "dashboard"
+    );
+
     setTeamOpen(false);
   }
 
   function openCases() {
-    setMainView("cases");
+    setMainView(
+      "cases"
+    );
+
     setTeamOpen(false);
   }
 
   function toggleTeam() {
-    setMainView("team");
+    setMainView(
+      "team"
+    );
+
     setTeamOpen(true);
 
     if (
-      role === "PARALEGAL"
+      role ===
+      "PARALEGAL"
     ) {
-      setTeamGroup("paralegal");
-      setTeamCalendar("caratula");
+      setTeamGroup(
+        "paralegal"
+      );
+
+      setTeamCalendar(
+        "caratula"
+      );
     } else if (
       role === "PSYCH"
     ) {
-      setTeamGroup("psych");
-      setTeamCalendar("psych");
+      setTeamGroup(
+        "psych"
+      );
+
+      setTeamCalendar(
+        "psych"
+      );
     } else if (
       role === "ANALYST"
     ) {
-      setTeamGroup("ea");
-      setTeamCalendar("ea");
+      setTeamGroup(
+        "ea"
+      );
+
+      setTeamCalendar(
+        "ea"
+      );
     }
   }
 
   function chooseTeamGroup(
     group: TeamGroup
   ) {
-    setMainView("team");
+    setMainView(
+      "team"
+    );
+
     setTeamOpen(true);
-    setTeamGroup(group);
-    setCollaboratorFilter("");
+
+    setTeamGroup(
+      group
+    );
+
+    setCollaboratorFilter(
+      ""
+    );
 
     if (
-      group === "paralegal"
+      group ===
+      "paralegal"
     ) {
       setTeamCalendar(
         "caratula"
@@ -1679,7 +2251,8 @@ export default function Home() {
     }
 
     if (
-      group === "psych"
+      group ===
+      "psych"
     ) {
       setTeamCalendar(
         "psych"
@@ -1694,10 +2267,6 @@ export default function Home() {
       );
     }
   }
-
-  /* =====================================================
-     DASHBOARD ROW
-  ===================================================== */
 
   function DashboardWorkflowRow({
     title,
@@ -1725,17 +2294,19 @@ export default function Home() {
           onDoubleClick={() =>
             setSelectedKpi({
               section,
-              type: "backlog",
+              type:
+                "backlog",
             })
           }
-          title="Doble clic para ver casos"
         >
           <span>
             Backlog
           </span>
 
           <strong>
-            {stats.backlog}
+            {
+              stats.backlog
+            }
           </strong>
         </button>
 
@@ -1744,17 +2315,19 @@ export default function Home() {
           onDoubleClick={() =>
             setSelectedKpi({
               section,
-              type: "pending",
+              type:
+                "pending",
             })
           }
-          title="Doble clic para ver casos"
         >
           <span>
             Esta semana
           </span>
 
           <strong>
-            {stats.pending}
+            {
+              stats.pending
+            }
           </strong>
         </button>
 
@@ -1763,26 +2336,24 @@ export default function Home() {
           onDoubleClick={() =>
             setSelectedKpi({
               section,
-              type: "future",
+              type:
+                "future",
             })
           }
-          title="Doble clic para ver casos"
         >
           <span>
             Próximas
           </span>
 
           <strong>
-            {stats.future}
+            {
+              stats.future
+            }
           </strong>
         </button>
       </div>
     );
   }
-
-  /* =====================================================
-     FIELD
-  ===================================================== */
 
   function Field({
     label,
@@ -1801,19 +2372,22 @@ export default function Home() {
     readOnly?: boolean;
     options?: string[];
   }) {
-    if (!selectedCase) {
+    if (
+      !selectedCase
+    ) {
       return null;
     }
 
     const value =
-      selectedCase[header] || "";
+      selectedCase[
+        header
+      ] || "";
 
     const updateLocal = (
       newValue: string
     ) => {
       setSelectedCase({
         ...selectedCase,
-
         [header]:
           newValue,
       });
@@ -1826,8 +2400,10 @@ export default function Home() {
           "calendar" &&
         !canEditStage
       ) ||
-      role === "MANAGER" ||
-      role === "COORDINATOR";
+      role ===
+        "MANAGER" ||
+      role ===
+        "COORDINATOR";
 
     return (
       <div className="detailField">
@@ -1883,11 +2459,16 @@ export default function Home() {
               —
             </option>
 
-            {(options || []).map(
+            {(options ||
+              []).map(
               (option) => (
                 <option
-                  key={option}
-                  value={option}
+                  key={
+                    option
+                  }
+                  value={
+                    option
+                  }
                 >
                   {option}
                 </option>
@@ -1898,7 +2479,8 @@ export default function Home() {
           <input
             type={type}
             value={
-              type === "date"
+              type ===
+              "date"
                 ? toInputDate(
                     value
                   )
@@ -1931,21 +2513,146 @@ export default function Home() {
     );
   }
 
-  /* =====================================================
-     STAGE CONTENT
-  ===================================================== */
+  /*
+   * CAMPO DE COLABORADOR
+   *
+   * ADMIN / TL => dropdown
+   * Otros => solo lectura
+   */
+  function CollaboratorField({
+    label,
+    header,
+    options,
+    exactColumn,
+  }: {
+    label: string;
+    header: string;
+    options: string[];
+    exactColumn?: string;
+  }) {
+    if (
+      !selectedCase
+    ) {
+      return null;
+    }
+
+    const value =
+      selectedCase[
+        header
+      ] || "";
+
+    if (!canReassign) {
+      return (
+        <div className="detailField">
+          <label>
+            {label}
+          </label>
+
+          <div className="readValue">
+            {value ||
+              "Sin asignar"}
+          </div>
+        </div>
+      );
+    }
+
+    const allOptions =
+      Array.from(
+        new Set([
+          ...options,
+          ...(value
+            ? [value]
+            : []),
+        ])
+      ).sort(
+        (a, b) =>
+          a.localeCompare(b)
+      );
+
+    return (
+      <div className="detailField">
+        <label>
+          {label}
+        </label>
+
+        <select
+          value={value}
+          onChange={async (
+            e
+          ) => {
+            const newValue =
+              e.target.value;
+
+            setSelectedCase(
+              {
+                ...selectedCase,
+                [header]:
+                  newValue,
+              }
+            );
+
+            if (
+              exactColumn
+            ) {
+              await saveExactColumn(
+                Number(
+                  selectedCase.__row
+                ),
+                exactColumn,
+                header,
+                newValue
+              );
+            } else {
+              await saveField(
+                Number(
+                  selectedCase.__row
+                ),
+                header,
+                newValue
+              );
+            }
+          }}
+        >
+          <option value="">
+            Sin asignar
+          </option>
+
+          {allOptions.map(
+            (option) => (
+              <option
+                key={option}
+                value={option}
+              >
+                {option}
+              </option>
+            )
+          )}
+        </select>
+
+        {savingField ===
+          header && (
+          <span className="savingText">
+            Guardando…
+          </span>
+        )}
+      </div>
+    );
+  }
 
   function StageContent({
     stage,
   }: {
     stage: TeamCalendar;
   }) {
-    if (!selectedCase) {
+    if (
+      !selectedCase
+    ) {
       return null;
     }
 
     if (
-      stage === "caratula"
+      stage ===
+      "caratula"
     ) {
       return (
         <section className="detailSection">
@@ -1966,10 +2673,13 @@ export default function Home() {
           </div>
 
           <div className="fieldGrid">
-            <Field
+            <CollaboratorField
               label="Paralegal"
-              header="PARALEGAL"
-              readOnly
+              header="__PARALEGAL_CARATULA"
+              exactColumn="J"
+              options={
+                paralegalOptions
+              }
             />
 
             <Field
@@ -2023,10 +2733,13 @@ export default function Home() {
           </div>
 
           <div className="fieldGrid">
-            <Field
+            <CollaboratorField
               label="Paralegal"
-              header="PARALEGAL"
-              readOnly
+              header="__PARALEGAL_DRAFT"
+              exactColumn="S"
+              options={
+                paralegalOptions
+              }
             />
 
             <Field
@@ -2087,10 +2800,13 @@ export default function Home() {
           </div>
 
           <div className="fieldGrid">
-            <Field
+            <CollaboratorField
               label="Paralegal"
-              header="PARALEGAL"
-              readOnly
+              header="__PARALEGAL_PLCVL"
+              exactColumn="BN"
+              options={
+                paralegalOptions
+              }
             />
 
             <Field
@@ -2132,10 +2848,12 @@ export default function Home() {
           </div>
 
           <div className="fieldGrid">
-            <Field
+            <CollaboratorField
               label="Psych"
               header="PSYCH"
-              readOnly
+              options={
+                psychOptions
+              }
             />
 
             <Field
@@ -2204,10 +2922,12 @@ export default function Home() {
           </div>
 
           <div className="fieldGrid">
-            <Field
+            <CollaboratorField
               label="EA Member"
               header="EA MEMBER"
-              readOnly
+              options={
+                eaOptions
+              }
             />
 
             <Field
@@ -2296,10 +3016,12 @@ export default function Home() {
         </div>
 
         <div className="fieldGrid">
-          <Field
+          <CollaboratorField
             label="CVL Member"
             header="CVL MEMBER"
-            readOnly
+            options={
+              cvlOptions
+            }
           />
 
           <Field
@@ -2329,11 +3051,9 @@ export default function Home() {
     );
   }
 
-  /* =====================================================
-     LOGIN
-  ===================================================== */
-
-  if (loadingUser) {
+  if (
+    loadingUser
+  ) {
     return (
       <div className="centerScreen">
         Cargando Alpha Hub…
@@ -2362,10 +3082,8 @@ export default function Home() {
           <button
             className="primaryButton"
             onClick={() =>
-              (
-                window.location.href =
-                  "/api/auth/login"
-              )
+              (window.location.href =
+                "/api/auth/login")
             }
           >
             Continue with Google
@@ -2375,15 +3093,8 @@ export default function Home() {
     );
   }
 
-  /* =====================================================
-     MAIN
-  ===================================================== */
-
   return (
     <div className="appLayout">
-
-      {/* SIDEBAR */}
-
       <aside className="sidebar">
         <div className="sidebarBrand">
           <div className="logoMark small">
@@ -2474,7 +3185,6 @@ export default function Home() {
 
           {teamOpen && (
             <div className="teamSubMenu">
-
               {canSeeParalegal && (
                 <button
                   className={
@@ -2528,14 +3238,14 @@ export default function Home() {
                   EA
                 </button>
               )}
-
             </div>
           )}
         </nav>
 
         <div className="sidebarBottom">
           <div className="userAvatar">
-            {(user.email || "A")
+            {(user.email ||
+              "A")
               .charAt(0)
               .toUpperCase()}
           </div>
@@ -2556,12 +3266,9 @@ export default function Home() {
 
           <button
             className="logoutButton"
-            title="Log out"
             onClick={() =>
-              (
-                window.location.href =
-                  "/api/auth/logout"
-              )
+              (window.location.href =
+                "/api/auth/logout")
             }
           >
             ↗
@@ -2569,10 +3276,7 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* MAIN */}
-
       <main className="mainContent">
-
         {message && (
           <div className="floatingMessage">
             ✓ {message}
@@ -2584,8 +3288,6 @@ export default function Home() {
             {error}
           </div>
         )}
-
-        {/* DASHBOARD */}
 
         {mainView ===
           "dashboard" && (
@@ -2621,7 +3323,6 @@ export default function Home() {
               </div>
             ) : (
               <div className="dashboardContent">
-
                 <section className="workflowGroup">
                   <div className="workflowGroupHeader">
                     <p className="dashboardSectionEyebrow">
@@ -2641,7 +3342,9 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="Entregas MGM"
                       section="mgm"
-                      stats={mgmStats}
+                      stats={
+                        mgmStats
+                      }
                     />
                   </div>
                 </section>
@@ -2665,19 +3368,25 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="Llenado de Carátula"
                       section="caratula"
-                      stats={caratulaStats}
+                      stats={
+                        caratulaStats
+                      }
                     />
 
                     <DashboardWorkflowRow
                       title="1st Draft"
                       section="draft"
-                      stats={draftStats}
+                      stats={
+                        draftStats
+                      }
                     />
 
                     <DashboardWorkflowRow
                       title="Escalación a CVL"
                       section="plcvl"
-                      stats={plcvlStats}
+                      stats={
+                        plcvlStats
+                      }
                     />
                   </div>
                 </section>
@@ -2701,7 +3410,9 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="Psych · DOE"
                       section="psych"
-                      stats={psychStats}
+                      stats={
+                        psychStats
+                      }
                     />
                   </div>
                 </section>
@@ -2725,23 +3436,24 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="EA / Analyst"
                       section="ea"
-                      stats={eaStats}
+                      stats={
+                        eaStats
+                      }
                     />
 
                     <DashboardWorkflowRow
                       title="CVL"
                       section="cvl"
-                      stats={cvlStats}
+                      stats={
+                        cvlStats
+                      }
                     />
                   </div>
                 </section>
-
               </div>
             )}
           </>
         )}
-
-        {/* CASES */}
 
         {mainView ===
           "cases" && (
@@ -2779,10 +3491,16 @@ export default function Home() {
                   </span>
 
                   <input
-                    value={search}
-                    onChange={(e) =>
+                    value={
+                      search
+                    }
+                    onChange={(
+                      e
+                    ) =>
                       setSearch(
-                        e.target.value
+                        e
+                          .target
+                          .value
                       )
                     }
                     placeholder="Buscar cliente, ID o receipt..."
@@ -2791,10 +3509,16 @@ export default function Home() {
 
                 <select
                   className="filterSelect"
-                  value={statusFilter}
-                  onChange={(e) =>
+                  value={
+                    statusFilter
+                  }
+                  onChange={(
+                    e
+                  ) =>
                     setStatusFilter(
-                      e.target.value
+                      e
+                        .target
+                        .value
                     )
                   }
                 >
@@ -2824,7 +3548,10 @@ export default function Home() {
                 </select>
 
                 <div className="caseCount">
-                  {filteredCases.length} casos
+                  {
+                    filteredCases.length
+                  }{" "}
+                  casos
                 </div>
               </div>
 
@@ -2856,7 +3583,9 @@ export default function Home() {
                 {filteredCases.map(
                   (row) => (
                     <button
-                      key={row.__row}
+                      key={
+                        row.__row
+                      }
                       className="caseTableRow"
                       onClick={() =>
                         openGeneralCase(
@@ -2869,7 +3598,9 @@ export default function Home() {
                           {(row[
                             "CLIENTE"
                           ] || "?")
-                            .charAt(0)
+                            .charAt(
+                              0
+                            )
                             .toUpperCase()}
                         </div>
 
@@ -2883,7 +3614,9 @@ export default function Home() {
 
                           <span>
                             ID{" "}
-                            {row["ID"] ||
+                            {row[
+                              "ID"
+                            ] ||
                               "—"}
                             {" · "}
                             {row[
@@ -2908,14 +3641,16 @@ export default function Home() {
 
                       <div className="tableValue">
                         {row[
-                          "PARALEGAL"
+                          "__PARALEGAL_CARATULA"
                         ] || "—"}
                       </div>
 
                       <div>
                         <span
                           className={statusClass(
-                            row["STATUS"] ||
+                            row[
+                              "STATUS"
+                            ] ||
                               ""
                           )}
                         >
@@ -2932,18 +3667,10 @@ export default function Home() {
                     </button>
                   )
                 )}
-
-                {!filteredCases.length && (
-                  <div className="emptyState">
-                    No encontramos casos con esos filtros.
-                  </div>
-                )}
               </div>
             </section>
           </>
         )}
-
-        {/* TEAM */}
 
         {mainView ===
           "team" && (
@@ -2965,7 +3692,9 @@ export default function Home() {
 
               <button
                 className="refreshButton"
-                onClick={loadCases}
+                onClick={
+                  loadCases
+                }
               >
                 ↻ Refresh
               </button>
@@ -2973,7 +3702,6 @@ export default function Home() {
 
             {canSeeAllTeam && (
               <div className="teamGroupTabs">
-
                 {canSeeParalegal && (
                   <button
                     className={
@@ -3027,12 +3755,10 @@ export default function Home() {
                     EA
                   </button>
                 )}
-
               </div>
             )}
 
             <div className="teamStageTabs">
-
               {teamGroup ===
                 "paralegal" &&
                 canSeeParalegal && (
@@ -3132,13 +3858,9 @@ export default function Home() {
                     </button>
                   </>
                 )}
-
             </div>
 
-            {/* TEAM TOOLBAR */}
-
             <div className="teamViewToolbar">
-
               <div className="teamViewSwitch">
                 <button
                   className={
@@ -3192,10 +3914,16 @@ export default function Home() {
                   </span>
 
                   <select
-                    value={collaboratorFilter}
-                    onChange={(e) =>
+                    value={
+                      collaboratorFilter
+                    }
+                    onChange={(
+                      e
+                    ) =>
                       setCollaboratorFilter(
-                        e.target.value
+                        e
+                          .target
+                          .value
                       )
                     }
                   >
@@ -3210,27 +3938,31 @@ export default function Home() {
                     )}
 
                     {collaborators.names.map(
-                      (collaborator) => (
+                      (
+                        collaborator
+                      ) => (
                         <option
-                          key={collaborator}
-                          value={collaborator}
+                          key={
+                            collaborator
+                          }
+                          value={
+                            collaborator
+                          }
                         >
-                          {collaborator}
+                          {
+                            collaborator
+                          }
                         </option>
                       )
                     )}
                   </select>
                 </div>
               </div>
-
             </div>
-
-            {/* CALENDAR VIEW */}
 
             {teamViewMode ===
               "calendar" && (
               <section className="calendarCard">
-
                 <div className="calendarToolbar">
                   <div className="calendarTitle">
                     <h2>
@@ -3245,34 +3977,35 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {calendarEvents.length}{" "}
+                      {
+                        calendarEvents.length
+                      }{" "}
                       entregas activas
-
-                      {collaboratorFilter ===
-                      "__UNASSIGNED__"
-                        ? " · Sin asignar"
-                        : collaboratorFilter
-                        ? ` · ${collaboratorFilter}`
-                        : ""}
                     </span>
                   </div>
 
                   <div className="calendarControls">
                     <button
-                      onClick={previousMonth}
+                      onClick={
+                        previousMonth
+                      }
                     >
                       ‹
                     </button>
 
                     <button
                       className="todayButton"
-                      onClick={goToday}
+                      onClick={
+                        goToday
+                      }
                     >
                       Hoy
                     </button>
 
                     <button
-                      onClick={nextMonth}
+                      onClick={
+                        nextMonth
+                      }
                     >
                       ›
                     </button>
@@ -3282,7 +4015,11 @@ export default function Home() {
                 <div className="calendarWeekHeader">
                   {weekDays.map(
                     (day) => (
-                      <div key={day}>
+                      <div
+                        key={
+                          day
+                        }
+                      >
                         {day}
                       </div>
                     )
@@ -3304,7 +4041,9 @@ export default function Home() {
 
                       const dayEvents =
                         calendarEvents.filter(
-                          (event) =>
+                          (
+                            event
+                          ) =>
                             sameDay(
                               event.date,
                               day
@@ -3313,7 +4052,9 @@ export default function Home() {
 
                       return (
                         <div
-                          key={day.toISOString()}
+                          key={
+                            day.toISOString()
+                          }
                           className={`calendarDay ${
                             !isCurrentMonth
                               ? "outsideMonth"
@@ -3328,7 +4069,9 @@ export default function Home() {
                                   : ""
                               }
                             >
-                              {day.getDate()}
+                              {
+                                day.getDate()
+                              }
                             </span>
                           </div>
 
@@ -3349,7 +4092,8 @@ export default function Home() {
                                   (
                                     row[
                                       currentCollaboratorHeader
-                                    ] || ""
+                                    ] ||
+                                    ""
                                   ).trim();
 
                                 const deliveryType =
@@ -3359,7 +4103,9 @@ export default function Home() {
 
                                 return (
                                   <button
-                                    key={row.__row}
+                                    key={
+                                      row.__row
+                                    }
                                     className={`calendarEvent ${
                                       deliveryType ===
                                       "backlog"
@@ -3393,11 +4139,15 @@ export default function Home() {
                                       </span>
                                     ) : status ? (
                                       <span>
-                                        {status}
+                                        {
+                                          status
+                                        }
                                       </span>
                                     ) : (
                                       <span>
-                                        {collaborator}
+                                        {
+                                          collaborator
+                                        }
                                       </span>
                                     )}
                                   </button>
@@ -3413,12 +4163,9 @@ export default function Home() {
               </section>
             )}
 
-            {/* TABLE VIEW */}
-
             {teamViewMode ===
               "table" && (
               <section className="teamTableCard">
-
                 <div className="teamTableTop">
                   <div>
                     <p className="eyebrow">
@@ -3432,15 +4179,10 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {teamTableRows.length}{" "}
+                      {
+                        teamTableRows.length
+                      }{" "}
                       resultados
-
-                      {collaboratorFilter ===
-                      "__UNASSIGNED__"
-                        ? " · Sin asignar"
-                        : collaboratorFilter
-                        ? ` · ${collaboratorFilter}`
-                        : ""}
                     </span>
                   </div>
                 </div>
@@ -3501,7 +4243,9 @@ export default function Home() {
 
                       return (
                         <button
-                          key={row.__row}
+                          key={
+                            row.__row
+                          }
                           className="teamTableRow"
                           onClick={() =>
                             openTeamCase(
@@ -3515,7 +4259,9 @@ export default function Home() {
                               {(row[
                                 "CLIENTE"
                               ] || "?")
-                                .charAt(0)
+                                .charAt(
+                                  0
+                                )
                                 .toUpperCase()}
                             </div>
 
@@ -3529,7 +4275,9 @@ export default function Home() {
 
                               <span>
                                 ID{" "}
-                                {row["ID"] ||
+                                {row[
+                                  "ID"
+                                ] ||
                                   "—"}
                               </span>
                             </div>
@@ -3566,7 +4314,9 @@ export default function Home() {
                                   status
                                 )}
                               >
-                                {status}
+                                {
+                                  status
+                                }
                               </span>
                             ) : (
                               <span className="tableDash">
@@ -3611,16 +4361,11 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-
               </section>
             )}
-
           </>
         )}
-
       </main>
-
-      {/* KPI DRAWER */}
 
       {selectedKpi && (
         <div
@@ -3633,7 +4378,9 @@ export default function Home() {
         >
           <aside
             className="drawer"
-            onMouseDown={(e) =>
+            onMouseDown={(
+              e
+            ) =>
               e.stopPropagation()
             }
           >
@@ -3656,7 +4403,10 @@ export default function Home() {
                 </h2>
 
                 <p>
-                  {kpiCases.length} casos
+                  {
+                    kpiCases.length
+                  }{" "}
+                  casos
                 </p>
               </div>
 
@@ -3676,7 +4426,9 @@ export default function Home() {
               {kpiCases.map(
                 (row) => (
                   <button
-                    key={row.__row}
+                    key={
+                      row.__row
+                    }
                     className="drawerCase"
                     onClick={() => {
                       setSelectedKpi(
@@ -3698,14 +4450,18 @@ export default function Home() {
 
                       <span>
                         ID{" "}
-                        {row["ID"] ||
+                        {row[
+                          "ID"
+                        ] ||
                           "—"}
                       </span>
                     </div>
 
                     <span
                       className={statusClass(
-                        row["STATUS"] ||
+                        row[
+                          "STATUS"
+                        ] ||
                           ""
                       )}
                     >
@@ -3726,8 +4482,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* TEAM MODAL */}
-
       {selectedCase &&
         openCaseSource ===
           "calendar" &&
@@ -3742,7 +4496,9 @@ export default function Home() {
           >
             <div
               className="caseModal stageOnlyModal"
-              onMouseDown={(e) =>
+              onMouseDown={(
+                e
+              ) =>
                 e.stopPropagation()
               }
             >
@@ -3799,8 +4555,6 @@ export default function Home() {
           </div>
         )}
 
-      {/* GENERAL CASE MODAL */}
-
       {selectedCase &&
         openCaseSource ===
           "cases" && (
@@ -3814,7 +4568,9 @@ export default function Home() {
           >
             <div
               className="caseModal"
-              onMouseDown={(e) =>
+              onMouseDown={(
+                e
+              ) =>
                 e.stopPropagation()
               }
             >
@@ -3970,7 +4726,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
     </div>
   );
 }
