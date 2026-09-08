@@ -1,154 +1,304 @@
-import { NextRequest, NextResponse } from "next/server";
-import { updateCase } from "@/lib/sheets";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
 
-export async function POST(req: NextRequest) {
+import {
+  updateCase,
+} from "@/lib/sheets";
+
+type Role =
+  | "ADMIN"
+  | "TL"
+  | "PARALEGAL"
+  | "PSYCH"
+  | "ANALYST"
+  | "MANAGER"
+  | "COORDINATOR";
+
+const USERS: Record<
+  string,
+  Role
+> = {
+  "adiazd@supportmendoza.com":
+    "ADMIN",
+
+  "nrioja@supportmendoza.com":
+    "TL",
+
+  "mponce@supportmendoza.com":
+    "PARALEGAL",
+
+  "camontoya@supportmendoza.com":
+    "PARALEGAL",
+
+  "aramirezd@supportmendoza.com":
+    "PSYCH",
+
+  "fvals@supportmendoza.com":
+    "PSYCH",
+
+  "nmolina@supportmendoza.com":
+    "PSYCH",
+
+  "agonzalezgo@supportmendoza.com":
+    "ANALYST",
+
+  "aramirezc@supportmendoza.com":
+    "ANALYST",
+
+  "hjesus@supportmendoza.com":
+    "ANALYST",
+
+  "bcastellanos@supportmendoza.com":
+    "MANAGER",
+
+  "vperez@supportmendoza.com":
+    "COORDINATOR",
+};
+
+/*
+ * Estas son las únicas columnas
+ * duplicadas de PARALEGAL que
+ * permitimos modificar directamente.
+ */
+const PARALEGAL_COLUMNS =
+  new Set([
+    "J",
+    "S",
+    "BN",
+  ]);
+
+export async function POST(
+  req: NextRequest
+) {
   try {
-    // -----------------------------------------
-    // OBTENER USUARIO REAL DE LA SESIÓN
-    // -----------------------------------------
+    const email =
+      req.cookies.get(
+        "alpha_hub_email"
+      )?.value;
 
-    const email = req.cookies.get("alpha_hub_email")?.value;
-    const role = req.cookies.get("alpha_hub_role")?.value;
-
-    if (!email || !role) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
-    }
-
-    // -----------------------------------------
-    // LEER DATOS DE LA PETICIÓN
-    // -----------------------------------------
-
-    const body = await req.json();
-
-    const row = Number(body.row);
-    const changes = body.changes as Record<string, string>;
-
-    if (!Number.isInteger(row) || row < 3) {
-      throw new Error("Invalid row");
-    }
-
-    if (
-      !changes ||
-      typeof changes !== "object" ||
-      Array.isArray(changes)
-    ) {
-      throw new Error("Invalid changes");
-    }
-
-    // -----------------------------------------
-    // NORMALIZAR COLUMNAS
-    // -----------------------------------------
-
-    const keys = Object.keys(changes).map((k) =>
-      k.trim().toUpperCase()
-    );
-
-    // -----------------------------------------
-    // DEFINIR PERMISOS
-    // -----------------------------------------
-
-    let canEdit = false;
-
-    // ADMIN
-    // Puede modificar absolutamente todo.
-    if (role === "ADMIN") {
-      canEdit = true;
-    }
-
-    // TEAM LEADER
-    // Puede modificar:
-    // - Paralegal asignado
-    // - Fecha de entrega
-    // - Status
-    else if (role === "TL") {
-      canEdit = keys.every((k) =>
-        [
-          "PARALEGAL ASIGNADO",
-          "FECHA DE ENTREGA",
-          "FECHA ENTREGA",
-          "DELIVERY DATE",
-          "STATUS",
-          "ESTATUS",
-        ].includes(k)
-      );
-    }
-
-    // PARALEGAL / PSYCH / ANALYST
-    // Pueden modificar:
-    // - Fecha de entrega
-    // - Status
-    // - Links
-    else if (
-      ["PARALEGAL", "PSYCH", "ANALYST"].includes(role)
-    ) {
-      canEdit = keys.every((k) => {
-        const isDelivery = [
-          "FECHA DE ENTREGA",
-          "FECHA ENTREGA",
-          "DELIVERY DATE",
-        ].includes(k);
-
-        const isStatus = [
-          "STATUS",
-          "ESTATUS",
-        ].includes(k);
-
-        const isLink =
-          k.includes("LINK") ||
-          k.includes("URL");
-
-        return (
-          isDelivery ||
-          isStatus ||
-          isLink
-        );
-      });
-    }
-
-    // MANAGER / COORDINATOR
-    // Solo lectura.
-    else if (
-      role === "MANAGER" ||
-      role === "COORDINATOR"
-    ) {
-      canEdit = false;
-    }
-
-    if (!canEdit) {
+    if (!email) {
       return NextResponse.json(
         {
           error:
-            "You do not have permission to edit these fields",
+            "No autenticado",
         },
-        { status: 403 }
+        {
+          status: 401,
+        }
       );
     }
 
-    // -----------------------------------------
-    // ACTUALIZAR GOOGLE SHEETS
-    // -----------------------------------------
+    const normalizedEmail =
+      email
+        .toLowerCase()
+        .trim();
 
-    await updateCase(row, changes);
+    const role =
+      USERS[
+        normalizedEmail
+      ];
+
+    if (!role) {
+      return NextResponse.json(
+        {
+          error:
+            "Usuario no autorizado",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    /*
+     * Manager y Coordinator
+     * siguen completamente
+     * read-only.
+     */
+    if (
+      role === "MANAGER" ||
+      role === "COORDINATOR"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Tu rol es de solo lectura",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const body =
+      await req.json();
+
+    const row =
+      Number(body.row);
+
+    const changes =
+      body.changes &&
+      typeof body.changes ===
+        "object"
+        ? body.changes
+        : {};
+
+    const columnChanges =
+      body.columnChanges &&
+      typeof body.columnChanges ===
+        "object"
+        ? body.columnChanges
+        : {};
+
+    if (
+      !Number.isInteger(row) ||
+      row < 3
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Fila inválida",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /*
+     * Si alguien intenta modificar
+     * una columna exacta de PARALEGAL,
+     * solamente ADMIN y TL pueden hacerlo.
+     */
+    const exactColumns =
+      Object.keys(
+        columnChanges
+      ).map((column) =>
+        column
+          .trim()
+          .toUpperCase()
+      );
+
+    const hasParalegalReassignment =
+      exactColumns.some(
+        (column) =>
+          PARALEGAL_COLUMNS.has(
+            column
+          )
+      );
+
+    if (
+      hasParalegalReassignment &&
+      role !== "ADMIN" &&
+      role !== "TL"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Solo Admin y Team Leader pueden reasignar colaboradores",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    /*
+     * No permitimos otras columnas
+     * exactas diferentes de J/S/BN.
+     */
+    const invalidExactColumn =
+      exactColumns.find(
+        (column) =>
+          !PARALEGAL_COLUMNS.has(
+            column
+          )
+      );
+
+    if (
+      invalidExactColumn
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            `No está permitido modificar directamente la columna ${invalidExactColumn}`,
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    /*
+     * Psych, EA Member y CVL Member
+     * tienen headers únicos.
+     *
+     * También son reasignaciones,
+     * por lo que solo ADMIN/TL
+     * pueden cambiar esos campos.
+     */
+    const restrictedHeaders =
+      new Set([
+        "PSYCH",
+        "EA MEMBER",
+        "CVL MEMBER",
+      ]);
+
+    const isUniqueCollaboratorChange =
+      Object.keys(
+        changes
+      ).some(
+        (header) =>
+          restrictedHeaders.has(
+            header
+              .trim()
+              .toUpperCase()
+          )
+      );
+
+    if (
+      isUniqueCollaboratorChange &&
+      role !== "ADMIN" &&
+      role !== "TL"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Solo Admin y Team Leader pueden reasignar colaboradores",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    await updateCase(
+      row,
+      changes,
+      columnChanges
+    );
 
     return NextResponse.json({
       ok: true,
-      email,
-      role,
     });
-  } catch (e) {
-    console.error("Update error:", e);
+  } catch (error) {
+    console.error(
+      "Update case error:",
+      error
+    );
 
     return NextResponse.json(
       {
         error:
-          e instanceof Error
-            ? e.message
-            : "Unknown error",
+          error instanceof Error
+            ? error.message
+            : "No se pudo guardar el cambio",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
