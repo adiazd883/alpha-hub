@@ -261,6 +261,71 @@ const sameDay = (
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
+const getDeliveryWeekLabel = (
+  date: Date
+) => {
+  const weekStart =
+    startOfWeek(date);
+
+  const weekEnd =
+    addDays(
+      weekStart,
+      6
+    );
+
+  const startDay =
+    String(
+      weekStart.getDate()
+    ).padStart(2, "0");
+
+  const endDay =
+    String(
+      weekEnd.getDate()
+    ).padStart(2, "0");
+
+  const startMonth =
+    weekStart
+      .toLocaleDateString(
+        "es-ES",
+        {
+          month: "short",
+        }
+      )
+      .replace(".", "");
+
+  const endMonth =
+    weekEnd
+      .toLocaleDateString(
+        "es-ES",
+        {
+          month: "short",
+        }
+      )
+      .replace(".", "");
+
+  const startYear =
+    weekStart.getFullYear();
+
+  const endYear =
+    weekEnd.getFullYear();
+
+  if (
+    weekStart.getMonth() ===
+      weekEnd.getMonth() &&
+    startYear === endYear
+  ) {
+    return `${startDay}–${endDay} ${endMonth} ${endYear}`;
+  }
+
+  if (
+    startYear === endYear
+  ) {
+    return `${startDay} ${startMonth} – ${endDay} ${endMonth} ${endYear}`;
+  }
+
+  return `${startDay} ${startMonth} ${startYear} – ${endDay} ${endMonth} ${endYear}`;
+};
+
 const classifyDate = (
   date: Date
 ): KpiType => {
@@ -2604,9 +2669,7 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="Entregas MGM"
                       section="mgm"
-                      stats={
-                        mgmStats
-                      }
+                      stats={mgmStats}
                     />
                   </div>
                 </section>
@@ -2630,25 +2693,19 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="Llenado de Carátula"
                       section="caratula"
-                      stats={
-                        caratulaStats
-                      }
+                      stats={caratulaStats}
                     />
 
                     <DashboardWorkflowRow
                       title="1st Draft"
                       section="draft"
-                      stats={
-                        draftStats
-                      }
+                      stats={draftStats}
                     />
 
                     <DashboardWorkflowRow
                       title="Escalación a CVL"
                       section="plcvl"
-                      stats={
-                        plcvlStats
-                      }
+                      stats={plcvlStats}
                     />
                   </div>
                 </section>
@@ -2672,9 +2729,7 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="Psych · DOE"
                       section="psych"
-                      stats={
-                        psychStats
-                      }
+                      stats={psychStats}
                     />
                   </div>
                 </section>
@@ -2698,17 +2753,13 @@ export default function Home() {
                     <DashboardWorkflowRow
                       title="EA / Analyst"
                       section="ea"
-                      stats={
-                        eaStats
-                      }
+                      stats={eaStats}
                     />
 
                     <DashboardWorkflowRow
                       title="CVL"
                       section="cvl"
-                      stats={
-                        cvlStats
-                      }
+                      stats={cvlStats}
                     />
                   </div>
                 </section>
@@ -2756,9 +2807,7 @@ export default function Home() {
                   </span>
 
                   <input
-                    value={
-                      search
-                    }
+                    value={search}
                     onChange={(e) =>
                       setSearch(
                         e.target.value
@@ -2770,9 +2819,7 @@ export default function Home() {
 
                 <select
                   className="filterSelect"
-                  value={
-                    statusFilter
-                  }
+                  value={statusFilter}
                   onChange={(e) =>
                     setStatusFilter(
                       e.target.value
@@ -2837,9 +2884,7 @@ export default function Home() {
                 {filteredCases.map(
                   (row) => (
                     <button
-                      key={
-                        row.__row
-                      }
+                      key={row.__row}
                       className="caseTableRow"
                       onClick={() =>
                         openGeneralCase(
@@ -2948,9 +2993,7 @@ export default function Home() {
 
               <button
                 className="refreshButton"
-                onClick={
-                  loadCases
-                }
+                onClick={loadCases}
               >
                 ↻ Refresh
               </button>
@@ -3177,9 +3220,7 @@ export default function Home() {
                   </span>
 
                   <select
-                    value={
-                      collaboratorFilter
-                    }
+                    value={collaboratorFilter}
                     onChange={(e) =>
                       setCollaboratorFilter(
                         e.target.value
@@ -3199,12 +3240,8 @@ export default function Home() {
                     {collaborators.names.map(
                       (collaborator) => (
                         <option
-                          key={
-                            collaborator
-                          }
-                          value={
-                            collaborator
-                          }
+                          key={collaborator}
+                          value={collaborator}
                         >
                           {collaborator}
                         </option>
@@ -3236,9 +3273,7 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {
-                        calendarEvents.length
-                      }{" "}
+                      {calendarEvents.length}{" "}
                       entregas activas
 
                       {collaboratorFilter ===
@@ -3252,26 +3287,20 @@ export default function Home() {
 
                   <div className="calendarControls">
                     <button
-                      onClick={
-                        previousMonth
-                      }
+                      onClick={previousMonth}
                     >
                       ‹
                     </button>
 
                     <button
                       className="todayButton"
-                      onClick={
-                        goToday
-                      }
+                      onClick={goToday}
                     >
                       Hoy
                     </button>
 
                     <button
-                      onClick={
-                        nextMonth
-                      }
+                      onClick={nextMonth}
                     >
                       ›
                     </button>
@@ -3281,9 +3310,7 @@ export default function Home() {
                 <div className="calendarWeekHeader">
                   {weekDays.map(
                     (day) => (
-                      <div
-                        key={day}
-                      >
+                      <div key={day}>
                         {day}
                       </div>
                     )
@@ -3314,9 +3341,7 @@ export default function Home() {
 
                       return (
                         <div
-                          key={
-                            day.toISOString()
-                          }
+                          key={day.toISOString()}
                           className={`calendarDay ${
                             !isCurrentMonth
                               ? "outsideMonth"
@@ -3362,9 +3387,7 @@ export default function Home() {
 
                                 return (
                                   <button
-                                    key={
-                                      row.__row
-                                    }
+                                    key={row.__row}
                                     className={`calendarEvent ${
                                       deliveryType ===
                                       "backlog"
@@ -3437,9 +3460,7 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {
-                        teamTableRows.length
-                      }{" "}
+                      {teamTableRows.length}{" "}
                       resultados
 
                       {collaboratorFilter ===
@@ -3463,6 +3484,10 @@ export default function Home() {
 
                   <div>
                     EXPECTED DONE
+                  </div>
+
+                  <div>
+                    SEMANA DE ENTREGA
                   </div>
 
                   <div>
@@ -3504,9 +3529,7 @@ export default function Home() {
 
                       return (
                         <button
-                          key={
-                            row.__row
-                          }
+                          key={row.__row}
                           className="teamTableRow"
                           onClick={() =>
                             openTeamCase(
@@ -3555,6 +3578,12 @@ export default function Home() {
                               row[
                                 currentDateHeader
                               ] || ""
+                            )}
+                          </div>
+
+                          <div className="teamTableValue teamWeekValue">
+                            {getDeliveryWeekLabel(
+                              date
                             )}
                           </div>
 
@@ -3675,9 +3704,7 @@ export default function Home() {
               {kpiCases.map(
                 (row) => (
                   <button
-                    key={
-                      row.__row
-                    }
+                    key={row.__row}
                     className="drawerCase"
                     onClick={() => {
                       setSelectedKpi(
