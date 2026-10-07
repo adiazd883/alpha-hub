@@ -160,6 +160,24 @@ const NW_EDITABLE_FIELDS = [
   "FECHA RTP",
   "EVIDENCE NEEDED",
   "REQUERIMIENTOS",
+  "PL ASSIGNED",
+];
+
+/*
+ * Reasignar PL ASSIGNED está restringido a ADMIN/TL, igual que la
+ * reasignación de paralegal en ADMINs.
+ */
+const NW_REASSIGNMENT_FIELDS = ["PL ASSIGNED"];
+
+const NW_PL_ASSIGNED_HEADER = "PL ASSIGNED";
+
+const NW_PL_ASSIGNED_OPTIONS = [
+  "PAOLA",
+  "GMC",
+  "DAN U",
+  "CARLOS ARTURO",
+  "MAYLA",
+  "LIZ",
 ];
 
 const NW_TEXTAREA_FIELDS = ["EVIDENCE NEEDED"];
@@ -1102,6 +1120,8 @@ export default function Home() {
 
   const [nwSelectedRow, setNwSelectedRow] =
     useState<CaseRow | null>(null);
+
+  const [nwPlFilter, setNwPlFilter] = useState("");
 
   const [
     historyMonth,
@@ -3116,10 +3136,27 @@ export default function Home() {
     return days;
   }, [nwCalendarMonth]);
 
+  const nwFilteredRows = useMemo(() => {
+    if (!nwPlFilter) {
+      return nwData.rows;
+    }
+
+    if (nwPlFilter === "__UNASSIGNED__") {
+      return nwData.rows.filter(
+        (row) => !(row[NW_PL_ASSIGNED_HEADER] || "").trim()
+      );
+    }
+
+    return nwData.rows.filter(
+      (row) =>
+        (row[NW_PL_ASSIGNED_HEADER] || "").trim() === nwPlFilter
+    );
+  }, [nwData.rows, nwPlFilter]);
+
   const nwCalendarEvents = useMemo(() => {
     const header = NW_DATE_FIELDS[nwCalendarKind].header;
 
-    return nwData.rows
+    return nwFilteredRows
       .map((row) => ({
         row,
         date: parseDateOnly(row[header] || ""),
@@ -3127,7 +3164,7 @@ export default function Home() {
       .filter(
         (item): item is { row: CaseRow; date: Date } => !!item.date
       );
-  }, [nwData.rows, nwCalendarKind]);
+  }, [nwFilteredRows, nwCalendarKind]);
 
   const teamTableRows =
     useMemo(() => {
@@ -6610,6 +6647,34 @@ export default function Home() {
               </button>
             </div>
 
+            <div className="teamViewToolbar">
+              <div className="collaboratorFilterBox">
+                <span className="filterIcon">◎</span>
+
+                <div className="collaboratorFilterText">
+                  <span>PL ASSIGNED</span>
+
+                  <select
+                    value={nwPlFilter}
+                    onChange={(e) =>
+                      setNwPlFilter(e.target.value)
+                    }
+                  >
+                    <option value="">Todos</option>
+                    <option value="__UNASSIGNED__">
+                      Sin asignar
+                    </option>
+
+                    {NW_PL_ASSIGNED_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {nwLoading ? (
               <div className="emptyState">
                 Cargando casos de NW GENERAL…
@@ -6919,17 +6984,25 @@ export default function Home() {
                   const isLink = normHeader === norm(NW_LINK_HEADER);
                   const isRequirements =
                     normHeader === norm(NW_REQUIREMENT_HEADER);
+                  const isPlAssigned =
+                    normHeader === norm(NW_PL_ASSIGNED_HEADER);
                   const isDateInput = NW_DATE_INPUT_FIELDS.some(
                     (h) => norm(h) === normHeader
                   );
                   const isTextarea = NW_TEXTAREA_FIELDS.some(
                     (h) => norm(h) === normHeader
                   );
+                  const isReassignment = NW_REASSIGNMENT_FIELDS.some(
+                    (h) => norm(h) === normHeader
+                  );
                   const editable =
                     nwCalendarKind === "interno" &&
                     role !== "MANAGER" &&
                     role !== "COORDINATOR" &&
-                    NW_EDITABLE_FIELDS.some((h) => norm(h) === normHeader);
+                    NW_EDITABLE_FIELDS.some((h) => norm(h) === normHeader) &&
+                    (!isReassignment ||
+                      role === "ADMIN" ||
+                      role === "TL");
                   const selectedRequirements = value
                     .split(",")
                     .map((s) => s.trim())
@@ -6965,6 +7038,24 @@ export default function Home() {
                         >
                           <option value="">—</option>
                           {NW_STATUS_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      ) : isPlAssigned ? (
+                        <select
+                          defaultValue={value}
+                          onChange={(e) =>
+                            saveNwField(
+                              Number(nwSelectedRow.__row),
+                              header,
+                              e.target.value
+                            )
+                          }
+                        >
+                          <option value="">—</option>
+                          {NW_PL_ASSIGNED_OPTIONS.map((opt) => (
                             <option key={opt} value={opt}>
                               {opt}
                             </option>
