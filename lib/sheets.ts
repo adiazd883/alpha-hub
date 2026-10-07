@@ -358,3 +358,209 @@ function columnName(
 
   return s;
 }
+
+/*
+ * A diferencia de getTargetSheet()
+ * (hardcoded a "ADMINs"), estas
+ * funciones genéricas leen/escriben
+ * cualquier pestaña por su título
+ * exacto, asumiendo headers en la
+ * fila 1 y datos desde la fila 2
+ * (sin columnas duplicadas ni
+ * campos sintéticos).
+ */
+
+async function getSheetByTitle(
+  title: string
+) {
+  const sheets = await getSheets();
+
+  const spreadsheetId =
+    process.env.GOOGLE_SPREADSHEET_ID;
+
+  if (!spreadsheetId) {
+    throw new Error(
+      "Missing GOOGLE_SPREADSHEET_ID"
+    );
+  }
+
+  const meta =
+    await sheets.spreadsheets.get({
+      spreadsheetId,
+      fields:
+        "sheets(properties(sheetId,title,index))",
+    });
+
+  const sheet = (
+    meta.data.sheets || []
+  ).find(
+    (s) =>
+      s.properties?.title === title
+  );
+
+  if (!sheet?.properties?.title) {
+    throw new Error(
+      `Could not find sheet "${title}"`
+    );
+  }
+
+  return {
+    sheets,
+    spreadsheetId,
+    title: sheet.properties.title,
+  };
+}
+
+export async function readSheetCases(
+  title: string
+) {
+  const {
+    sheets,
+    spreadsheetId,
+    title: sheetTitle,
+  } = await getSheetByTitle(title);
+
+  const range = `'${sheetTitle.replace(
+    /'/g,
+    "''"
+  )}'!1:1000`;
+
+  const res =
+    await sheets.spreadsheets.values.get(
+      {
+        spreadsheetId,
+        range,
+        valueRenderOption:
+          "FORMATTED_VALUE",
+      }
+    );
+
+  const values =
+    res.data.values || [];
+
+  if (!values.length) {
+    return {
+      title: sheetTitle,
+      headers: [],
+      rows: [],
+    };
+  }
+
+  const headers = values[0].map(
+    (v) => String(v ?? "")
+  );
+
+  const rows = values
+    .slice(1)
+    .map((r, i) => {
+      const obj: Record<
+        string,
+        string
+      > = {
+        __row: String(i + 2),
+      };
+
+      headers.forEach(
+        (header, index) => {
+          if (
+            header &&
+            !(header in obj)
+          ) {
+            obj[header] = String(
+              r[index] ?? ""
+            );
+          }
+        }
+      );
+
+      return obj;
+    })
+    .filter((row) =>
+      Object.entries(row).some(
+        ([key, value]) =>
+          key !== "__row" && value
+      )
+    );
+
+  return {
+    title: sheetTitle,
+    headers,
+    rows,
+  };
+}
+
+export async function updateSheetCase(
+  title: string,
+  rowNumber: number,
+  changes: Record<string, string> = {}
+) {
+  const {
+    sheets,
+    spreadsheetId,
+    title: sheetTitle,
+  } = await getSheetByTitle(title);
+
+  if (
+    !Number.isInteger(rowNumber) ||
+    rowNumber < 2
+  ) {
+    throw new Error(
+      "Invalid row number"
+    );
+  }
+
+  if (!Object.keys(changes).length) {
+    return;
+  }
+
+  const current =
+    await sheets.spreadsheets.values.get(
+      {
+        spreadsheetId,
+        range: `'${sheetTitle.replace(
+          /'/g,
+          "''"
+        )}'!1:1`,
+      }
+    );
+
+  const headers = (
+    current.data.values?.[0] || []
+  ).map(String);
+
+  const data = Object.entries(
+    changes
+  ).map(([header, value]) => {
+    const idx = headers.findIndex(
+      (h) =>
+        normal(h) === normal(header)
+    );
+
+    if (idx < 0) {
+      throw new Error(
+        `Column not found: ${header}`
+      );
+    }
+
+    const col = columnName(idx + 1);
+
+    return {
+      range: `'${sheetTitle.replace(
+        /'/g,
+        "''"
+      )}'!${col}${rowNumber}`,
+      values: [[value]],
+    };
+  });
+
+  await sheets.spreadsheets.values.batchUpdate(
+    {
+      spreadsheetId,
+      requestBody: {
+        valueInputOption:
+          "USER_ENTERED",
+        data,
+      },
+    }
+  );
+}

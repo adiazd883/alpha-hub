@@ -21,7 +21,9 @@ type User = {
   role: Role | null;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral";
+
+type NwCalendarKind = "due" | "interno";
 
 type TeamGroup = "paralegal" | "psych" | "ea";
 
@@ -126,6 +128,17 @@ const monthNames = [
 ];
 
 const weekDays = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
+
+const NW_DATE_FIELDS: Record<
+  NwCalendarKind,
+  { header: string; label: string }
+> = {
+  due: { header: "Due Date", label: "Deadline del Recibo" },
+  interno: { header: "DEADLINE INTERNO", label: "Deadline Interno" },
+};
+
+const NW_STATUS_HEADER = "GENERAL STATUS";
+const NW_CLIENT_HEADER = "CL";
 
 const norm = (value: string) =>
   value.trim().toUpperCase().replace(/\s+/g, " ");
@@ -1011,6 +1024,36 @@ export default function Home() {
     );
   });
 
+  const [nwData, setNwData] = useState<{
+    headers: string[];
+    rows: CaseRow[];
+    title: string;
+  }>({ headers: [], rows: [], title: "" });
+
+  const [nwLoaded, setNwLoaded] = useState(false);
+  const [nwLoading, setNwLoading] = useState(false);
+  const [nwErr, setNwErr] = useState("");
+  const [nwMsg, setNwMsg] = useState("");
+
+  const [nwCalendarKind, setNwCalendarKind] =
+    useState<NwCalendarKind>("due");
+
+  const [
+    nwCalendarMonth,
+    setNwCalendarMonth,
+  ] = useState(() => {
+    const now = new Date();
+
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+  });
+
+  const [nwSelectedRow, setNwSelectedRow] =
+    useState<CaseRow | null>(null);
+
   const [
     historyMonth,
     setHistoryMonth,
@@ -1181,6 +1224,92 @@ export default function Home() {
       );
     } finally {
       setLoadingCases(false);
+    }
+  }
+
+  async function loadNwGeneral() {
+    setNwLoading(true);
+    setNwErr("");
+
+    try {
+      const response = await fetch(
+        "/api/nw-general",
+        {
+          cache: "no-store",
+        }
+      );
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          json.error ||
+            "No se pudieron cargar los casos de NW GENERAL"
+        );
+      }
+
+      setNwData(json);
+      setNwLoaded(true);
+    } catch (e) {
+      setNwErr(
+        e instanceof Error ? e.message : "Error"
+      );
+    } finally {
+      setNwLoading(false);
+    }
+  }
+
+  async function saveNwStatus(
+    rowNumber: number,
+    value: string
+  ) {
+    setNwMsg("");
+    setNwErr("");
+
+    try {
+      const response = await fetch(
+        "/api/nw-general/update",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            row: rowNumber,
+            changes: {
+              [NW_STATUS_HEADER]: value,
+            },
+          }),
+        }
+      );
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          json.error || "No se pudo guardar"
+        );
+      }
+
+      setNwData((prev) => ({
+        ...prev,
+        rows: prev.rows.map((row) =>
+          row.__row === String(rowNumber)
+            ? { ...row, [NW_STATUS_HEADER]: value }
+            : row
+        ),
+      }));
+
+      setNwSelectedRow((prev) =>
+        prev?.__row === String(rowNumber)
+          ? { ...prev, [NW_STATUS_HEADER]: value }
+          : prev
+      );
+
+      setNwMsg("Cambio guardado en Google Sheets");
+      window.setTimeout(() => setNwMsg(""), 2200);
+    } catch (e) {
+      setNwErr(e instanceof Error ? e.message : "Error");
     }
   }
 
@@ -2911,6 +3040,45 @@ export default function Home() {
       currentDateHeader,
     ]);
 
+  const nwCalendarDays = useMemo(() => {
+    const year = nwCalendarMonth.getFullYear();
+    const month = nwCalendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const mondayIndex =
+      firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const startDate = addDays(firstDay, -mondayIndex);
+
+    const lastDayMondayIndex =
+      lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1;
+    const remaining = 6 - lastDayMondayIndex;
+    const endDate = addDays(lastDay, remaining);
+
+    const days: Date[] = [];
+    let cursor = new Date(startDate);
+
+    while (cursor.getTime() <= endDate.getTime()) {
+      days.push(new Date(cursor));
+      cursor = addDays(cursor, 1);
+    }
+
+    return days;
+  }, [nwCalendarMonth]);
+
+  const nwCalendarEvents = useMemo(() => {
+    const header = NW_DATE_FIELDS[nwCalendarKind].header;
+
+    return nwData.rows
+      .map((row) => ({
+        row,
+        date: parseDateOnly(row[header] || ""),
+      }))
+      .filter(
+        (item): item is { row: CaseRow; date: Date } => !!item.date
+      );
+  }, [nwData.rows, nwCalendarKind]);
+
   const teamTableRows =
     useMemo(() => {
       return filteredTeamRows
@@ -2979,6 +3147,38 @@ export default function Home() {
     );
   }
 
+  function nwPreviousMonth() {
+    setNwCalendarMonth(
+      new Date(
+        nwCalendarMonth.getFullYear(),
+        nwCalendarMonth.getMonth() - 1,
+        1
+      )
+    );
+  }
+
+  function nwNextMonth() {
+    setNwCalendarMonth(
+      new Date(
+        nwCalendarMonth.getFullYear(),
+        nwCalendarMonth.getMonth() + 1,
+        1
+      )
+    );
+  }
+
+  function nwGoToday() {
+    const today = new Date();
+
+    setNwCalendarMonth(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      )
+    );
+  }
+
   const statusClass = (
     status: string
   ) => {
@@ -3039,6 +3239,15 @@ export default function Home() {
   function openAccountability() {
     setMainView("accountability");
     setTeamOpen(false);
+  }
+
+  function openNwGeneral() {
+    setMainView("nwgeneral");
+    setTeamOpen(false);
+
+    if (!nwLoaded && !nwLoading) {
+      loadNwGeneral();
+    }
   }
 
   function toggleTeam() {
@@ -4135,6 +4344,23 @@ export default function Home() {
 
             <span>
               Rendición de cuentas
+            </span>
+          </button>
+
+          <button
+            className={`navItem ${
+              mainView === "nwgeneral"
+                ? "active"
+                : ""
+            }`}
+            onClick={openNwGeneral}
+          >
+            <span className="navIcon">
+              ▤
+            </span>
+
+            <span>
+              NW General
             </span>
           </button>
         </nav>
@@ -6454,6 +6680,225 @@ export default function Home() {
               )}
             </div>
           </aside>
+        </div>
+      )}
+
+      {mainView === "nwgeneral" && (
+        <>
+          <header className="pageHeader">
+            <div>
+              <p className="eyebrow">NW GENERAL</p>
+              <h1>NW General</h1>
+              <p>
+                Calendarios de casos por deadline del recibo y deadline interno.
+              </p>
+            </div>
+
+            <button
+              className="refreshButton"
+              onClick={loadNwGeneral}
+            >
+              ↻ Refresh
+            </button>
+          </header>
+
+          {nwMsg && (
+            <div className="floatingMessage">✓ {nwMsg}</div>
+          )}
+
+          {nwErr && (
+            <div className="errorBanner">{nwErr}</div>
+          )}
+
+          <div className="teamStageTabs">
+            <button
+              className={
+                nwCalendarKind === "due"
+                  ? "stageTab active"
+                  : "stageTab"
+              }
+              onClick={() => setNwCalendarKind("due")}
+            >
+              Deadline del Recibo
+            </button>
+
+            <button
+              className={
+                nwCalendarKind === "interno"
+                  ? "stageTab active"
+                  : "stageTab"
+              }
+              onClick={() => setNwCalendarKind("interno")}
+            >
+              Deadline Interno
+            </button>
+          </div>
+
+          {nwLoading ? (
+            <div className="emptyState">
+              Cargando casos de NW GENERAL…
+            </div>
+          ) : (
+            <section className="calendarCard">
+              <div className="calendarToolbar">
+                <div className="calendarTitle">
+                  <h2>
+                    {monthNames[nwCalendarMonth.getMonth()]}{" "}
+                    {nwCalendarMonth.getFullYear()}
+                  </h2>
+
+                  <span>
+                    {nwCalendarEvents.length} casos ·{" "}
+                    {NW_DATE_FIELDS[nwCalendarKind].label}
+                  </span>
+                </div>
+
+                <div className="calendarControls">
+                  <button onClick={nwPreviousMonth}>‹</button>
+                  <button
+                    className="todayButton"
+                    onClick={nwGoToday}
+                  >
+                    Hoy
+                  </button>
+                  <button onClick={nwNextMonth}>›</button>
+                </div>
+              </div>
+
+              <div className="calendarWeekHeader">
+                {weekDays.map((day) => (
+                  <div key={day}>{day}</div>
+                ))}
+              </div>
+
+              <div className="calendarGrid">
+                {nwCalendarDays.map((day) => {
+                  const isCurrentMonth =
+                    day.getMonth() === nwCalendarMonth.getMonth();
+                  const isToday = sameDay(day, new Date());
+                  const dayEvents = nwCalendarEvents.filter((event) =>
+                    sameDay(event.date, day)
+                  );
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`calendarDay ${
+                        !isCurrentMonth ? "outsideMonth" : ""
+                      }`}
+                    >
+                      <div className="calendarDayNumber">
+                        <span className={isToday ? "todayNumber" : ""}>
+                          {day.getDate()}
+                        </span>
+                      </div>
+
+                      <div className="calendarEvents">
+                        {dayEvents.map(({ row }) => {
+                          const status = row[NW_STATUS_HEADER] || "";
+                          const deliveryType = classifyDate(day);
+
+                          return (
+                            <button
+                              key={row.__row}
+                              className={`calendarEvent ${
+                                deliveryType === "backlog"
+                                  ? "calendarEventBacklog"
+                                  : deliveryType === "pending"
+                                  ? "calendarEventPending"
+                                  : "calendarEventFuture"
+                              }`}
+                              onClick={() => setNwSelectedRow(row)}
+                            >
+                              <strong>
+                                {row[NW_CLIENT_HEADER] || "Sin cliente"}
+                              </strong>
+
+                              {status ? <span>{status}</span> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {nwSelectedRow && (
+        <div
+          className="modalOverlay"
+          onMouseDown={() => setNwSelectedRow(null)}
+        >
+          <div
+            className="caseModal stageOnlyModal"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="modalHeader">
+              <div>
+                <p className="eyebrow">NW GENERAL</p>
+
+                <h2>
+                  {nwSelectedRow[NW_CLIENT_HEADER] || "Sin cliente"}
+                </h2>
+
+                <div className="caseMeta">
+                  <span>
+                    {NW_DATE_FIELDS[nwCalendarKind].label}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                className="closeButton"
+                onClick={() => setNwSelectedRow(null)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modalBody">
+              <div className="fieldGrid">
+                {nwData.headers.map((header) => {
+                  const value = nwSelectedRow[header] || "";
+                  const isStatus =
+                    norm(header) === norm(NW_STATUS_HEADER);
+                  const editable =
+                    isStatus &&
+                    nwCalendarKind === "interno" &&
+                    role !== "MANAGER" &&
+                    role !== "COORDINATOR";
+
+                  return (
+                    <div className="detailField" key={header}>
+                      <label>{header}</label>
+
+                      {editable ? (
+                        <input
+                          defaultValue={value}
+                          onBlur={(e) => {
+                            if (e.target.value !== value) {
+                              saveNwStatus(
+                                Number(nwSelectedRow.__row),
+                                e.target.value
+                              );
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="readValue">
+                          {value || "—"}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
