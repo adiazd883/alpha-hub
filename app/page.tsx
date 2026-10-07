@@ -140,6 +140,30 @@ const NW_DATE_FIELDS: Record<
 const NW_STATUS_HEADER = "GENERAL STATUS";
 const NW_CLIENT_HEADER = "CL";
 
+const NW_STATUS_OPTIONS = [
+  "Cancelled",
+  "Special Case",
+  "Assigned",
+  "Working",
+  "Correction",
+  "Ready to Print",
+  "Sent to USCIS",
+  "Waiting Conf.",
+  "Waiting Medical Exam",
+  "Waiting Passport Photos",
+  "Waiting Signatures",
+];
+
+const NW_EDITABLE_FIELDS = [
+  "GENERAL STATUS",
+  "DATE ATTY REVIEW",
+  "FECHA RTP",
+  "EVIDENCE NEEDED",
+  "REQUERIMIENTOS",
+];
+
+const NW_TEXTAREA_FIELDS = ["EVIDENCE NEEDED", "REQUERIMIENTOS"];
+
 const norm = (value: string) =>
   value.trim().toUpperCase().replace(/\s+/g, " ");
 
@@ -1259,8 +1283,9 @@ export default function Home() {
     }
   }
 
-  async function saveNwStatus(
+  async function saveNwField(
     rowNumber: number,
+    header: string,
     value: string
   ) {
     setNwMsg("");
@@ -1277,7 +1302,7 @@ export default function Home() {
           body: JSON.stringify({
             row: rowNumber,
             changes: {
-              [NW_STATUS_HEADER]: value,
+              [header]: value,
             },
           }),
         }
@@ -1295,14 +1320,14 @@ export default function Home() {
         ...prev,
         rows: prev.rows.map((row) =>
           row.__row === String(rowNumber)
-            ? { ...row, [NW_STATUS_HEADER]: value }
+            ? { ...row, [header]: value }
             : row
         ),
       }));
 
       setNwSelectedRow((prev) =>
         prev?.__row === String(rowNumber)
-          ? { ...prev, [NW_STATUS_HEADER]: value }
+          ? { ...prev, [header]: value }
           : prev
       );
 
@@ -6864,34 +6889,69 @@ export default function Home() {
               <div className="fieldGrid">
                 {nwData.headers.map((header) => {
                   const value = nwSelectedRow[header] || "";
-                  const isStatus =
-                    norm(header) === norm(NW_STATUS_HEADER);
+                  const normHeader = norm(header);
+                  const isStatus = normHeader === norm(NW_STATUS_HEADER);
+                  const isTextarea = NW_TEXTAREA_FIELDS.some(
+                    (h) => norm(h) === normHeader
+                  );
                   const editable =
-                    isStatus &&
                     nwCalendarKind === "interno" &&
                     role !== "MANAGER" &&
-                    role !== "COORDINATOR";
+                    role !== "COORDINATOR" &&
+                    NW_EDITABLE_FIELDS.some((h) => norm(h) === normHeader);
 
                   return (
                     <div className="detailField" key={header}>
                       <label>{header}</label>
 
-                      {editable ? (
-                        <input
+                      {!editable ? (
+                        <div className="readValue">
+                          {value || "—"}
+                        </div>
+                      ) : isStatus ? (
+                        <select
+                          defaultValue={value}
+                          onChange={(e) =>
+                            saveNwField(
+                              Number(nwSelectedRow.__row),
+                              header,
+                              e.target.value
+                            )
+                          }
+                        >
+                          <option value="">—</option>
+                          {NW_STATUS_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      ) : isTextarea ? (
+                        <textarea
                           defaultValue={value}
                           onBlur={(e) => {
                             if (e.target.value !== value) {
-                              saveNwStatus(
+                              saveNwField(
                                 Number(nwSelectedRow.__row),
+                                header,
                                 e.target.value
                               );
                             }
                           }}
                         />
                       ) : (
-                        <div className="readValue">
-                          {value || "—"}
-                        </div>
+                        <input
+                          defaultValue={value}
+                          onBlur={(e) => {
+                            if (e.target.value !== value) {
+                              saveNwField(
+                                Number(nwSelectedRow.__row),
+                                header,
+                                e.target.value
+                              );
+                            }
+                          }}
+                        />
                       )}
                     </div>
                   );
