@@ -13,6 +13,26 @@ const EDITABLE_FIELDS = new Set([
   "FECHA RTP",
   "EVIDENCE NEEDED",
   "REQUERIMIENTOS",
+  "PL ASSIGNED",
+]);
+
+/*
+ * Reasignar PL ASSIGNED está restringido a ADMIN/TL, igual que la
+ * reasignación de paralegal en la Sheet ADMINs.
+ */
+const REASSIGNMENT_FIELDS = new Set(["PL ASSIGNED"]);
+
+/*
+ * Opciones de la lista de validación configurada en la columna
+ * PL ASSIGNED de la Sheet.
+ */
+const PL_ASSIGNED_OPTIONS = new Set([
+  "PAOLA",
+  "GMC",
+  "DAN U",
+  "CARLOS ARTURO",
+  "MAYLA",
+  "LIZ",
 ]);
 
 /*
@@ -80,6 +100,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: `No está permitido modificar ${invalidField}` },
         { status: 403 }
+      );
+    }
+
+    const hasReassignment = Object.keys(changes).some((header) =>
+      REASSIGNMENT_FIELDS.has(header.trim().toUpperCase())
+    );
+    if (hasReassignment && role !== "ADMIN" && role !== "TL") {
+      return NextResponse.json(
+        { error: "Solo Admin y Team Leader pueden reasignar" },
+        { status: 403 }
+      );
+    }
+
+    const plAssignedKey = Object.keys(changes).find(
+      (header) => header.trim().toUpperCase() === "PL ASSIGNED"
+    );
+    if (
+      plAssignedKey &&
+      changes[plAssignedKey] &&
+      !PL_ASSIGNED_OPTIONS.has(changes[plAssignedKey])
+    ) {
+      return NextResponse.json(
+        { error: "Asignación inválida" },
+        { status: 400 }
       );
     }
 
