@@ -6508,6 +6508,151 @@ export default function Home() {
             </section>
           </>
         )}
+
+        {mainView === "nwgeneral" && (
+          <>
+            <header className="pageHeader">
+              <div>
+                <p className="eyebrow">NW GENERAL</p>
+                <h1>NW General</h1>
+                <p>
+                  Calendarios de casos por deadline del recibo y deadline interno.
+                </p>
+              </div>
+
+              <button
+                className="refreshButton"
+                onClick={loadNwGeneral}
+              >
+                ↻ Refresh
+              </button>
+            </header>
+
+            {nwMsg && (
+              <div className="floatingMessage">✓ {nwMsg}</div>
+            )}
+
+            {nwErr && (
+              <div className="errorBanner">{nwErr}</div>
+            )}
+
+            <div className="teamStageTabs">
+              <button
+                className={
+                  nwCalendarKind === "due"
+                    ? "stageTab active"
+                    : "stageTab"
+                }
+                onClick={() => setNwCalendarKind("due")}
+              >
+                Deadline del Recibo
+              </button>
+
+              <button
+                className={
+                  nwCalendarKind === "interno"
+                    ? "stageTab active"
+                    : "stageTab"
+                }
+                onClick={() => setNwCalendarKind("interno")}
+              >
+                Deadline Interno
+              </button>
+            </div>
+
+            {nwLoading ? (
+              <div className="emptyState">
+                Cargando casos de NW GENERAL…
+              </div>
+            ) : (
+              <section className="calendarCard">
+                <div className="calendarToolbar">
+                  <div className="calendarTitle">
+                    <h2>
+                      {monthNames[nwCalendarMonth.getMonth()]}{" "}
+                      {nwCalendarMonth.getFullYear()}
+                    </h2>
+
+                    <span>
+                      {nwCalendarEvents.length} casos ·{" "}
+                      {NW_DATE_FIELDS[nwCalendarKind].label}
+                    </span>
+                  </div>
+
+                  <div className="calendarControls">
+                    <button onClick={nwPreviousMonth}>‹</button>
+                    <button
+                      className="todayButton"
+                      onClick={nwGoToday}
+                    >
+                      Hoy
+                    </button>
+                    <button onClick={nwNextMonth}>›</button>
+                  </div>
+                </div>
+
+                <div className="calendarWeekHeader">
+                  {weekDays.map((day) => (
+                    <div key={day}>{day}</div>
+                  ))}
+                </div>
+
+                <div className="calendarGrid">
+                  {nwCalendarDays.map((day) => {
+                    const isCurrentMonth =
+                      day.getMonth() === nwCalendarMonth.getMonth();
+                    const isToday = sameDay(day, new Date());
+                    const dayEvents = nwCalendarEvents.filter((event) =>
+                      sameDay(event.date, day)
+                    );
+
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className={`calendarDay ${
+                          !isCurrentMonth ? "outsideMonth" : ""
+                        }`}
+                      >
+                        <div className="calendarDayNumber">
+                          <span className={isToday ? "todayNumber" : ""}>
+                            {day.getDate()}
+                          </span>
+                        </div>
+
+                        <div className="calendarEvents">
+                          {dayEvents.map(({ row }) => {
+                            const status = row[NW_STATUS_HEADER] || "";
+                            const deliveryType = classifyDate(day);
+
+                            return (
+                              <button
+                                key={row.__row}
+                                className={`calendarEvent ${
+                                  deliveryType === "backlog"
+                                    ? "calendarEventBacklog"
+                                    : deliveryType === "pending"
+                                    ? "calendarEventPending"
+                                    : "calendarEventFuture"
+                                }`}
+                                onClick={() => setNwSelectedRow(row)}
+                              >
+                                <strong>
+                                  {row[NW_CLIENT_HEADER] || "Sin cliente"}
+                                </strong>
+
+                                {status ? <span>{status}</span> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+          </>
+        )}
       </main>
 
       {deliveryDetail && (
@@ -6681,151 +6826,6 @@ export default function Home() {
             </div>
           </aside>
         </div>
-      )}
-
-      {mainView === "nwgeneral" && (
-        <>
-          <header className="pageHeader">
-            <div>
-              <p className="eyebrow">NW GENERAL</p>
-              <h1>NW General</h1>
-              <p>
-                Calendarios de casos por deadline del recibo y deadline interno.
-              </p>
-            </div>
-
-            <button
-              className="refreshButton"
-              onClick={loadNwGeneral}
-            >
-              ↻ Refresh
-            </button>
-          </header>
-
-          {nwMsg && (
-            <div className="floatingMessage">✓ {nwMsg}</div>
-          )}
-
-          {nwErr && (
-            <div className="errorBanner">{nwErr}</div>
-          )}
-
-          <div className="teamStageTabs">
-            <button
-              className={
-                nwCalendarKind === "due"
-                  ? "stageTab active"
-                  : "stageTab"
-              }
-              onClick={() => setNwCalendarKind("due")}
-            >
-              Deadline del Recibo
-            </button>
-
-            <button
-              className={
-                nwCalendarKind === "interno"
-                  ? "stageTab active"
-                  : "stageTab"
-              }
-              onClick={() => setNwCalendarKind("interno")}
-            >
-              Deadline Interno
-            </button>
-          </div>
-
-          {nwLoading ? (
-            <div className="emptyState">
-              Cargando casos de NW GENERAL…
-            </div>
-          ) : (
-            <section className="calendarCard">
-              <div className="calendarToolbar">
-                <div className="calendarTitle">
-                  <h2>
-                    {monthNames[nwCalendarMonth.getMonth()]}{" "}
-                    {nwCalendarMonth.getFullYear()}
-                  </h2>
-
-                  <span>
-                    {nwCalendarEvents.length} casos ·{" "}
-                    {NW_DATE_FIELDS[nwCalendarKind].label}
-                  </span>
-                </div>
-
-                <div className="calendarControls">
-                  <button onClick={nwPreviousMonth}>‹</button>
-                  <button
-                    className="todayButton"
-                    onClick={nwGoToday}
-                  >
-                    Hoy
-                  </button>
-                  <button onClick={nwNextMonth}>›</button>
-                </div>
-              </div>
-
-              <div className="calendarWeekHeader">
-                {weekDays.map((day) => (
-                  <div key={day}>{day}</div>
-                ))}
-              </div>
-
-              <div className="calendarGrid">
-                {nwCalendarDays.map((day) => {
-                  const isCurrentMonth =
-                    day.getMonth() === nwCalendarMonth.getMonth();
-                  const isToday = sameDay(day, new Date());
-                  const dayEvents = nwCalendarEvents.filter((event) =>
-                    sameDay(event.date, day)
-                  );
-
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`calendarDay ${
-                        !isCurrentMonth ? "outsideMonth" : ""
-                      }`}
-                    >
-                      <div className="calendarDayNumber">
-                        <span className={isToday ? "todayNumber" : ""}>
-                          {day.getDate()}
-                        </span>
-                      </div>
-
-                      <div className="calendarEvents">
-                        {dayEvents.map(({ row }) => {
-                          const status = row[NW_STATUS_HEADER] || "";
-                          const deliveryType = classifyDate(day);
-
-                          return (
-                            <button
-                              key={row.__row}
-                              className={`calendarEvent ${
-                                deliveryType === "backlog"
-                                  ? "calendarEventBacklog"
-                                  : deliveryType === "pending"
-                                  ? "calendarEventPending"
-                                  : "calendarEventFuture"
-                              }`}
-                              onClick={() => setNwSelectedRow(row)}
-                            >
-                              <strong>
-                                {row[NW_CLIENT_HEADER] || "Sin cliente"}
-                              </strong>
-
-                              {status ? <span>{status}</span> : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-        </>
       )}
 
       {nwSelectedRow && (
