@@ -162,7 +162,24 @@ const NW_EDITABLE_FIELDS = [
   "REQUERIMIENTOS",
 ];
 
-const NW_TEXTAREA_FIELDS = ["EVIDENCE NEEDED", "REQUERIMIENTOS"];
+const NW_TEXTAREA_FIELDS = ["EVIDENCE NEEDED"];
+
+const NW_DATE_INPUT_FIELDS = ["DATE ATTY REVIEW", "FECHA RTP"];
+
+const NW_LINK_HEADER = "LINK";
+
+const NW_REQUIREMENT_HEADER = "REQUERIMIENTOS";
+
+const NW_REQUIREMENT_OPTIONS = [
+  "DCL PLG",
+  "DCL PSYCH",
+  "DOE",
+  "DRAFT",
+  "DCL EDITADA",
+  "CVL",
+  "CR",
+  "NA",
+];
 
 const norm = (value: string) =>
   value.trim().toUpperCase().replace(/\s+/g, " ");
@@ -6891,6 +6908,12 @@ export default function Home() {
                   const value = nwSelectedRow[header] || "";
                   const normHeader = norm(header);
                   const isStatus = normHeader === norm(NW_STATUS_HEADER);
+                  const isLink = normHeader === norm(NW_LINK_HEADER);
+                  const isRequirements =
+                    normHeader === norm(NW_REQUIREMENT_HEADER);
+                  const isDateInput = NW_DATE_INPUT_FIELDS.some(
+                    (h) => norm(h) === normHeader
+                  );
                   const isTextarea = NW_TEXTAREA_FIELDS.some(
                     (h) => norm(h) === normHeader
                   );
@@ -6899,12 +6922,25 @@ export default function Home() {
                     role !== "MANAGER" &&
                     role !== "COORDINATOR" &&
                     NW_EDITABLE_FIELDS.some((h) => norm(h) === normHeader);
+                  const selectedRequirements = value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
 
                   return (
                     <div className="detailField" key={header}>
                       <label>{header}</label>
 
-                      {!editable ? (
+                      {isLink && value ? (
+                        <a
+                          className="readValue"
+                          href={value}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {value}
+                        </a>
+                      ) : !editable ? (
                         <div className="readValue">
                           {value || "—"}
                         </div>
@@ -6926,6 +6962,53 @@ export default function Home() {
                             </option>
                           ))}
                         </select>
+                      ) : isRequirements ? (
+                        <div
+                          className="teamStageTabs"
+                          style={{ flexWrap: "wrap" }}
+                        >
+                          {NW_REQUIREMENT_OPTIONS.map((opt) => {
+                            const active =
+                              selectedRequirements.includes(opt);
+
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                className={
+                                  active ? "stageTab active" : "stageTab"
+                                }
+                                onClick={() => {
+                                  const next = active
+                                    ? selectedRequirements.filter(
+                                        (s) => s !== opt
+                                      )
+                                    : [...selectedRequirements, opt];
+
+                                  saveNwField(
+                                    Number(nwSelectedRow.__row),
+                                    header,
+                                    next.join(", ")
+                                  );
+                                }}
+                              >
+                                {opt}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : isDateInput ? (
+                        <input
+                          type="date"
+                          defaultValue={toInputDate(value)}
+                          onChange={(e) =>
+                            saveNwField(
+                              Number(nwSelectedRow.__row),
+                              header,
+                              e.target.value
+                            )
+                          }
+                        />
                       ) : isTextarea ? (
                         <textarea
                           defaultValue={value}
