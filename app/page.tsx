@@ -729,9 +729,17 @@ const calendarActive = (
   stage: TeamCalendar
 ) => {
   if (stage === "mgm") {
+    const sentToMgm = (
+      row["SENT TO MGM"] || ""
+    ).trim();
+
+    const notSentYet =
+      sentToMgm === "" ||
+      sentToMgm === "--";
+
     return (
       getMgmKpi(row) !== "none" &&
-      !(row["SENT TO MGM"] || "").trim()
+      notSentYet
     );
   }
 
