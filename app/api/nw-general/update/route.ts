@@ -4,10 +4,34 @@ import { USERS } from "@/lib/auth";
 
 /*
  * Única sección de NW GENERAL con escritura: el calendario
- * "Deadline Interno" solo permite cambiar el status del caso.
+ * "Deadline Interno" permite cambiar estos campos.
  * El calendario "Deadline del Recibo" nunca llama a esta ruta.
  */
-const EDITABLE_FIELDS = new Set(["GENERAL STATUS"]);
+const EDITABLE_FIELDS = new Set([
+  "GENERAL STATUS",
+  "DATE ATTY REVIEW",
+  "FECHA RTP",
+  "EVIDENCE NEEDED",
+  "REQUERIMIENTOS",
+]);
+
+/*
+ * Opciones de la lista de validación configurada en la columna
+ * GENERAL STATUS de la Sheet (Datos > Validación de datos).
+ */
+const GENERAL_STATUS_OPTIONS = new Set([
+  "Cancelled",
+  "Special Case",
+  "Assigned",
+  "Working",
+  "Correction",
+  "Ready to Print",
+  "Sent to USCIS",
+  "Waiting Conf.",
+  "Waiting Medical Exam",
+  "Waiting Passport Photos",
+  "Waiting Signatures",
+]);
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,6 +64,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: `No está permitido modificar ${invalidField}` },
         { status: 403 }
+      );
+    }
+
+    const statusKey = Object.keys(changes).find(
+      (header) => header.trim().toUpperCase() === "GENERAL STATUS"
+    );
+    if (statusKey && !GENERAL_STATUS_OPTIONS.has(changes[statusKey])) {
+      return NextResponse.json(
+        { error: "Status inválido" },
+        { status: 400 }
       );
     }
 
