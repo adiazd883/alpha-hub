@@ -10,6 +10,7 @@ export type Role =
 export const USERS: Record<string, Role> = {
   "adiazd@supportmendoza.com": "ADMIN",
   "nrioja@supportmendoza.com": "TL",
+  "anavag@supportmendoza.com": "TL",
   "mponce@supportmendoza.com": "PARALEGAL",
   "camontoya@supportmendoza.com": "PARALEGAL",
   "aramirezd@supportmendoza.com": "PSYCH",
