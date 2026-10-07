@@ -425,18 +425,35 @@ export async function readSheetCases(
     "''"
   )}'!1:1000`;
 
+  /*
+   * Usamos spreadsheets.get con includeGridData en vez de
+   * values.get para poder leer el campo "hyperlink" de cada
+   * celda: algunas columnas (ej. LINK) muestran un texto fijo
+   * ("LINK") con un enlace insertado por separado, y el texto
+   * mostrado no sirve como URL.
+   */
   const res =
-    await sheets.spreadsheets.values.get(
-      {
-        spreadsheetId,
-        range,
-        valueRenderOption:
-          "FORMATTED_VALUE",
-      }
-    );
+    await sheets.spreadsheets.get({
+      spreadsheetId,
+      ranges: [range],
+      includeGridData: true,
+      fields:
+        "sheets.data.rowData.values(formattedValue,hyperlink)",
+    });
 
-  const values =
-    res.data.values || [];
+  const gridRows =
+    res.data.sheets?.[0]?.data?.[0]
+      ?.rowData || [];
+
+  const values: string[][] =
+    gridRows.map((r) =>
+      (r.values || []).map(
+        (v) =>
+          v.hyperlink ||
+          v.formattedValue ||
+          ""
+      )
+    );
 
   if (!values.length) {
     return {
