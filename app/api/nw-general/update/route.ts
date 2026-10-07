@@ -33,6 +33,22 @@ const GENERAL_STATUS_OPTIONS = new Set([
   "Waiting Signatures",
 ]);
 
+/*
+ * Opciones de la lista de validación (selección múltiple) configurada
+ * en la columna REQUERIMIENTOS. El valor guardado es una lista separada
+ * por comas, p. ej. "CVL, CR, DOE".
+ */
+const REQUIREMENT_OPTIONS = new Set([
+  "DCL PLG",
+  "DCL PSYCH",
+  "DOE",
+  "DRAFT",
+  "DCL EDITADA",
+  "CVL",
+  "CR",
+  "NA",
+]);
+
 export async function POST(req: NextRequest) {
   try {
     const email = req.cookies.get("alpha_hub_email")?.value;
@@ -75,6 +91,25 @@ export async function POST(req: NextRequest) {
         { error: "Status inválido" },
         { status: 400 }
       );
+    }
+
+    const requirementsKey = Object.keys(changes).find(
+      (header) => header.trim().toUpperCase() === "REQUERIMIENTOS"
+    );
+    if (requirementsKey) {
+      const parts = changes[requirementsKey]
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      const invalidPart = parts.find(
+        (p: string) => !REQUIREMENT_OPTIONS.has(p)
+      );
+      if (invalidPart) {
+        return NextResponse.json(
+          { error: `Requerimiento inválido: ${invalidPart}` },
+          { status: 400 }
+        );
+      }
     }
 
     await updateSheetCase("NW GENERAL", row, changes);
