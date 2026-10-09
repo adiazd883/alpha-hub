@@ -704,6 +704,19 @@ button {
     #fff4f4;
 }
 
+.workflowMetric.isDelivered span {
+  color: #5a9c79;
+}
+
+.workflowMetric.isDelivered strong {
+  color: #3c7a57;
+}
+
+.workflowMetric.isDelivered:hover {
+  background:
+    #f0fcf4;
+}
+
 /* ======================================================
    CASES
 ====================================================== */
@@ -1543,6 +1556,26 @@ button {
 .calendarEvent
 .unassignedEventLabel {
   color: #b54e4e;
+
+  font-weight: 850;
+
+  opacity: 1;
+}
+
+.calendarEventDelivered {
+  border-left-color:
+    #4c9a6a;
+
+  background:
+    #eefcf2;
+
+  color:
+    #2f6b46;
+}
+
+.calendarEvent
+.deliveredEventLabel {
+  color: #2f6b46;
 
   font-weight: 850;
 

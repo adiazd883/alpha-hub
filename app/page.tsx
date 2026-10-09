@@ -51,7 +51,7 @@ type KpiSection =
 
 type KpiSelection = {
   section: KpiSection;
-  type: Exclude<KpiType, "none">;
+  type: Exclude<KpiType, "none"> | "delivered";
 } | null;
 
 type OpenCaseSource = "cases" | "calendar";
@@ -60,6 +60,7 @@ type Stats = {
   backlog: number;
   pending: number;
   future: number;
+  delivered: number;
 };
 
 type DeliveryDetailItem = {
@@ -742,7 +743,13 @@ const calendarStatusHeader = (
   return "";
 };
 
-const calendarActive = (
+/*
+  Una entrega completada ya NO debe desaparecer de los
+  calendarios/dashboard: isStageDelivered() marca cuándo un
+  caso ya se entregó en esa etapa, para seguir mostrándolo
+  (con su estatus) en vez de ocultarlo por completo.
+*/
+const isStageDelivered = (
   row: CaseRow,
   stage: TeamCalendar
 ) => {
@@ -751,37 +758,67 @@ const calendarActive = (
       row["SENT TO MGM"] || ""
     ).trim();
 
-    const notSentYet =
-      sentToMgm === "" ||
-      sentToMgm === "--";
-
     return (
-      getMgmKpi(row) !== "none" &&
-      notSentYet
+      sentToMgm !== "" &&
+      sentToMgm !== "--"
+    );
+  }
+
+  return (
+    (row[doneDateHeader(stage)] || "").trim() !== ""
+  );
+};
+
+const calendarActive = (
+  row: CaseRow,
+  stage: TeamCalendar
+) => {
+  if (stage === "mgm") {
+    return (
+      getMgmKpi(row) !== "none" ||
+      isStageDelivered(row, "mgm")
     );
   }
 
   if (stage === "caratula") {
-    return getCaratulaKpi(row) !== "none";
+    return (
+      getCaratulaKpi(row) !== "none" ||
+      isStageDelivered(row, "caratula")
+    );
   }
 
   if (stage === "draft") {
-    return getDraftKpi(row) !== "none";
+    return (
+      getDraftKpi(row) !== "none" ||
+      isStageDelivered(row, "draft")
+    );
   }
 
   if (stage === "plcvl") {
-    return getPlCvlKpi(row) !== "none";
+    return (
+      getPlCvlKpi(row) !== "none" ||
+      isStageDelivered(row, "plcvl")
+    );
   }
 
   if (stage === "psych") {
-    return getPsychKpi(row) !== "none";
+    return (
+      getPsychKpi(row) !== "none" ||
+      isStageDelivered(row, "psych")
+    );
   }
 
   if (stage === "ea") {
-    return getEaKpi(row) !== "none";
+    return (
+      getEaKpi(row) !== "none" ||
+      isStageDelivered(row, "ea")
+    );
   }
 
-  return getCvlKpi(row) !== "none";
+  return (
+    getCvlKpi(row) !== "none" ||
+    isStageDelivered(row, "cvl")
+  );
 };
 
 /*
@@ -1594,6 +1631,7 @@ export default function Home() {
     let backlog = 0;
     let pending = 0;
     let future = 0;
+    let delivered = 0;
 
     data.rows.forEach(
       (row) => {
@@ -1617,6 +1655,15 @@ export default function Home() {
         ) {
           future++;
         }
+
+        if (
+          isStageDelivered(
+            row,
+            section
+          )
+        ) {
+          delivered++;
+        }
       }
     );
 
@@ -1624,6 +1671,7 @@ export default function Home() {
       backlog,
       pending,
       future,
+      delivered,
     };
   };
 
@@ -1728,6 +1776,19 @@ export default function Home() {
     useMemo(() => {
       if (!selectedKpi) {
         return [];
+      }
+
+      if (
+        selectedKpi.type ===
+        "delivered"
+      ) {
+        return data.rows.filter(
+          (row) =>
+            isStageDelivered(
+              row,
+              selectedKpi.section
+            )
+        );
       }
 
       const getter =
@@ -3095,6 +3156,12 @@ export default function Home() {
                   currentDateHeader
                 ] || ""
               ),
+
+            delivered:
+              isStageDelivered(
+                row,
+                teamCalendar
+              ),
           })
         )
         .filter(
@@ -3103,11 +3170,13 @@ export default function Home() {
           ): item is {
             row: CaseRow;
             date: Date;
+            delivered: boolean;
           } => !!item.date
         );
     }, [
       filteredTeamRows,
       currentDateHeader,
+      teamCalendar,
     ]);
 
   const nwCalendarDays = useMemo(() => {
@@ -3472,6 +3541,24 @@ export default function Home() {
 
           <strong>
             {stats.future}
+          </strong>
+        </button>
+
+        <button
+          className="workflowMetric isDelivered"
+          onDoubleClick={() =>
+            setSelectedKpi({
+              section,
+              type: "delivered",
+            })
+          }
+        >
+          <span>
+            Entregado
+          </span>
+
+          <strong>
+            {stats.delivered}
           </strong>
         </button>
       </div>
@@ -5185,9 +5272,25 @@ export default function Home() {
 
                     <span>
                       {
-                        calendarEvents.length
+                        calendarEvents.filter(
+                          (event) => !event.delivered
+                        ).length
                       }{" "}
-                      entregas activas
+                      activas
+                      {calendarEvents.some(
+                        (event) => event.delivered
+                      ) && (
+                        <>
+                          {" "}
+                          ·{" "}
+                          {
+                            calendarEvents.filter(
+                              (event) => event.delivered
+                            ).length
+                          }{" "}
+                          entregadas
+                        </>
+                      )}
                     </span>
                   </div>
 
@@ -5286,6 +5389,7 @@ export default function Home() {
                             {dayEvents.map(
                               ({
                                 row,
+                                delivered,
                               }) => {
                                 const status =
                                   currentStatusHeader
@@ -5314,14 +5418,17 @@ export default function Home() {
                                       row.__row
                                     }
                                     className={`calendarEvent ${
-                                      deliveryType ===
-                                      "backlog"
+                                      delivered
+                                        ? "calendarEventDelivered"
+                                        : deliveryType ===
+                                          "backlog"
                                         ? "calendarEventBacklog"
                                         : deliveryType ===
                                           "pending"
                                         ? "calendarEventPending"
                                         : "calendarEventFuture"
                                     } ${
+                                      !delivered &&
                                       !collaborator
                                         ? "calendarEventUnassigned"
                                         : ""
@@ -5340,7 +5447,11 @@ export default function Home() {
                                         "Sin cliente"}
                                     </strong>
 
-                                    {!collaborator ? (
+                                    {delivered ? (
+                                      <span className="deliveredEventLabel">
+                                        ✓ Entregado
+                                      </span>
+                                    ) : !collaborator ? (
                                       <span className="unassignedEventLabel">
                                         Sin asignar
                                       </span>
@@ -6860,6 +6971,9 @@ export default function Home() {
                     : selectedKpi.type ===
                       "pending"
                     ? "Pendientes"
+                    : selectedKpi.type ===
+                      "delivered"
+                    ? "Entregado"
                     : "Próximas entregas"}
                 </h2>
 
