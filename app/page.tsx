@@ -21,7 +21,7 @@ type User = {
   role: Role | null;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -224,6 +224,24 @@ const NW_REQUIREMENT_OPTIONS = [
   "CR",
   "NA",
 ];
+
+/*
+ * Calendario unificado "CS": combina la revisión de Case Strategy
+ * de VAWA (ADMINs) con la de NON-VAWA (NW GENERAL) en un solo
+ * calendario.
+ */
+const VAWA_CS_DATE_HEADER = "CS EXP DONE ESTRATEGIA";
+const VAWA_CS_DONE_HEADER = "CS DONE ESTRATEGIA";
+const NONVAWA_CS_DATE_HEADER = "REVISIÓN CS";
+const NONVAWA_CS_DONE_HEADER = "REVISIÓN CS COMPLETADA";
+
+type CsReviewEvent = {
+  origin: "vawa" | "nonvawa";
+  row: CaseRow;
+  date: Date;
+  completed: boolean;
+  client: string;
+};
 
 const norm = (value: string) =>
   value.trim().toUpperCase().replace(/\s+/g, " ");
@@ -1187,6 +1205,19 @@ export default function Home() {
     useState<CaseRow | null>(null);
 
   const [nwPlFilter, setNwPlFilter] = useState("");
+
+  const [
+    csCalendarMonth,
+    setCsCalendarMonth,
+  ] = useState(() => {
+    const now = new Date();
+
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+  });
 
   const [
     historyMonth,
@@ -3318,6 +3349,80 @@ export default function Home() {
       );
   }, [nwFilteredRows, nwCalendarKind]);
 
+  const csCalendarDays = useMemo(() => {
+    const year = csCalendarMonth.getFullYear();
+    const month = csCalendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const mondayIndex =
+      firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const startDate = addDays(firstDay, -mondayIndex);
+
+    const lastDayMondayIndex =
+      lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1;
+    const remaining = 6 - lastDayMondayIndex;
+    const endDate = addDays(lastDay, remaining);
+
+    const days: Date[] = [];
+    let cursor = new Date(startDate);
+
+    while (cursor.getTime() <= endDate.getTime()) {
+      days.push(new Date(cursor));
+      cursor = addDays(cursor, 1);
+    }
+
+    return days;
+  }, [csCalendarMonth]);
+
+  const csCalendarEvents = useMemo(() => {
+    const vawaEvents: CsReviewEvent[] = data.rows
+      .map((row) => {
+        const date = parseDateOnly(
+          row[VAWA_CS_DATE_HEADER] || ""
+        );
+
+        return date
+          ? {
+              origin: "vawa" as const,
+              row,
+              date,
+              completed: !!(
+                row[VAWA_CS_DONE_HEADER] || ""
+              ).trim(),
+              client: row["CLIENTE"] || "Sin cliente",
+            }
+          : null;
+      })
+      .filter(
+        (item): item is CsReviewEvent => item !== null
+      );
+
+    const nonVawaEvents: CsReviewEvent[] = nwData.rows
+      .map((row) => {
+        const date = parseDateOnly(
+          row[NONVAWA_CS_DATE_HEADER] || ""
+        );
+
+        return date
+          ? {
+              origin: "nonvawa" as const,
+              row,
+              date,
+              completed: !!(
+                row[NONVAWA_CS_DONE_HEADER] || ""
+              ).trim(),
+              client: row["CL"] || "Sin cliente",
+            }
+          : null;
+      })
+      .filter(
+        (item): item is CsReviewEvent => item !== null
+      );
+
+    return [...vawaEvents, ...nonVawaEvents];
+  }, [data.rows, nwData.rows]);
+
   const teamTableRows =
     useMemo(() => {
       return filteredTeamRows
@@ -3418,6 +3523,38 @@ export default function Home() {
     );
   }
 
+  function csPreviousMonth() {
+    setCsCalendarMonth(
+      new Date(
+        csCalendarMonth.getFullYear(),
+        csCalendarMonth.getMonth() - 1,
+        1
+      )
+    );
+  }
+
+  function csNextMonth() {
+    setCsCalendarMonth(
+      new Date(
+        csCalendarMonth.getFullYear(),
+        csCalendarMonth.getMonth() + 1,
+        1
+      )
+    );
+  }
+
+  function csGoToday() {
+    const today = new Date();
+
+    setCsCalendarMonth(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      )
+    );
+  }
+
   const statusClass = (
     status: string
   ) => {
@@ -3484,9 +3621,37 @@ export default function Home() {
     setMainView("nwgeneral");
     setTeamOpen(false);
 
+    /*
+     * "revisioncs" solo se alcanza desde el calendario
+     * unificado "CS"; al entrar por el propio nav de NW
+     * General siempre arrancamos en un tab real.
+     */
+    if (nwCalendarKind === "revisioncs") {
+      setNwCalendarKind("due");
+    }
+
     if (!nwLoaded && !nwLoading) {
       loadNwGeneral();
     }
+  }
+
+  function openCsReview() {
+    setMainView("cs");
+    setTeamOpen(false);
+
+    if (!nwLoaded && !nwLoading) {
+      loadNwGeneral();
+    }
+  }
+
+  function openCsEvent(event: CsReviewEvent) {
+    if (event.origin === "vawa") {
+      openGeneralCase(event.row);
+      return;
+    }
+
+    setNwCalendarKind("revisioncs");
+    setNwSelectedRow(event.row);
   }
 
   function toggleTeam() {
@@ -4619,6 +4784,19 @@ export default function Home() {
             <span>
               NW General
             </span>
+          </button>
+
+          <button
+            className={`navItem ${
+              mainView === "cs" ? "active" : ""
+            }`}
+            onClick={openCsReview}
+          >
+            <span className="navIcon">
+              ◈
+            </span>
+
+            <span>CS</span>
           </button>
         </nav>
 
@@ -6839,17 +7017,6 @@ export default function Home() {
               >
                 Deadline Interno
               </button>
-
-              <button
-                className={
-                  nwCalendarKind === "revisioncs"
-                    ? "stageTab active"
-                    : "stageTab"
-                }
-                onClick={() => setNwCalendarKind("revisioncs")}
-              >
-                Revisión CS
-              </button>
             </div>
 
             <div className="teamViewToolbar">
@@ -7006,6 +7173,153 @@ export default function Home() {
                 </div>
               </section>
             )}
+          </>
+        )}
+
+        {mainView === "cs" && (
+          <>
+            <header className="pageHeader">
+              <div>
+                <p className="eyebrow">CASE STRATEGY</p>
+                <h1>CS</h1>
+                <p>
+                  Calendario unificado de revisiones de Case
+                  Strategy, VAWA y NON-VAWA.
+                </p>
+              </div>
+
+              <button
+                className="refreshButton"
+                onClick={() => {
+                  loadCases();
+                  loadNwGeneral();
+                }}
+              >
+                ↻ Refresh
+              </button>
+            </header>
+
+            <section className="calendarCard">
+              <div className="calendarToolbar">
+                <div className="calendarTitle">
+                  <h2>
+                    {monthNames[csCalendarMonth.getMonth()]}{" "}
+                    {csCalendarMonth.getFullYear()}
+                  </h2>
+
+                  <span>
+                    {
+                      csCalendarEvents.filter(
+                        (event) => !event.completed
+                      ).length
+                    }{" "}
+                    pendientes
+                    {csCalendarEvents.some(
+                      (event) => event.completed
+                    ) && (
+                      <>
+                        {" "}
+                        ·{" "}
+                        {
+                          csCalendarEvents.filter(
+                            (event) => event.completed
+                          ).length
+                        }{" "}
+                        completadas
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="calendarControls">
+                  <button onClick={csPreviousMonth}>‹</button>
+                  <button
+                    className="todayButton"
+                    onClick={csGoToday}
+                  >
+                    Hoy
+                  </button>
+                  <button onClick={csNextMonth}>›</button>
+                </div>
+              </div>
+
+              <div className="calendarWeekHeader">
+                {weekDays.map((day) => (
+                  <div key={day}>{day}</div>
+                ))}
+              </div>
+
+              <div className="calendarGrid">
+                {csCalendarDays.map((day) => {
+                  const isCurrentMonth =
+                    day.getMonth() ===
+                    csCalendarMonth.getMonth();
+                  const isToday = sameDay(day, new Date());
+                  const dayEvents = csCalendarEvents.filter(
+                    (event) => sameDay(event.date, day)
+                  );
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`calendarDay ${
+                        !isCurrentMonth ? "outsideMonth" : ""
+                      }`}
+                    >
+                      <div className="calendarDayNumber">
+                        <span
+                          className={
+                            isToday ? "todayNumber" : ""
+                          }
+                        >
+                          {day.getDate()}
+                        </span>
+                      </div>
+
+                      <div className="calendarEvents">
+                        {dayEvents.map((event) => {
+                          const deliveryType = classifyDate(
+                            day
+                          );
+
+                          return (
+                            <button
+                              key={`${event.origin}-${event.row.__row}`}
+                              className={`calendarEvent ${
+                                event.completed
+                                  ? "calendarEventDelivered"
+                                  : deliveryType === "backlog"
+                                  ? "calendarEventBacklog"
+                                  : deliveryType === "pending"
+                                  ? "calendarEventPending"
+                                  : "calendarEventFuture"
+                              }`}
+                              onClick={() =>
+                                openCsEvent(event)
+                              }
+                            >
+                              <strong>{event.client}</strong>
+
+                              {event.completed ? (
+                                <span className="deliveredEventLabel">
+                                  ✓ Completada
+                                </span>
+                              ) : (
+                                <span>
+                                  {event.origin === "vawa"
+                                    ? "VAWA"
+                                    : "NON-VAWA"}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           </>
         )}
       </main>
