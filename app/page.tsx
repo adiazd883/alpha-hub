@@ -758,9 +758,25 @@ const isStageDelivered = (
       row["SENT TO MGM"] || ""
     ).trim();
 
-    return (
+    if (
       sentToMgm !== "" &&
       sentToMgm !== "--"
+    ) {
+      return true;
+    }
+
+    /*
+     * Algunos casos avanzan de STATUS a "MGM REVIEW" o
+     * "SENT TO USCIS" sin que alguien llene la columna
+     * "SENT TO MGM" — igual ya se entregó esta etapa.
+     */
+    const status = norm(
+      row["STATUS"] || ""
+    );
+
+    return (
+      status === "MGM REVIEW" ||
+      status === "SENT TO USCIS"
     );
   }
 
