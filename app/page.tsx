@@ -3377,7 +3377,7 @@ export default function Home() {
 
   const csCalendarEvents = useMemo(() => {
     const vawaEvents: CsReviewEvent[] = data.rows
-      .map((row) => {
+      .map((row): CsReviewEvent | null => {
         const date = parseDateOnly(
           row[VAWA_CS_DATE_HEADER] || ""
         );
@@ -3399,7 +3399,7 @@ export default function Home() {
       );
 
     const nonVawaEvents: CsReviewEvent[] = nwData.rows
-      .map((row) => {
+      .map((row): CsReviewEvent | null => {
         const date = parseDateOnly(
           row[NONVAWA_CS_DATE_HEADER] || ""
         );
