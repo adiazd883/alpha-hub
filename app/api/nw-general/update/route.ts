@@ -3,9 +3,9 @@ import { updateSheetCase } from "@/lib/sheets";
 import { USERS } from "@/lib/auth";
 
 /*
- * Única sección de NW GENERAL con escritura: el calendario
- * "Deadline Interno" permite cambiar estos campos.
- * El calendario "Deadline del Recibo" nunca llama a esta ruta.
+ * Los calendarios "Deadline Interno" y "Revisión CS" de NW GENERAL
+ * permiten cambiar estos campos. "Deadline del Recibo" nunca llama
+ * a esta ruta (es de solo lectura).
  */
 const EDITABLE_FIELDS = new Set([
   "GENERAL STATUS",
@@ -14,6 +14,8 @@ const EDITABLE_FIELDS = new Set([
   "EVIDENCE NEEDED",
   "REQUERIMIENTOS",
   "PL ASSIGNED",
+  "FORM",
+  "REVISIÓN CS COMPLETADA",
 ]);
 
 /*
