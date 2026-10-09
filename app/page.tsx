@@ -23,7 +23,7 @@ type User = {
 
 type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral";
 
-type NwCalendarKind = "due" | "interno";
+type NwCalendarKind = "due" | "interno" | "revisioncs";
 
 type TeamGroup = "paralegal" | "psych" | "ea";
 
@@ -136,6 +136,7 @@ const NW_DATE_FIELDS: Record<
 > = {
   due: { header: "Due Date", label: "Deadline del Recibo" },
   interno: { header: "DEADLINE INTERNO", label: "Deadline Interno" },
+  revisioncs: { header: "REVISIÓN CS", label: "Revisión CS" },
 };
 
 const NW_STATUS_HEADER = "GENERAL STATUS";
@@ -183,9 +184,33 @@ const NW_PL_ASSIGNED_OPTIONS = [
 
 const NW_TEXTAREA_FIELDS = ["EVIDENCE NEEDED"];
 
-const NW_DATE_INPUT_FIELDS = ["DATE ATTY REVIEW", "FECHA RTP"];
+const NW_DATE_INPUT_FIELDS = [
+  "DATE ATTY REVIEW",
+  "FECHA RTP",
+  "REVISIÓN CS COMPLETADA",
+];
 
 const NW_LINK_HEADER = "LINK";
+
+/*
+ * Calendario "Revisión CS": solo muestra este subconjunto de
+ * campos en el modal, no todos los headers de la sheet.
+ */
+const NW_REVISIONCS_DISPLAY_FIELDS = [
+  "CL",
+  "FORM",
+  "Evidence needed",
+  "REVISIÓN CS COMPLETADA",
+  "REQUERIMIENTOS",
+  "LINK",
+];
+
+const NW_REVISIONCS_EDITABLE_FIELDS = [
+  "FORM",
+  "EVIDENCE NEEDED",
+  "REVISIÓN CS COMPLETADA",
+  "REQUERIMIENTOS",
+];
 
 const NW_REQUIREMENT_HEADER = "REQUERIMIENTOS";
 
@@ -3275,9 +3300,21 @@ export default function Home() {
       .map((row) => ({
         row,
         date: parseDateOnly(row[header] || ""),
+        completed:
+          nwCalendarKind === "revisioncs"
+            ? !!(
+                row["REVISIÓN CS COMPLETADA"] || ""
+              ).trim()
+            : false,
       }))
       .filter(
-        (item): item is { row: CaseRow; date: Date } => !!item.date
+        (
+          item
+        ): item is {
+          row: CaseRow;
+          date: Date;
+          completed: boolean;
+        } => !!item.date
       );
   }, [nwFilteredRows, nwCalendarKind]);
 
@@ -6802,6 +6839,17 @@ export default function Home() {
               >
                 Deadline Interno
               </button>
+
+              <button
+                className={
+                  nwCalendarKind === "revisioncs"
+                    ? "stageTab active"
+                    : "stageTab"
+                }
+                onClick={() => setNwCalendarKind("revisioncs")}
+              >
+                Revisión CS
+              </button>
             </div>
 
             <div className="teamViewToolbar">
@@ -6846,8 +6894,35 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {nwCalendarEvents.length} casos ·{" "}
-                      {NW_DATE_FIELDS[nwCalendarKind].label}
+                      {nwCalendarKind === "revisioncs" ? (
+                        <>
+                          {
+                            nwCalendarEvents.filter(
+                              (event) => !event.completed
+                            ).length
+                          }{" "}
+                          pendientes
+                          {nwCalendarEvents.some(
+                            (event) => event.completed
+                          ) && (
+                            <>
+                              {" "}
+                              ·{" "}
+                              {
+                                nwCalendarEvents.filter(
+                                  (event) => event.completed
+                                ).length
+                              }{" "}
+                              completadas
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {nwCalendarEvents.length} casos ·{" "}
+                          {NW_DATE_FIELDS[nwCalendarKind].label}
+                        </>
+                      )}
                     </span>
                   </div>
 
@@ -6892,7 +6967,7 @@ export default function Home() {
                         </div>
 
                         <div className="calendarEvents">
-                          {dayEvents.map(({ row }) => {
+                          {dayEvents.map(({ row, completed }) => {
                             const status = row[NW_STATUS_HEADER] || "";
                             const deliveryType = classifyDate(day);
 
@@ -6900,7 +6975,9 @@ export default function Home() {
                               <button
                                 key={row.__row}
                                 className={`calendarEvent ${
-                                  deliveryType === "backlog"
+                                  completed
+                                    ? "calendarEventDelivered"
+                                    : deliveryType === "backlog"
                                     ? "calendarEventBacklog"
                                     : deliveryType === "pending"
                                     ? "calendarEventPending"
@@ -6912,7 +6989,13 @@ export default function Home() {
                                   {row[NW_CLIENT_HEADER] || "Sin cliente"}
                                 </strong>
 
-                                {status ? <span>{status}</span> : null}
+                                {completed ? (
+                                  <span className="deliveredEventLabel">
+                                    ✓ Completada
+                                  </span>
+                                ) : status ? (
+                                  <span>{status}</span>
+                                ) : null}
                               </button>
                             );
                           })}
@@ -7137,7 +7220,10 @@ export default function Home() {
 
             <div className="modalBody">
               <div className="fieldGrid">
-                {nwData.headers.map((header) => {
+                {(nwCalendarKind === "revisioncs"
+                  ? NW_REVISIONCS_DISPLAY_FIELDS
+                  : nwData.headers
+                ).map((header) => {
                   const value = nwSelectedRow[header] || "";
                   const normHeader = norm(header);
                   const isStatus = normHeader === norm(NW_STATUS_HEADER);
@@ -7155,11 +7241,18 @@ export default function Home() {
                   const isReassignment = NW_REASSIGNMENT_FIELDS.some(
                     (h) => norm(h) === normHeader
                   );
+                  const editableFieldsForKind =
+                    nwCalendarKind === "interno"
+                      ? NW_EDITABLE_FIELDS
+                      : nwCalendarKind === "revisioncs"
+                      ? NW_REVISIONCS_EDITABLE_FIELDS
+                      : [];
                   const editable =
-                    nwCalendarKind === "interno" &&
                     role !== "MANAGER" &&
                     role !== "COORDINATOR" &&
-                    NW_EDITABLE_FIELDS.some((h) => norm(h) === normHeader) &&
+                    editableFieldsForKind.some(
+                      (h) => norm(h) === normHeader
+                    ) &&
                     (!isReassignment ||
                       role === "ADMIN" ||
                       role === "TL");
