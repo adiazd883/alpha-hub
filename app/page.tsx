@@ -610,19 +610,6 @@ const getCvlKpi = (
   return classifyDate(date);
 };
 
-const getKpiGetter = (
-  section: KpiSection
-) => {
-  if (section === "mgm") return getMgmKpi;
-  if (section === "psych") return getPsychKpi;
-  if (section === "caratula") return getCaratulaKpi;
-  if (section === "draft") return getDraftKpi;
-  if (section === "plcvl") return getPlCvlKpi;
-  if (section === "ea") return getEaKpi;
-
-  return getCvlKpi;
-};
-
 /* =========================
    TEAM
    ========================= */
@@ -1641,9 +1628,6 @@ export default function Home() {
   const calculateStats = (
     section: KpiSection
   ): Stats => {
-    const getter =
-      getKpiGetter(section);
-
     let backlog = 0;
     let pending = 0;
     let future = 0;
@@ -1651,25 +1635,52 @@ export default function Home() {
 
     data.rows.forEach(
       (row) => {
-        const result =
-          getter(row);
-
+        /*
+         * Igual que la carga programada: la semana a la que
+         * pertenece un caso se calcula por su fecha esperada
+         * y se ignora si ya fue entregado, para que el
+         * número de "Esta semana"/"Backlog"/"Próximas" nunca
+         * baje solo porque alguien lo entregó.
+         */
         if (
-          result === "backlog"
+          scheduledEligible(
+            row,
+            section
+          )
         ) {
-          backlog++;
-        }
+          const expectedDate =
+            parseDateOnly(
+              row[
+                calendarDateHeader(
+                  section
+                )
+              ] || ""
+            );
 
-        if (
-          result === "pending"
-        ) {
-          pending++;
-        }
+          const result =
+            expectedDate
+              ? classifyDate(
+                  expectedDate
+                )
+              : null;
 
-        if (
-          result === "future"
-        ) {
-          future++;
+          if (
+            result === "backlog"
+          ) {
+            backlog++;
+          }
+
+          if (
+            result === "pending"
+          ) {
+            pending++;
+          }
+
+          if (
+            result === "future"
+          ) {
+            future++;
+          }
         }
 
         if (
@@ -1807,15 +1818,34 @@ export default function Home() {
         );
       }
 
-      const getter =
-        getKpiGetter(
-          selectedKpi.section
-        );
-
       return data.rows.filter(
-        (row) =>
-          getter(row) ===
-          selectedKpi.type
+        (row) => {
+          if (
+            !scheduledEligible(
+              row,
+              selectedKpi.section
+            )
+          ) {
+            return false;
+          }
+
+          const expectedDate =
+            parseDateOnly(
+              row[
+                calendarDateHeader(
+                  selectedKpi.section
+                )
+              ] || ""
+            );
+
+          return (
+            !!expectedDate &&
+            classifyDate(
+              expectedDate
+            ) ===
+              selectedKpi.type
+          );
+        }
       );
     }, [
       data.rows,
