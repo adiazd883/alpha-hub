@@ -7436,21 +7436,15 @@ export default function Home() {
 
                       <div className="calendarEvents">
                         {dayEvents.map((event) => {
-                          const deliveryType = classifyDate(
-                            day
-                          );
-
                           return (
                             <button
                               key={`${event.origin}-${event.row.__row}`}
                               className={`calendarEvent ${
                                 event.completed
                                   ? "calendarEventDelivered"
-                                  : deliveryType === "backlog"
-                                  ? "calendarEventBacklog"
-                                  : deliveryType === "pending"
-                                  ? "calendarEventPending"
-                                  : "calendarEventFuture"
+                                  : event.origin === "vawa"
+                                  ? "calendarEventVawa"
+                                  : "calendarEventNonVawa"
                               }`}
                               onClick={() =>
                                 openCsEvent(event)
@@ -7593,21 +7587,15 @@ export default function Home() {
 
                       <div className="calendarEvents">
                         {dayEvents.map((event) => {
-                          const deliveryType = classifyDate(
-                            day
-                          );
-
                           return (
                             <button
                               key={`${event.origin}-${event.row.__row}`}
                               className={`calendarEvent ${
                                 event.completed
                                   ? "calendarEventDelivered"
-                                  : deliveryType === "backlog"
-                                  ? "calendarEventBacklog"
-                                  : deliveryType === "pending"
-                                  ? "calendarEventPending"
-                                  : "calendarEventFuture"
+                                  : event.origin === "vawa"
+                                  ? "calendarEventVawa"
+                                  : "calendarEventNonVawa"
                               }`}
                               onClick={() =>
                                 openMgmReviewEvent(event)
