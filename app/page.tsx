@@ -21,7 +21,7 @@ type User = {
   role: Role | null;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -235,7 +235,16 @@ const VAWA_CS_DONE_HEADER = "CS DONE ESTRATEGIA";
 const NONVAWA_CS_DATE_HEADER = "REVISIÓN CS";
 const NONVAWA_CS_DONE_HEADER = "REVISIÓN CS COMPLETADA";
 
-type CsReviewEvent = {
+/*
+ * Calendario unificado "MGM Review": combina la meta de MGM
+ * Review de VAWA (ADMINs) con las entregas NON-VAWA por
+ * Deadline Interno (NW GENERAL).
+ */
+const VAWA_MGM_DATE_HEADER = "COMMITMENT";
+const NONVAWA_DEADLINE_INTERNO_DATE_HEADER = "DEADLINE INTERNO";
+const NONVAWA_DELIVERED_STATUS = "SENT TO USCIS";
+
+type MergedReviewEvent = {
   origin: "vawa" | "nonvawa";
   row: CaseRow;
   date: Date;
@@ -1209,6 +1218,19 @@ export default function Home() {
   const [
     csCalendarMonth,
     setCsCalendarMonth,
+  ] = useState(() => {
+    const now = new Date();
+
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+  });
+
+  const [
+    mgmReviewCalendarMonth,
+    setMgmReviewCalendarMonth,
   ] = useState(() => {
     const now = new Date();
 
@@ -3376,8 +3398,8 @@ export default function Home() {
   }, [csCalendarMonth]);
 
   const csCalendarEvents = useMemo(() => {
-    const vawaEvents: CsReviewEvent[] = data.rows
-      .map((row): CsReviewEvent | null => {
+    const vawaEvents: MergedReviewEvent[] = data.rows
+      .map((row): MergedReviewEvent | null => {
         const date = parseDateOnly(
           row[VAWA_CS_DATE_HEADER] || ""
         );
@@ -3395,11 +3417,11 @@ export default function Home() {
           : null;
       })
       .filter(
-        (item): item is CsReviewEvent => item !== null
+        (item): item is MergedReviewEvent => item !== null
       );
 
-    const nonVawaEvents: CsReviewEvent[] = nwData.rows
-      .map((row): CsReviewEvent | null => {
+    const nonVawaEvents: MergedReviewEvent[] = nwData.rows
+      .map((row): MergedReviewEvent | null => {
         const date = parseDateOnly(
           row[NONVAWA_CS_DATE_HEADER] || ""
         );
@@ -3417,7 +3439,79 @@ export default function Home() {
           : null;
       })
       .filter(
-        (item): item is CsReviewEvent => item !== null
+        (item): item is MergedReviewEvent => item !== null
+      );
+
+    return [...vawaEvents, ...nonVawaEvents];
+  }, [data.rows, nwData.rows]);
+
+  const mgmReviewCalendarDays = useMemo(() => {
+    const year = mgmReviewCalendarMonth.getFullYear();
+    const month = mgmReviewCalendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const mondayIndex =
+      firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const startDate = addDays(firstDay, -mondayIndex);
+
+    const lastDayMondayIndex =
+      lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1;
+    const remaining = 6 - lastDayMondayIndex;
+    const endDate = addDays(lastDay, remaining);
+
+    const days: Date[] = [];
+    let cursor = new Date(startDate);
+
+    while (cursor.getTime() <= endDate.getTime()) {
+      days.push(new Date(cursor));
+      cursor = addDays(cursor, 1);
+    }
+
+    return days;
+  }, [mgmReviewCalendarMonth]);
+
+  const mgmReviewCalendarEvents = useMemo(() => {
+    const vawaEvents: MergedReviewEvent[] = data.rows
+      .map((row): MergedReviewEvent | null => {
+        const date = parseDateOnly(
+          row[VAWA_MGM_DATE_HEADER] || ""
+        );
+
+        return date
+          ? {
+              origin: "vawa" as const,
+              row,
+              date,
+              completed: isStageDelivered(row, "mgm"),
+              client: row["CLIENTE"] || "Sin cliente",
+            }
+          : null;
+      })
+      .filter(
+        (item): item is MergedReviewEvent => item !== null
+      );
+
+    const nonVawaEvents: MergedReviewEvent[] = nwData.rows
+      .map((row): MergedReviewEvent | null => {
+        const date = parseDateOnly(
+          row[NONVAWA_DEADLINE_INTERNO_DATE_HEADER] || ""
+        );
+
+        return date
+          ? {
+              origin: "nonvawa" as const,
+              row,
+              date,
+              completed:
+                norm(row["GENERAL STATUS"] || "") ===
+                NONVAWA_DELIVERED_STATUS,
+              client: row["CL"] || "Sin cliente",
+            }
+          : null;
+      })
+      .filter(
+        (item): item is MergedReviewEvent => item !== null
       );
 
     return [...vawaEvents, ...nonVawaEvents];
@@ -3555,6 +3649,38 @@ export default function Home() {
     );
   }
 
+  function mgmReviewPreviousMonth() {
+    setMgmReviewCalendarMonth(
+      new Date(
+        mgmReviewCalendarMonth.getFullYear(),
+        mgmReviewCalendarMonth.getMonth() - 1,
+        1
+      )
+    );
+  }
+
+  function mgmReviewNextMonth() {
+    setMgmReviewCalendarMonth(
+      new Date(
+        mgmReviewCalendarMonth.getFullYear(),
+        mgmReviewCalendarMonth.getMonth() + 1,
+        1
+      )
+    );
+  }
+
+  function mgmReviewGoToday() {
+    const today = new Date();
+
+    setMgmReviewCalendarMonth(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      )
+    );
+  }
+
   const statusClass = (
     status: string
   ) => {
@@ -3644,13 +3770,32 @@ export default function Home() {
     }
   }
 
-  function openCsEvent(event: CsReviewEvent) {
+  function openCsEvent(event: MergedReviewEvent) {
     if (event.origin === "vawa") {
       openGeneralCase(event.row);
       return;
     }
 
     setNwCalendarKind("revisioncs");
+    setNwSelectedRow(event.row);
+  }
+
+  function openMgmReview() {
+    setMainView("mgmreview");
+    setTeamOpen(false);
+
+    if (!nwLoaded && !nwLoading) {
+      loadNwGeneral();
+    }
+  }
+
+  function openMgmReviewEvent(event: MergedReviewEvent) {
+    if (event.origin === "vawa") {
+      openTeamCase(event.row, "mgm");
+      return;
+    }
+
+    setNwCalendarKind("interno");
     setNwSelectedRow(event.row);
   }
 
@@ -4797,6 +4942,19 @@ export default function Home() {
             </span>
 
             <span>CS</span>
+          </button>
+
+          <button
+            className={`navItem ${
+              mainView === "mgmreview" ? "active" : ""
+            }`}
+            onClick={openMgmReview}
+          >
+            <span className="navIcon">
+              ◆
+            </span>
+
+            <span>MGM Review</span>
           </button>
         </nav>
 
@@ -7303,6 +7461,163 @@ export default function Home() {
                               {event.completed ? (
                                 <span className="deliveredEventLabel">
                                   ✓ Completada
+                                </span>
+                              ) : (
+                                <span>
+                                  {event.origin === "vawa"
+                                    ? "VAWA"
+                                    : "NON-VAWA"}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </>
+        )}
+
+        {mainView === "mgmreview" && (
+          <>
+            <header className="pageHeader">
+              <div>
+                <p className="eyebrow">MGM REVIEW</p>
+                <h1>MGM Review</h1>
+                <p>
+                  Calendario unificado de metas MGM Review
+                  (VAWA) y entregas por Deadline Interno
+                  (NON-VAWA).
+                </p>
+              </div>
+
+              <button
+                className="refreshButton"
+                onClick={() => {
+                  loadCases();
+                  loadNwGeneral();
+                }}
+              >
+                ↻ Refresh
+              </button>
+            </header>
+
+            <section className="calendarCard">
+              <div className="calendarToolbar">
+                <div className="calendarTitle">
+                  <h2>
+                    {
+                      monthNames[
+                        mgmReviewCalendarMonth.getMonth()
+                      ]
+                    }{" "}
+                    {mgmReviewCalendarMonth.getFullYear()}
+                  </h2>
+
+                  <span>
+                    {
+                      mgmReviewCalendarEvents.filter(
+                        (event) => !event.completed
+                      ).length
+                    }{" "}
+                    pendientes
+                    {mgmReviewCalendarEvents.some(
+                      (event) => event.completed
+                    ) && (
+                      <>
+                        {" "}
+                        ·{" "}
+                        {
+                          mgmReviewCalendarEvents.filter(
+                            (event) => event.completed
+                          ).length
+                        }{" "}
+                        completadas
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="calendarControls">
+                  <button onClick={mgmReviewPreviousMonth}>
+                    ‹
+                  </button>
+                  <button
+                    className="todayButton"
+                    onClick={mgmReviewGoToday}
+                  >
+                    Hoy
+                  </button>
+                  <button onClick={mgmReviewNextMonth}>
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div className="calendarWeekHeader">
+                {weekDays.map((day) => (
+                  <div key={day}>{day}</div>
+                ))}
+              </div>
+
+              <div className="calendarGrid">
+                {mgmReviewCalendarDays.map((day) => {
+                  const isCurrentMonth =
+                    day.getMonth() ===
+                    mgmReviewCalendarMonth.getMonth();
+                  const isToday = sameDay(day, new Date());
+                  const dayEvents =
+                    mgmReviewCalendarEvents.filter(
+                      (event) => sameDay(event.date, day)
+                    );
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`calendarDay ${
+                        !isCurrentMonth ? "outsideMonth" : ""
+                      }`}
+                    >
+                      <div className="calendarDayNumber">
+                        <span
+                          className={
+                            isToday ? "todayNumber" : ""
+                          }
+                        >
+                          {day.getDate()}
+                        </span>
+                      </div>
+
+                      <div className="calendarEvents">
+                        {dayEvents.map((event) => {
+                          const deliveryType = classifyDate(
+                            day
+                          );
+
+                          return (
+                            <button
+                              key={`${event.origin}-${event.row.__row}`}
+                              className={`calendarEvent ${
+                                event.completed
+                                  ? "calendarEventDelivered"
+                                  : deliveryType === "backlog"
+                                  ? "calendarEventBacklog"
+                                  : deliveryType === "pending"
+                                  ? "calendarEventPending"
+                                  : "calendarEventFuture"
+                              }`}
+                              onClick={() =>
+                                openMgmReviewEvent(event)
+                              }
+                            >
+                              <strong>{event.client}</strong>
+
+                              {event.completed ? (
+                                <span className="deliveredEventLabel">
+                                  ✓ Entregado
                                 </span>
                               ) : (
                                 <span>
