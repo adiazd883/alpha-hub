@@ -242,7 +242,10 @@ const NONVAWA_CS_DONE_HEADER = "REVISIÓN CS COMPLETADA";
  */
 const VAWA_MGM_DATE_HEADER = "COMMITMENT";
 const NONVAWA_DEADLINE_INTERNO_DATE_HEADER = "DEADLINE INTERNO";
-const NONVAWA_DELIVERED_STATUS = "SENT TO USCIS";
+const NONVAWA_DELIVERED_STATUSES = new Set([
+  "READY TO PRINT",
+  "SENT TO USCIS",
+]);
 
 type MergedReviewEvent = {
   origin: "vawa" | "nonvawa";
@@ -3503,9 +3506,9 @@ export default function Home() {
               origin: "nonvawa" as const,
               row,
               date,
-              completed:
-                norm(row["GENERAL STATUS"] || "") ===
-                NONVAWA_DELIVERED_STATUS,
+              completed: NONVAWA_DELIVERED_STATUSES.has(
+                norm(row["GENERAL STATUS"] || "")
+              ),
               client: row["CL"] || "Sin cliente",
             }
           : null;
