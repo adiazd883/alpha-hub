@@ -3361,7 +3361,9 @@ export default function Home() {
             ? !!(
                 row["REVISIÓN CS COMPLETADA"] || ""
               ).trim()
-            : false,
+            : NONVAWA_DELIVERED_STATUSES.has(
+                norm(row["GENERAL STATUS"] || "")
+              ),
       }))
       .filter(
         (
@@ -7226,33 +7228,24 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {nwCalendarKind === "revisioncs" ? (
+                      {
+                        nwCalendarEvents.filter(
+                          (event) => !event.completed
+                        ).length
+                      }{" "}
+                      pendientes
+                      {nwCalendarEvents.some(
+                        (event) => event.completed
+                      ) && (
                         <>
+                          {" "}
+                          ·{" "}
                           {
                             nwCalendarEvents.filter(
-                              (event) => !event.completed
+                              (event) => event.completed
                             ).length
                           }{" "}
-                          pendientes
-                          {nwCalendarEvents.some(
-                            (event) => event.completed
-                          ) && (
-                            <>
-                              {" "}
-                              ·{" "}
-                              {
-                                nwCalendarEvents.filter(
-                                  (event) => event.completed
-                                ).length
-                              }{" "}
-                              completadas
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {nwCalendarEvents.length} casos ·{" "}
-                          {NW_DATE_FIELDS[nwCalendarKind].label}
+                          completadas
                         </>
                       )}
                     </span>
