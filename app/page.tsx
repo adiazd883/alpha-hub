@@ -4934,6 +4934,10 @@ export default function Home() {
             </span>
           </button>
 
+          <p className="navSectionLabel">
+            Vistas combinadas
+          </p>
+
           <button
             className={`navItem ${
               mainView === "cs" ? "active" : ""

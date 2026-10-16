@@ -246,6 +246,35 @@ button {
   color: white;
 }
 
+.navSectionLabel {
+  margin:
+    10px
+    0
+    2px
+    12px;
+
+  padding-top: 10px;
+
+  border-top:
+    1px
+    solid
+    rgba(
+      255,
+      255,
+      255,
+      0.09
+    );
+
+  color: #5c6b8a;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+}
+
 .navIcon {
   width: 21px;
 
@@ -1589,13 +1618,13 @@ button {
  */
 .calendarEventVawa {
   border-left-color:
-    #365bc0;
+    #0e8f80;
 
   background:
-    #edf3ff;
+    #e6f7f4;
 
   color:
-    #2c4a96;
+    #0b6e62;
 }
 
 .calendarEventNonVawa {
