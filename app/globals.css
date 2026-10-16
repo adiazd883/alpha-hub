@@ -1582,6 +1582,33 @@ button {
   opacity: 1;
 }
 
+/*
+ * Calendarios combinados (CS, MGM Review): mientras no esté
+ * entregado, el color identifica el origen (VAWA vs NON-VAWA)
+ * en vez de la urgencia, para distinguirlos sin leer la etiqueta.
+ */
+.calendarEventVawa {
+  border-left-color:
+    #365bc0;
+
+  background:
+    #edf3ff;
+
+  color:
+    #2c4a96;
+}
+
+.calendarEventNonVawa {
+  border-left-color:
+    #7049ae;
+
+  background:
+    #f3edff;
+
+  color:
+    #5c3a8c;
+}
+
 /* ======================================================
    TEAM TABLE
 ====================================================== */
