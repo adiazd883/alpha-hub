@@ -81,14 +81,14 @@ button {
   display: flex;
   flex-direction: column;
 
-  background:
-    linear-gradient(
-      180deg,
-      #111d36 0%,
-      #0d172c 100%
-    );
+  background: #f3efe6;
 
-  color: white;
+  border-right:
+    1px
+    solid
+    #e4ddd0;
+
+  color: #2a2721;
 }
 
 .sidebarBrand {
@@ -124,7 +124,7 @@ button {
   letter-spacing:
     0.24em;
 
-  color: #8290aa;
+  color: #a39b8c;
 }
 
 .logoMark {
@@ -176,7 +176,7 @@ button {
 
   margin-bottom: 8px;
 
-  color: #697994;
+  color: #a39b8c;
 
   font-size: 9px;
   font-weight: 800;
@@ -208,7 +208,7 @@ button {
 
   background: transparent;
 
-  color: #aab5c9;
+  color: #6b6558;
 
   text-align: left;
 
@@ -225,25 +225,25 @@ button {
 .navItem:hover {
   background:
     rgba(
-      255,
-      255,
-      255,
-      0.055
+      0,
+      0,
+      0,
+      0.04
     );
 
-  color: white;
+  color: #2a2721;
 }
 
 .navItem.active {
   background:
     rgba(
-      76,
-      112,
-      232,
-      0.18
+      66,
+      99,
+      193,
+      0.14
     );
 
-  color: white;
+  color: #3350a0;
 }
 
 .navSectionLabel {
@@ -258,14 +258,9 @@ button {
   border-top:
     1px
     solid
-    rgba(
-      255,
-      255,
-      255,
-      0.09
-    );
+    #e4ddd0;
 
-  color: #5c6b8a;
+  color: #a39b8c;
 
   font-size: 9px;
   font-weight: 700;
@@ -290,7 +285,7 @@ button {
 .teamChevron {
   margin-left: auto;
 
-  color: #7786a1;
+  color: #a39b8c;
 
   font-size: 12px;
 }
@@ -318,7 +313,7 @@ button {
 
   background: transparent;
 
-  color: #74839d;
+  color: #8a8478;
 
   font-size: 11px;
 
@@ -326,18 +321,18 @@ button {
 }
 
 .teamSub:hover {
-  color: white;
+  color: #2a2721;
 }
 
 .teamSub.active {
-  color: #aebfff;
+  color: #3350a0;
 
   background:
     rgba(
-      83,
-      116,
-      228,
-      0.08
+      66,
+      99,
+      193,
+      0.1
     );
 
   font-weight: 700;
@@ -354,12 +349,7 @@ button {
   border-top:
     1px
     solid
-    rgba(
-      255,
-      255,
-      255,
-      0.07
-    );
+    #e4ddd0;
 
   display: flex;
   align-items: center;
@@ -378,7 +368,7 @@ button {
   display: grid;
   place-items: center;
 
-  background: #243656;
+  background: #4263c1;
 
   color: white;
 
@@ -402,7 +392,7 @@ button {
 .sidebarUser span {
   margin-top: 2px;
 
-  color: #7f8ca3;
+  color: #8a8478;
 
   font-size: 9px;
 
@@ -421,7 +411,7 @@ button {
 
   background: transparent;
 
-  color: #72819c;
+  color: #8a8478;
 
   cursor: pointer;
 }
@@ -429,13 +419,13 @@ button {
 .logoutButton:hover {
   background:
     rgba(
-      255,
-      255,
-      255,
-      0.06
+      0,
+      0,
+      0,
+      0.05
     );
 
-  color: white;
+  color: #2a2721;
 }
 
 /* ======================================================
@@ -2716,6 +2706,7 @@ button {
 
   .brandWords,
   .navLabel,
+  .navSectionLabel,
   .navItem
   > span:not(
     .navIcon
