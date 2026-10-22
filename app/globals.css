@@ -3992,3 +3992,19 @@ button {
     width: auto;
   }
 }
+
+.teamCheck.partial {
+  border-color: #4263c1;
+}
+
+.teamCheck.partial::after {
+  content: "";
+  width: 7px;
+  height: 2px;
+  border-radius: 1px;
+  background: #4263c1;
+}
+
+.teamStageOption.isUnassigned .teamMemberName {
+  color: #a74c4c;
+}
