@@ -1229,9 +1229,11 @@ export default function Home() {
   const [teamViewMode, setTeamViewMode] =
     useState<TeamViewMode>("calendar");
 
-  // null = todavía no se eligió; se usa el primer colaborador.
   const [teamMember, setTeamMember] =
-    useState<string | null>(null);
+    useState(TEAM_ALL_MEMBERS);
+
+  const [teamMenu, setTeamMenu] =
+    useState<"member" | "stage" | null>(null);
 
   const [
     hiddenTeamStages,
@@ -2212,13 +2214,12 @@ export default function Home() {
       });
   }, [teamEvents, teamMonthRange]);
 
+  // Por defecto se ve todo el equipo.
   const activeTeamMember =
-    teamMember !== null &&
-    (teamMember === TEAM_ALL_MEMBERS ||
-      teamMembers.some((item) => item.member === teamMember))
+    teamMember === TEAM_ALL_MEMBERS ||
+    teamMembers.some((item) => item.member === teamMember)
       ? teamMember
-      : teamMembers.find((item) => item.member)?.member ??
-        TEAM_ALL_MEMBERS;
+      : TEAM_ALL_MEMBERS;
 
   const memberTeamEvents = useMemo(
     () =>
@@ -5171,530 +5172,595 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="teamStageFilters">
-                <span className="teamStageFiltersLabel">Tipo</span>
+              <div className="teamFilterBar">
+                {teamMenu && (
+                  <div
+                    className="teamMenuBackdrop"
+                    onClick={() => setTeamMenu(null)}
+                  />
+                )}
 
-                {TEAM_STAGES.map((stage) => {
-                  const count = memberTeamEvents.filter(
-                    (event) =>
-                      event.stage === stage &&
-                      isInTeamMonth(event.date)
-                  ).length;
+                <div className="teamDropdown">
+                  <button
+                    className={`teamDropdownButton ${
+                      teamMenu === "member" ? "open" : ""
+                    }`}
+                    onClick={() =>
+                      setTeamMenu(teamMenu === "member" ? null : "member")
+                    }
+                  >
+                    <span className="teamDropdownLabel">Colaborador</span>
+                    <strong>
+                      {activeTeamMember === TEAM_ALL_MEMBERS
+                        ? "Todo el equipo"
+                        : activeTeamMember || "Sin asignar"}
+                    </strong>
+                    <span className="teamDropdownCaret">▾</span>
+                  </button>
 
-                  return (
-                    <button
-                      key={stage}
-                      className={`teamStageChip ${
-                        hiddenTeamStages.includes(stage) ? "" : "active"
-                      } ${count === 0 ? "isEmpty" : ""}`}
-                      onClick={() => toggleTeamStage(stage)}
-                      title={stageLabel(stage)}
-                    >
-                      {teamStageShortLabel[stage]}
-                      <em>{count}</em>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                  {teamMenu === "member" && (
+                    <div className="teamDropdownMenu">
+                      <button
+                        className={`teamMemberItem ${
+                          activeTeamMember === TEAM_ALL_MEMBERS ? "active" : ""
+                        }`}
+                        onClick={() => {
+                          setTeamMember(TEAM_ALL_MEMBERS);
+                          setTeamMenu(null);
+                        }}
+                      >
+                        <span className="teamMemberAvatar">∑</span>
+                        <span className="teamMemberName">Todo el equipo</span>
+                      </button>
 
-            <div className="teamMemberLayout">
-              <div className="teamMemberMain">
-                {teamViewMode === "calendar" && (
-                  <section className="calendarCard">
-                    <div className="calendarToolbar">
-                      <div className="calendarTitle">
-                        <h2>
-                          {monthNames[calendarMonth.getMonth()]}{" "}
-                          {calendarMonth.getFullYear()}
-                        </h2>
+                      {teamMembers.map((item) => (
+                        <button
+                          key={item.member || "__UNASSIGNED__"}
+                          className={`teamMemberItem ${
+                            activeTeamMember === item.member ? "active" : ""
+                          } ${!item.member ? "isUnassigned" : ""}`}
+                          onClick={() => {
+                            setTeamMember(item.member);
+                            setTeamMenu(null);
+                          }}
+                        >
+                          <span className="teamMemberAvatar">
+                            {item.member ? item.member.charAt(0) : "?"}
+                          </span>
 
-                        <span>
-                          {activeTeamMember === TEAM_ALL_MEMBERS
-                            ? "Todo el equipo"
-                            : activeTeamMember || "Sin asignar"}{" "}
-                          ·{" "}
-                          {
-                            visibleMonthTeamEvents.filter(
-                              (event) => !event.delivered
-                            ).length
-                          }{" "}
-                          pendientes
-                          {visibleMonthTeamEvents.some(
-                            (event) => event.delivered
-                          ) && (
-                            <>
-                              {" "}
-                              ·{" "}
-                              {
-                                visibleMonthTeamEvents.filter(
-                                  (event) => event.delivered
-                                ).length
-                              }{" "}
-                              entregadas
-                            </>
-                          )}
-                        </span>
-                      </div>
+                          <span className="teamMemberName">
+                            {item.member || "Sin asignar"}
+                          </span>
 
-                      <div className="calendarControls">
-                        <button onClick={previousMonth}>‹</button>
+                          <span className="teamMemberCounts">
+                            {item.backlog > 0 && (
+                              <em
+                                className="teamMemberBacklog"
+                                title="Entregas en backlog"
+                              >
+                                {item.backlog}
+                              </em>
+                            )}
 
-                        <button className="todayButton" onClick={goToday}>
-                          Hoy
+                            <em title="Entregas en el mes">{item.month}</em>
+                          </span>
                         </button>
-
-                        <button onClick={nextMonth}>›</button>
-                      </div>
-                    </div>
-
-                    <div className="calendarWeekHeader">
-                      {weekDays.map((day) => (
-                        <div key={day}>{day}</div>
                       ))}
                     </div>
+                  )}
+                </div>
 
-                    <div className="calendarGrid">
-                      {calendarDays.map((day) => {
-                        const isCurrentMonth =
-                          day.getMonth() === calendarMonth.getMonth();
+                <div className="teamDropdown">
+                  <button
+                    className={`teamDropdownButton ${
+                      teamMenu === "stage" ? "open" : ""
+                    }`}
+                    onClick={() =>
+                      setTeamMenu(teamMenu === "stage" ? null : "stage")
+                    }
+                  >
+                    <span className="teamDropdownLabel">Tipo</span>
+                    <strong>
+                      {hiddenTeamStages.length === 0
+                        ? "Todos"
+                        : `${TEAM_STAGES.length - hiddenTeamStages.length} de ${TEAM_STAGES.length}`}
+                    </strong>
+                    <span className="teamDropdownCaret">▾</span>
+                  </button>
 
-                        const isToday = sameDay(day, new Date());
+                  {teamMenu === "stage" && (
+                    <div className="teamDropdownMenu">
+                      <button
+                        className="teamStageOption"
+                        onClick={() => setHiddenTeamStages([])}
+                      >
+                        <span
+                          className={`teamCheck ${
+                            hiddenTeamStages.length === 0 ? "checked" : ""
+                          }`}
+                        />
+                        <span className="teamMemberName">Todos</span>
+                      </button>
 
-                        const dayEvents = visibleTeamEvents.filter(
-                          (event) => sameDay(event.date, day)
-                        );
+                      {TEAM_STAGES.map((stage) => {
+                        const count = memberTeamEvents.filter(
+                          (event) =>
+                            event.stage === stage &&
+                            isInTeamMonth(event.date)
+                        ).length;
 
                         return (
-                          <div
-                            key={day.toISOString()}
-                            className={`calendarDay ${
-                              !isCurrentMonth ? "outsideMonth" : ""
-                            }`}
+                          <button
+                            key={stage}
+                            className="teamStageOption"
+                            onClick={() => toggleTeamStage(stage)}
                           >
-                            <div className="calendarDayNumber">
-                              <span className={isToday ? "todayNumber" : ""}>
-                                {day.getDate()}
-                              </span>
-                            </div>
-
-                            <div className="calendarEvents">
-                              {dayEvents.map((event) => {
-                                const deliveryType = classifyDate(day);
-
-                                return (
-                                  <button
-                                    key={`${event.stage}-${event.row.__row}`}
-                                    className={`calendarEvent ${
-                                      event.delivered
-                                        ? "calendarEventDelivered"
-                                        : deliveryType === "backlog"
-                                        ? "calendarEventBacklog"
-                                        : deliveryType === "pending"
-                                        ? "calendarEventPending"
-                                        : "calendarEventFuture"
-                                    } ${
-                                      !event.delivered && !event.member
-                                        ? "calendarEventUnassigned"
-                                        : ""
-                                    }`}
-                                    title={`${stageLabel(event.stage)} · ${
-                                      event.row["CLIENTE"] || "Sin cliente"
-                                    }`}
-                                    onClick={() =>
-                                      openTeamCase(event.row, event.stage)
-                                    }
-                                  >
-                                    <strong>
-                                      <b className="teamStageTag">
-                                        {teamStageShortLabel[event.stage]}
-                                      </b>
-                                      {event.row["CLIENTE"] || "Sin cliente"}
-                                    </strong>
-
-                                    {event.delivered ? (
-                                      <span className="deliveredEventLabel">
-                                        ✓ Entregado
-                                      </span>
-                                    ) : !event.member ? (
-                                      <span className="unassignedEventLabel">
-                                        Sin asignar
-                                      </span>
-                                    ) : activeTeamMember === TEAM_ALL_MEMBERS ? (
-                                      <span>{event.member}</span>
-                                    ) : event.status ? (
-                                      <span>{event.status}</span>
-                                    ) : null}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
+                            <span
+                              className={`teamCheck ${
+                                hiddenTeamStages.includes(stage)
+                                  ? ""
+                                  : "checked"
+                              }`}
+                            />
+                            <span className="teamMemberName">
+                              {stageLabel(stage)}
+                            </span>
+                            <span className="teamMemberCounts">
+                              <em title="Entregas en el mes">{count}</em>
+                            </span>
+                          </button>
                         );
                       })}
                     </div>
-                  </section>
-                )}
+                  )}
+                </div>
+              </div>
+            </div>
 
-                {teamViewMode === "table" && (
-                  <>
-                    <section className="workloadCard">
-                      <div className="workloadHeader">
-                        <div>
-                          <p className="eyebrow">
-                            CARGA PROGRAMADA
-                          </p>
+            {teamViewMode === "calendar" && (
+              <section className="calendarCard">
+                <div className="calendarToolbar">
+                  <div className="calendarTitle">
+                    <h2>
+                      {monthNames[calendarMonth.getMonth()]}{" "}
+                      {calendarMonth.getFullYear()}
+                    </h2>
 
-                          <h2>
-                            Entregas que se deben realizar
-                          </h2>
+                    <span>
+                      {activeTeamMember === TEAM_ALL_MEMBERS
+                        ? "Todo el equipo"
+                        : activeTeamMember || "Sin asignar"}{" "}
+                      ·{" "}
+                      {
+                        visibleMonthTeamEvents.filter(
+                          (event) => !event.delivered
+                        ).length
+                      }{" "}
+                      pendientes
+                      {visibleMonthTeamEvents.some(
+                        (event) => event.delivered
+                      ) && (
+                        <>
+                          {" "}
+                          ·{" "}
+                          {
+                            visibleMonthTeamEvents.filter(
+                              (event) => event.delivered
+                            ).length
+                          }{" "}
+                          entregadas
+                        </>
+                      )}
+                    </span>
+                  </div>
 
-                          <p>
-                            Se calcula por Expected Done. Si una entrega ya se completó, sigue contando en la carga original de esa semana.
-                          </p>
+                  <div className="calendarControls">
+                    <button onClick={previousMonth}>‹</button>
+
+                    <button className="todayButton" onClick={goToday}>
+                      Hoy
+                    </button>
+
+                    <button onClick={nextMonth}>›</button>
+                  </div>
+                </div>
+
+                <div className="calendarWeekHeader">
+                  {weekDays.map((day) => (
+                    <div key={day}>{day}</div>
+                  ))}
+                </div>
+
+                <div className="calendarGrid">
+                  {calendarDays.map((day) => {
+                    const isCurrentMonth =
+                      day.getMonth() === calendarMonth.getMonth();
+
+                    const isToday = sameDay(day, new Date());
+
+                    const dayEvents = visibleTeamEvents.filter(
+                      (event) => sameDay(event.date, day)
+                    );
+
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className={`calendarDay ${
+                          !isCurrentMonth ? "outsideMonth" : ""
+                        }`}
+                      >
+                        <div className="calendarDayNumber">
+                          <span className={isToday ? "todayNumber" : ""}>
+                            {day.getDate()}
+                          </span>
                         </div>
 
-                        <div className="workloadHeaderRight">
-                          <div className="workloadTotal">
-                            <span>
-                              TOTAL DEL MES
-                            </span>
+                        <div className="calendarEvents">
+                          {dayEvents.map((event) => {
+                            const deliveryType = classifyDate(day);
 
-                            <strong>
-                              {
-                                scheduledMonthTotal
-                              }
-                            </strong>
-                          </div>
+                            return (
+                              <button
+                                key={`${event.stage}-${event.row.__row}`}
+                                className={`calendarEvent ${
+                                  event.delivered
+                                    ? "calendarEventDelivered"
+                                    : deliveryType === "backlog"
+                                    ? "calendarEventBacklog"
+                                    : deliveryType === "pending"
+                                    ? "calendarEventPending"
+                                    : "calendarEventFuture"
+                                } ${
+                                  !event.delivered && !event.member
+                                    ? "calendarEventUnassigned"
+                                    : ""
+                                }`}
+                                title={`${stageLabel(event.stage)} · ${
+                                  event.row["CLIENTE"] || "Sin cliente"
+                                }`}
+                                onClick={() =>
+                                  openTeamCase(event.row, event.stage)
+                                }
+                              >
+                                <strong>
+                                  <b className="teamStageTag">
+                                    {teamStageShortLabel[event.stage]}
+                                  </b>
+                                  {event.row["CLIENTE"] || "Sin cliente"}
+                                </strong>
 
-                          <div className="calendarControls">
-                            <button
-                              onClick={
-                                previousMonth
-                              }
-                            >
-                              ‹
-                            </button>
-
-                            <button
-                              className="todayButton workloadMonthButton"
-                              onClick={
-                                goToday
-                              }
-                            >
-                              {
-                                monthNames[
-                                  calendarMonth.getMonth()
-                                ]
-                              }{" "}
-                              {
-                                calendarMonth.getFullYear()
-                              }
-                            </button>
-
-                            <button
-                              onClick={
-                                nextMonth
-                              }
-                            >
-                              ›
-                            </button>
-                          </div>
+                                {event.delivered ? (
+                                  <span className="deliveredEventLabel">
+                                    ✓ Entregado
+                                  </span>
+                                ) : !event.member ? (
+                                  <span className="unassignedEventLabel">
+                                    Sin asignar
+                                  </span>
+                                ) : activeTeamMember === TEAM_ALL_MEMBERS ? (
+                                  <span>{event.member}</span>
+                                ) : event.status ? (
+                                  <span>{event.status}</span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-                      <div className="workloadTableWrap">
+            {teamViewMode === "table" && (
+              <>
+                <section className="workloadCard">
+                  <div className="workloadHeader">
+                    <div>
+                      <p className="eyebrow">
+                        CARGA PROGRAMADA
+                      </p>
+
+                      <h2>
+                        Entregas que se deben realizar
+                      </h2>
+
+                      <p>
+                        Se calcula por Expected Done. Si una entrega ya se completó, sigue contando en la carga original de esa semana.
+                      </p>
+                    </div>
+
+                    <div className="workloadHeaderRight">
+                      <div className="workloadTotal">
+                        <span>
+                          TOTAL DEL MES
+                        </span>
+
+                        <strong>
+                          {
+                            scheduledMonthTotal
+                          }
+                        </strong>
+                      </div>
+
+                      <div className="calendarControls">
+                        <button
+                          onClick={
+                            previousMonth
+                          }
+                        >
+                          ‹
+                        </button>
+
+                        <button
+                          className="todayButton workloadMonthButton"
+                          onClick={
+                            goToday
+                          }
+                        >
+                          {
+                            monthNames[
+                              calendarMonth.getMonth()
+                            ]
+                          }{" "}
+                          {
+                            calendarMonth.getFullYear()
+                          }
+                        </button>
+
+                        <button
+                          onClick={
+                            nextMonth
+                          }
+                        >
+                          ›
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="workloadTableWrap">
+                    <div
+                      className="workloadGrid workloadGridHeader"
+                      style={{
+                        gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${workloadWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
+                      }}
+                    >
+                      <div>
+                        COLABORADOR
+                      </div>
+
+                      {workloadWeeks.map(
+                        (week) => (
+                          <div
+                            key={
+                              week.week
+                            }
+                          >
+                            {
+                              week.label
+                            }
+                          </div>
+                        )
+                      )}
+
+                      <div>
+                        TOTAL
+                      </div>
+                    </div>
+
+                    {scheduledWorkload.map(
+                      (item) => (
                         <div
-                          className="workloadGrid workloadGridHeader"
+                          key={
+                            item.name
+                          }
+                          className="workloadGrid workloadGridRow"
                           style={{
                             gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${workloadWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
                           }}
                         >
-                          <div>
-                            COLABORADOR
+                          <div className="workloadPerson">
+                            {item.name ===
+                            "Sin asignar" ? (
+                              <span className="unassignedPill">
+                                Sin asignar
+                              </span>
+                            ) : (
+                              <strong>
+                                {
+                                  item.name
+                                }
+                              </strong>
+                            )}
                           </div>
 
                           {workloadWeeks.map(
-                            (week) => (
+                            (
+                              week
+                            ) => (
                               <div
                                 key={
                                   week.week
                                 }
+                                className="workloadNumber"
                               >
-                                {
-                                  week.label
-                                }
+                                {(item
+                                  .counts[
+                                  week
+                                    .week
+                                ] ||
+                                  0) > 0 ? (
+                                  <button
+                                    className="workloadNumberButton"
+                                    title="Doble clic para ver clientes"
+                                    onDoubleClick={() =>
+                                      setDeliveryDetail({
+                                        title: item.name,
+                                        subtitle: `${week.label} · ${item.counts[week.week]} entregas programadas`,
+                                        items:
+                                          item.items[
+                                            week.week
+                                          ] || [],
+                                      })
+                                    }
+                                  >
+                                    {item
+                                      .counts[
+                                      week
+                                        .week
+                                    ] || 0}
+                                  </button>
+                                ) : (
+                                  <span>0</span>
+                                )}
                               </div>
                             )
                           )}
 
-                          <div>
-                            TOTAL
+                          <div className="workloadTotalCell">
+                            {
+                              item.total
+                            }
                           </div>
                         </div>
+                      )
+                    )}
 
-                        {scheduledWorkload.map(
-                          (item) => (
-                            <div
-                              key={
-                                item.name
-                              }
-                              className="workloadGrid workloadGridRow"
-                              style={{
-                                gridTemplateColumns: `minmax(180px, 1.5fr) repeat(${workloadWeeks.length}, minmax(90px, .8fr)) minmax(80px, .7fr)`,
-                              }}
-                            >
-                              <div className="workloadPerson">
-                                {item.name ===
-                                "Sin asignar" ? (
-                                  <span className="unassignedPill">
-                                    Sin asignar
-                                  </span>
-                                ) : (
-                                  <strong>
-                                    {
-                                      item.name
-                                    }
-                                  </strong>
-                                )}
-                              </div>
-
-                              {workloadWeeks.map(
-                                (
-                                  week
-                                ) => (
-                                  <div
-                                    key={
-                                      week.week
-                                    }
-                                    className="workloadNumber"
-                                  >
-                                    {(item
-                                      .counts[
-                                      week
-                                        .week
-                                    ] ||
-                                      0) > 0 ? (
-                                      <button
-                                        className="workloadNumberButton"
-                                        title="Doble clic para ver clientes"
-                                        onDoubleClick={() =>
-                                          setDeliveryDetail({
-                                            title: item.name,
-                                            subtitle: `${week.label} · ${item.counts[week.week]} entregas programadas`,
-                                            items:
-                                              item.items[
-                                                week.week
-                                              ] || [],
-                                          })
-                                        }
-                                      >
-                                        {item
-                                          .counts[
-                                          week
-                                            .week
-                                        ] || 0}
-                                      </button>
-                                    ) : (
-                                      <span>0</span>
-                                    )}
-                                  </div>
-                                )
-                              )}
-
-                              <div className="workloadTotalCell">
-                                {
-                                  item.total
-                                }
-                              </div>
-                            </div>
-                          )
-                        )}
-
-                        {!scheduledWorkload.length && (
-                          <div className="emptyState">
-                            No hay entregas programadas para este mes.
-                          </div>
-                        )}
+                    {!scheduledWorkload.length && (
+                      <div className="emptyState">
+                        No hay entregas programadas para este mes.
                       </div>
-                    </section>
+                    )}
+                  </div>
+                </section>
 
-                    <section className="teamTableCard">
-                      <div className="teamTableTop">
-                        <div>
-                          <p className="eyebrow">
-                            {activeTeamMember === TEAM_ALL_MEMBERS
-                              ? "Todo el equipo"
-                              : activeTeamMember || "Sin asignar"}
-                          </p>
+                <section className="teamTableCard">
+                  <div className="teamTableTop">
+                    <div>
+                      <p className="eyebrow">
+                        {activeTeamMember === TEAM_ALL_MEMBERS
+                          ? "Todo el equipo"
+                          : activeTeamMember || "Sin asignar"}
+                      </p>
 
-                          <h2>Entregas</h2>
+                      <h2>Entregas</h2>
 
-                          <span>{visibleTeamEvents.length} resultados</span>
-                        </div>
-                      </div>
+                      <span>{visibleTeamEvents.length} resultados</span>
+                    </div>
+                  </div>
 
-                      <div className="teamTableHeader">
-                        <div>CLIENTE</div>
-                        <div>TIPO</div>
-                        <div>EXPECTED DONE</div>
-                        <div>SEMANA DE ENTREGA</div>
-                        <div>STATUS</div>
-                        <div>ESTADO</div>
-                        <div />
-                      </div>
+                  <div className="teamTableHeader">
+                    <div>CLIENTE</div>
+                    <div>TIPO</div>
+                    <div>EXPECTED DONE</div>
+                    <div>SEMANA DE ENTREGA</div>
+                    <div>STATUS</div>
+                    <div>ESTADO</div>
+                    <div />
+                  </div>
 
-                      <div className="teamTableBody">
-                        {visibleTeamEvents.map((event) => {
-                          const deliveryState = classifyDate(event.date);
+                  <div className="teamTableBody">
+                    {visibleTeamEvents.map((event) => {
+                      const deliveryState = classifyDate(event.date);
 
-                          return (
-                            <button
-                              key={`${event.stage}-${event.row.__row}`}
-                              className="teamTableRow"
-                              onClick={() =>
-                                openTeamCase(event.row, event.stage)
-                              }
-                            >
-                              <div className="teamTableClient">
-                                <div className="clientAvatar">
-                                  {(event.row["CLIENTE"] || "?")
-                                    .charAt(0)
-                                    .toUpperCase()}
-                                </div>
-
-                                <div>
-                                  <strong>
-                                    {event.row["CLIENTE"] || "Sin cliente"}
-                                  </strong>
-
-                                  <span>ID {event.row["ID"] || "—"}</span>
-                                </div>
-                              </div>
-
-                              <div className="teamTableValue">
-                                <b className="teamStageTag">
-                                  {teamStageShortLabel[event.stage]}
-                                </b>
-
-                                {activeTeamMember === TEAM_ALL_MEMBERS &&
-                                  (event.member ? (
-                                    event.member
-                                  ) : (
-                                    <span className="unassignedPill">
-                                      Sin asignar
-                                    </span>
-                                  ))}
-                              </div>
-
-                              <div className="teamTableValue teamDateValue">
-                                {formatDate(
-                                  event.row[calendarDateHeader(event.stage)] ||
-                                    ""
-                                )}
-                              </div>
-
-                              <div className="teamTableValue teamWeekValue">
-                                {getDeliveryWeekLabel(event.date)}
-                              </div>
-
-                              <div>
-                                {event.status ? (
-                                  <span className={statusClass(event.status)}>
-                                    {event.status}
-                                  </span>
-                                ) : (
-                                  <span className="tableDash">—</span>
-                                )}
-                              </div>
-
-                              <div>
-                                <span
-                                  className={`deliveryState ${
-                                    event.delivered
-                                      ? "deliveryDelivered"
-                                      : deliveryState === "backlog"
-                                      ? "deliveryBacklog"
-                                      : deliveryState === "pending"
-                                      ? "deliveryPending"
-                                      : "deliveryFuture"
-                                  }`}
-                                >
-                                  {event.delivered
-                                    ? "Entregado"
-                                    : deliveryState === "backlog"
-                                    ? "Backlog"
-                                    : deliveryState === "pending"
-                                    ? "Esta semana"
-                                    : "Próxima"}
-                                </span>
-                              </div>
-
-                              <div className="rowArrow">›</div>
-                            </button>
-                          );
-                        })}
-
-                        {!visibleTeamEvents.length && (
-                          <div className="emptyState">
-                            No hay entregas con este filtro.
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                  </>
-                )}
-              </div>
-
-              <aside className="teamMemberPanel">
-                <p className="teamMemberPanelTitle">Colaboradores</p>
-
-                <button
-                  className={`teamMemberItem ${
-                    activeTeamMember === TEAM_ALL_MEMBERS ? "active" : ""
-                  }`}
-                  onClick={() => setTeamMember(TEAM_ALL_MEMBERS)}
-                >
-                  <span className="teamMemberAvatar">∑</span>
-                  <span className="teamMemberName">Todo el equipo</span>
-                </button>
-
-                {teamMembers.map((item) => (
-                  <button
-                    key={item.member || "__UNASSIGNED__"}
-                    className={`teamMemberItem ${
-                      activeTeamMember === item.member ? "active" : ""
-                    } ${!item.member ? "isUnassigned" : ""}`}
-                    onClick={() => setTeamMember(item.member)}
-                  >
-                    <span className="teamMemberAvatar">
-                      {item.member ? item.member.charAt(0) : "?"}
-                    </span>
-
-                    <span className="teamMemberName">
-                      {item.member || "Sin asignar"}
-                    </span>
-
-                    <span className="teamMemberCounts">
-                      {item.backlog > 0 && (
-                        <em
-                          className="teamMemberBacklog"
-                          title="Entregas en backlog"
+                      return (
+                        <button
+                          key={`${event.stage}-${event.row.__row}`}
+                          className="teamTableRow"
+                          onClick={() =>
+                            openTeamCase(event.row, event.stage)
+                          }
                         >
-                          {item.backlog}
-                        </em>
-                      )}
+                          <div className="teamTableClient">
+                            <div className="clientAvatar">
+                              {(event.row["CLIENTE"] || "?")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
 
-                      <em title="Entregas en el mes">{item.month}</em>
-                    </span>
-                  </button>
-                ))}
+                            <div>
+                              <strong>
+                                {event.row["CLIENTE"] || "Sin cliente"}
+                              </strong>
 
-                {!teamMembers.length && (
-                  <p className="teamMemberEmpty">Sin colaboradores.</p>
-                )}
-              </aside>
-            </div>
+                              <span>ID {event.row["ID"] || "—"}</span>
+                            </div>
+                          </div>
+
+                          <div className="teamTableValue">
+                            <b className="teamStageTag">
+                              {teamStageShortLabel[event.stage]}
+                            </b>
+
+                            {activeTeamMember === TEAM_ALL_MEMBERS &&
+                              (event.member ? (
+                                event.member
+                              ) : (
+                                <span className="unassignedPill">
+                                  Sin asignar
+                                </span>
+                              ))}
+                          </div>
+
+                          <div className="teamTableValue teamDateValue">
+                            {formatDate(
+                              event.row[calendarDateHeader(event.stage)] ||
+                                ""
+                            )}
+                          </div>
+
+                          <div className="teamTableValue teamWeekValue">
+                            {getDeliveryWeekLabel(event.date)}
+                          </div>
+
+                          <div>
+                            {event.status ? (
+                              <span className={statusClass(event.status)}>
+                                {event.status}
+                              </span>
+                            ) : (
+                              <span className="tableDash">—</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span
+                              className={`deliveryState ${
+                                event.delivered
+                                  ? "deliveryDelivered"
+                                  : deliveryState === "backlog"
+                                  ? "deliveryBacklog"
+                                  : deliveryState === "pending"
+                                  ? "deliveryPending"
+                                  : "deliveryFuture"
+                              }`}
+                            >
+                              {event.delivered
+                                ? "Entregado"
+                                : deliveryState === "backlog"
+                                ? "Backlog"
+                                : deliveryState === "pending"
+                                ? "Esta semana"
+                                : "Próxima"}
+                            </span>
+                          </div>
+
+                          <div className="rowArrow">›</div>
+                        </button>
+                      );
+                    })}
+
+                    {!visibleTeamEvents.length && (
+                      <div className="emptyState">
+                        No hay entregas con este filtro.
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
           </>
         )}
 

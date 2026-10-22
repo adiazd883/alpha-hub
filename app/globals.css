@@ -278,6 +278,96 @@ button {
   font-size: 17px;
 }
 
+.sidebarBottom {
+  margin-top: auto;
+
+  padding:
+    18px
+    4px
+    0;
+
+  border-top:
+    1px
+    solid
+    #e4ddd0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.userAvatar {
+  flex: 0 0 auto;
+
+  width: 35px;
+  height: 35px;
+
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+
+  background: #4263c1;
+
+  color: white;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sidebarUser {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarUser strong {
+  font-size: 10px;
+}
+
+.sidebarUser span {
+  margin-top: 2px;
+
+  color: #8a8478;
+
+  font-size: 9px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+.logoutButton {
+  width: 30px;
+  height: 30px;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #8a8478;
+
+  cursor: pointer;
+}
+
+.logoutButton:hover {
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      0.05
+    );
+
+  color: #2a2721;
+}
+
 /* ======================================================
    HEADER
 ====================================================== */
@@ -3671,54 +3761,6 @@ button {
    TEAM · POR COLABORADOR
 ========================================================= */
 
-.teamStageFilters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.teamStageFiltersLabel {
-  margin-right: 2px;
-  color: #8d98a9;
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.teamStageChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px dashed #d3d9e3;
-  border-radius: 999px;
-  background: transparent;
-  color: #9aa4b4;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.teamStageChip em {
-  font-style: normal;
-  font-weight: 800;
-  opacity: 0.7;
-}
-
-.teamStageChip.active {
-  border-style: solid;
-  border-color: #e0e5ed;
-  background: white;
-  color: #344158;
-}
-
-.teamStageChip.isEmpty {
-  opacity: 0.5;
-}
-
 /* Etiqueta de tipo de entrega en calendario y tabla. */
 .teamStageTag {
   display: inline-block;
@@ -3743,40 +3785,6 @@ button {
 .deliveryDelivered {
   background: #eefcf2;
   color: #2f6b46;
-}
-
-.teamMemberLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  align-items: start;
-  gap: 16px;
-}
-
-.teamMemberMain {
-  min-width: 0;
-}
-
-.teamMemberPanel {
-  position: sticky;
-  top: 20px;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid #dfe5ed;
-  border-radius: 16px;
-  background: white;
-}
-
-.teamMemberPanelTitle {
-  margin: 2px 6px 8px;
-  color: #8d98a9;
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
 }
 
 .teamMemberItem {
@@ -3855,36 +3863,132 @@ button {
   color: #a74c4c;
 }
 
-.teamMemberEmpty {
-  padding: 8px;
-  color: #8d98a9;
-  font-size: 11px;
+.teamFilterBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-@media (max-width: 1000px) {
-  .teamMemberLayout {
-    grid-template-columns: minmax(0, 1fr);
+/* Capa invisible para cerrar el menú al hacer clic fuera. */
+.teamMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.teamDropdown {
+  position: relative;
+}
+
+.teamDropdownButton {
+  height: 44px;
+  min-width: 190px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e0e5ed;
+  border-radius: 10px;
+  background: white;
+  color: #344158;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.teamDropdownButton:hover,
+.teamDropdownButton.open {
+  border-color: #cad6ff;
+}
+
+.teamDropdownLabel {
+  color: #8d98a9;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.teamDropdownButton strong {
+  flex: 1;
+  overflow: hidden;
+  font-weight: 750;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.teamDropdownCaret {
+  color: #8d98a9;
+  font-size: 10px;
+}
+
+.teamDropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 21;
+  width: 260px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid #dfe5ed;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 12px 32px rgba(24, 38, 66, 0.12);
+}
+
+.teamStageOption {
+  width: 100%;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 9px;
+  background: transparent;
+  color: #344158;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.teamStageOption:hover {
+  background: #f5f7fa;
+}
+
+.teamCheck {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #c4ccd8;
+  border-radius: 4px;
+}
+
+.teamCheck.checked {
+  border-color: #4263c1;
+  background: #4263c1;
+}
+
+.teamCheck.checked::after {
+  content: "✓";
+  color: white;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+@media (max-width: 820px) {
+  .teamFilterBar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  /* En pantallas chicas el menú pasa arriba como fila deslizable. */
-  .teamMemberPanel {
-    position: static;
-    order: -1;
-    max-height: none;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .teamMemberPanelTitle {
-    display: none;
-  }
-
-  .teamMemberItem {
+  .teamDropdownMenu {
+    left: 0;
     width: auto;
-    flex-shrink: 0;
-  }
-
-  .teamStageFilters {
-    justify-content: flex-start;
   }
 }
