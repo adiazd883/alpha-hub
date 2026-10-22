@@ -1073,6 +1073,70 @@ const teamStageShortLabel: Record<TeamCalendar, string> = {
   cvl: "CVL",
 };
 
+/*
+  Fechas que se muestran en el calendario de un caso (Cases):
+  el deadline general y la fecha esperada de cada etapa, con
+  su columna de entregado para editarla desde ahí mismo.
+*/
+type CaseDateItem = {
+  key: string;
+  label: string;
+  stage: TeamCalendar | null;
+  dateHeader: string;
+  doneHeader: string | null;
+};
+
+const CASE_CALENDAR_ITEMS: CaseDateItem[] = [
+  {
+    key: "deadline",
+    label: "Deadline",
+    stage: null,
+    dateHeader: "DEADLINE",
+    doneHeader: null,
+  },
+  ...TEAM_STAGES.map((stage) => ({
+    key: stage,
+    label: teamStageShortLabel[stage],
+    stage,
+    dateHeader: calendarDateHeader(stage),
+    doneHeader: doneDateHeader(stage),
+  })),
+];
+
+const dateToInput = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+
+// Días (lunes a domingo) que cubren por completo el mes dado.
+const buildMonthDays = (month: Date) => {
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+  const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+
+  const start = addDays(
+    firstDay,
+    -(firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1)
+  );
+
+  const end = addDays(
+    lastDay,
+    6 - (lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1)
+  );
+
+  const days: Date[] = [];
+
+  for (
+    let cursor = start;
+    cursor.getTime() <= end.getTime();
+    cursor = addDays(cursor, 1)
+  ) {
+    days.push(cursor);
+  }
+
+  return days;
+};
+
 type TeamEvent = {
   row: CaseRow;
   stage: TeamCalendar;
@@ -1359,6 +1423,18 @@ export default function Home() {
     setSelectedStage,
   ] =
     useState<TeamCalendar | null>(null);
+
+  const [caseModalView, setCaseModalView] =
+    useState<"detail" | "calendar">("detail");
+
+  const [
+    caseCalendarMonth,
+    setCaseCalendarMonth,
+  ] = useState(() => new Date());
+
+  // Entrega resaltada en el calendario del caso.
+  const [caseFocusKey, setCaseFocusKey] =
+    useState<string | null>(null);
 
   const [
     selectedKpi,
@@ -1746,6 +1822,7 @@ export default function Home() {
   ) {
     setOpenCaseSource("cases");
     setSelectedStage(null);
+    setCaseModalView("detail");
     setSelectedCase(row);
   }
 
@@ -3894,6 +3971,309 @@ export default function Home() {
           </strong>
         </button>
       </div>
+    );
+  }
+
+  /* =========================
+     CASES · CALENDARIO DEL CASO
+     ========================= */
+
+  const caseDatesLocked =
+    role === "MANAGER" || role === "COORDINATOR";
+
+  const caseCalendarEvents = useMemo(() => {
+    if (!selectedCase) {
+      return [];
+    }
+
+    return CASE_CALENDAR_ITEMS.map((item) => ({
+      item,
+      date: parseDateOnly(selectedCase[item.dateHeader] || ""),
+      delivered: item.stage
+        ? isStageDelivered(selectedCase, item.stage)
+        : false,
+    })).filter(
+      (
+        event
+      ): event is {
+        item: CaseDateItem;
+        date: Date;
+        delivered: boolean;
+      } => !!event.date
+    );
+  }, [selectedCase]);
+
+  function openCaseCalendar() {
+    const pending = caseCalendarEvents.find(
+      (event) => !event.delivered && event.item.stage
+    );
+
+    const target =
+      pending?.date || caseCalendarEvents[0]?.date || new Date();
+
+    setCaseCalendarMonth(
+      new Date(target.getFullYear(), target.getMonth(), 1)
+    );
+    setCaseFocusKey(null);
+    setCaseModalView("calendar");
+  }
+
+  function shiftCaseCalendarMonth(offset: number) {
+    setCaseCalendarMonth(
+      new Date(
+        caseCalendarMonth.getFullYear(),
+        caseCalendarMonth.getMonth() + offset,
+        1
+      )
+    );
+  }
+
+  function saveCaseDate(header: string, value: string) {
+    if (!selectedCase || caseDatesLocked) {
+      return;
+    }
+
+    setSelectedCase({ ...selectedCase, [header]: value });
+    saveField(Number(selectedCase.__row), header, value);
+  }
+
+  function renderCaseCalendar() {
+    if (!selectedCase) {
+      return null;
+    }
+
+    return (
+      <section className="caseCalendar">
+        <div className="calendarCard">
+          <div className="calendarToolbar">
+            <div className="calendarTitle">
+              <h2>
+                {monthNames[caseCalendarMonth.getMonth()]}{" "}
+                {caseCalendarMonth.getFullYear()}
+              </h2>
+
+              <span>
+                {caseDatesLocked
+                  ? "Solo lectura"
+                  : "Arrastra una entrega a otro día para cambiar su fecha"}
+              </span>
+            </div>
+
+            <div className="calendarControls">
+              <button onClick={() => shiftCaseCalendarMonth(-1)}>‹</button>
+
+              <button
+                className="todayButton"
+                onClick={() => {
+                  const now = new Date();
+
+                  setCaseCalendarMonth(
+                    new Date(now.getFullYear(), now.getMonth(), 1)
+                  );
+                }}
+              >
+                Hoy
+              </button>
+
+              <button onClick={() => shiftCaseCalendarMonth(1)}>›</button>
+            </div>
+          </div>
+
+          <div className="calendarWeekHeader">
+            {weekDays.map((day) => (
+              <div key={day}>{day}</div>
+            ))}
+          </div>
+
+          <div className="calendarGrid">
+            {buildMonthDays(caseCalendarMonth).map((day) => {
+              const dayEvents = caseCalendarEvents.filter((event) =>
+                sameDay(event.date, day)
+              );
+
+              const deliveryType = classifyDate(day);
+
+              return (
+                <div
+                  key={day.toISOString()}
+                  className={`calendarDay caseCalendarDay ${
+                    day.getMonth() !== caseCalendarMonth.getMonth()
+                      ? "outsideMonth"
+                      : ""
+                  }`}
+                  onDragOver={(e) => {
+                    if (!caseDatesLocked) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+
+                    const item = CASE_CALENDAR_ITEMS.find(
+                      (candidate) =>
+                        candidate.key ===
+                        e.dataTransfer.getData("text/plain")
+                    );
+
+                    if (item) {
+                      saveCaseDate(item.dateHeader, dateToInput(day));
+                      setCaseFocusKey(item.key);
+                    }
+                  }}
+                >
+                  <div className="calendarDayNumber">
+                    <span
+                      className={
+                        sameDay(day, new Date()) ? "todayNumber" : ""
+                      }
+                    >
+                      {day.getDate()}
+                    </span>
+                  </div>
+
+                  <div className="calendarEvents">
+                    {dayEvents.map((event) => (
+                      <button
+                        key={event.item.key}
+                        draggable={!caseDatesLocked}
+                        onDragStart={(e) =>
+                          e.dataTransfer.setData(
+                            "text/plain",
+                            event.item.key
+                          )
+                        }
+                        className={`calendarEvent ${
+                          !event.item.stage
+                            ? "calendarEventDeadline"
+                            : event.delivered
+                            ? "calendarEventDelivered"
+                            : deliveryType === "backlog"
+                            ? "calendarEventBacklog"
+                            : deliveryType === "pending"
+                            ? "calendarEventPending"
+                            : "calendarEventFuture"
+                        } ${
+                          caseFocusKey === event.item.key
+                            ? "isFocused"
+                            : ""
+                        }`}
+                        title={
+                          event.item.stage
+                            ? stageLabel(event.item.stage)
+                            : "Deadline del caso"
+                        }
+                        onClick={() => setCaseFocusKey(event.item.key)}
+                      >
+                        <strong>
+                          <b className="teamStageTag">{event.item.label}</b>
+                        </strong>
+
+                        <span>
+                          {!event.item.stage
+                            ? "Deadline"
+                            : event.delivered
+                            ? "✓ Entregado"
+                            : "Esperado"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="caseDateList">
+          <div className="caseDateListHeader">
+            <div>ENTREGA</div>
+            <div>FECHA ESPERADA</div>
+            <div>ENTREGADO</div>
+          </div>
+
+          {CASE_CALENDAR_ITEMS.map((item) => {
+            const expected = selectedCase[item.dateHeader] || "";
+            const done = item.doneHeader
+              ? selectedCase[item.doneHeader] || ""
+              : "";
+
+            return (
+              <div
+                key={item.key}
+                className={`caseDateRow ${
+                  caseFocusKey === item.key ? "isFocused" : ""
+                }`}
+                onClick={() => {
+                  setCaseFocusKey(item.key);
+
+                  const date = parseDateOnly(expected);
+
+                  if (date) {
+                    setCaseCalendarMonth(
+                      new Date(date.getFullYear(), date.getMonth(), 1)
+                    );
+                  }
+                }}
+              >
+                <div className="caseDateName">
+                  <b className="teamStageTag">{item.label}</b>
+                  <span>
+                    {item.stage
+                      ? stageLabel(item.stage)
+                      : "Deadline del caso"}
+                  </span>
+                </div>
+
+                <div>
+                  {caseDatesLocked ? (
+                    <span className="readValue">
+                      {formatDate(expected) || "—"}
+                    </span>
+                  ) : (
+                    <input
+                      type="date"
+                      value={toInputDate(expected)}
+                      onChange={(e) =>
+                        setSelectedCase({
+                          ...selectedCase,
+                          [item.dateHeader]: e.target.value,
+                        })
+                      }
+                      onBlur={(e) =>
+                        saveCaseDate(item.dateHeader, e.target.value)
+                      }
+                    />
+                  )}
+                </div>
+
+                <div>
+                  {!item.doneHeader ? (
+                    <span className="tableDash">—</span>
+                  ) : caseDatesLocked ? (
+                    <span className="readValue">
+                      {formatDate(done) || "—"}
+                    </span>
+                  ) : (
+                    <input
+                      type="date"
+                      value={toInputDate(done)}
+                      onChange={(e) =>
+                        setSelectedCase({
+                          ...selectedCase,
+                          [item.doneHeader || ""]: e.target.value,
+                        })
+                      }
+                      onBlur={(e) =>
+                        saveCaseDate(item.doneHeader || "", e.target.value)
+                      }
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     );
   }
 
@@ -7774,98 +8154,130 @@ export default function Home() {
               </div>
 
               <div className="modalBody">
-                <section className="detailSection">
-                  <div className="detailSectionHeader">
-                    <div className="stageIcon">
-                      01
-                    </div>
+                <div className="teamViewSwitch caseViewSwitch">
+                  <button
+                    className={
+                      caseModalView === "detail"
+                        ? "teamViewButton active"
+                        : "teamViewButton"
+                    }
+                    onClick={() => setCaseModalView("detail")}
+                  >
+                    <span>≡</span>
+                    Detalle
+                  </button>
 
-                    <div>
-                      <h3>
-                        General
-                      </h3>
+                  <button
+                    className={
+                      caseModalView === "calendar"
+                        ? "teamViewButton active"
+                        : "teamViewButton"
+                    }
+                    onClick={openCaseCalendar}
+                  >
+                    <span>▦</span>
+                    Calendario
+                  </button>
+                </div>
 
-                      <p>
-                        Información principal del caso
-                      </p>
-                    </div>
-                  </div>
+                {caseModalView === "calendar" ? (
+                  renderCaseCalendar()
+                ) : (
+                  <>
+                    <section className="detailSection">
+                      <div className="detailSectionHeader">
+                        <div className="stageIcon">
+                          01
+                        </div>
 
-                  <div className="fieldGrid">
-                    <Field
-                      label="Receipt Number"
-                      header="RECEIPT NUMBER"
-                      readOnly
+                        <div>
+                          <h3>
+                            General
+                          </h3>
+
+                          <p>
+                            Información principal del caso
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="fieldGrid">
+                        <Field
+                          label="Receipt Number"
+                          header="RECEIPT NUMBER"
+                          readOnly
+                        />
+
+                        <Field
+                          label="Receipt Date"
+                          header="RECEIPT DATE"
+                          type="date"
+                        />
+
+                        <Field
+                          label="Deadline"
+                          header="DEADLINE"
+                          type="date"
+                        />
+
+                        <Field
+                          label="Commitment"
+                          header="COMMITMENT"
+                          type="date"
+                        />
+
+                        <Field
+                          label="Status"
+                          header="STATUS"
+                          type="select"
+                          options={[
+                            "WORKING",
+                            "MGM REVIEW",
+                            "SENT TO USCIS",
+                            "SPECIAL CASE",
+                            "CANCELLED/CLOSED",
+                          ]}
+                        />
+
+                        <Field
+                          label="Sent to MGM"
+                          header="SENT TO MGM"
+                          type="date"
+                        />
+                      </div>
+
+                      <Field
+                        label="Nota"
+                        header="NOTA"
+                        type="textarea"
+                      />
+                    </section>
+
+                    <StageContent
+                      stage="psych"
                     />
 
-                    <Field
-                      label="Receipt Date"
-                      header="RECEIPT DATE"
-                      type="date"
+                    <StageContent
+                      stage="caratula"
                     />
 
-                    <Field
-                      label="Deadline"
-                      header="DEADLINE"
-                      type="date"
+                    <StageContent
+                      stage="draft"
                     />
 
-                    <Field
-                      label="Commitment"
-                      header="COMMITMENT"
-                      type="date"
+                    <StageContent
+                      stage="plcvl"
                     />
 
-                    <Field
-                      label="Status"
-                      header="STATUS"
-                      type="select"
-                      options={[
-                        "WORKING",
-                        "MGM REVIEW",
-                        "SENT TO USCIS",
-                        "SPECIAL CASE",
-                        "CANCELLED/CLOSED",
-                      ]}
+                    <StageContent
+                      stage="ea"
                     />
 
-                    <Field
-                      label="Sent to MGM"
-                      header="SENT TO MGM"
-                      type="date"
+                    <StageContent
+                      stage="cvl"
                     />
-                  </div>
-
-                  <Field
-                    label="Nota"
-                    header="NOTA"
-                    type="textarea"
-                  />
-                </section>
-
-                <StageContent
-                  stage="psych"
-                />
-
-                <StageContent
-                  stage="caratula"
-                />
-
-                <StageContent
-                  stage="draft"
-                />
-
-                <StageContent
-                  stage="plcvl"
-                />
-
-                <StageContent
-                  stage="ea"
-                />
-
-                <StageContent
-                  stage="cvl"
-                />
+                  </>
+                )}
               </div>
             </div>
           </div>
