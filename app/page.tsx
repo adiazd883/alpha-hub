@@ -1053,14 +1053,15 @@ const historyStageOptions: {
   entregas (carátula, draft, DOE, CVL, etc.) y cada una se
   etiqueta con su tipo.
 */
+// En el orden del flujo del caso.
 const TEAM_STAGES: TeamCalendar[] = [
   "caratula",
-  "draft",
-  "plcvl",
-  "mgm",
   "psych",
+  "draft",
   "ea",
+  "plcvl",
   "cvl",
+  "mgm",
 ];
 
 const teamStageShortLabel: Record<TeamCalendar, string> = {
@@ -1086,19 +1087,9 @@ type CaseDateItem = {
   doneHeader: string | null;
 };
 
-// Orden del flujo del caso; el deadline va al final como meta.
-const CASE_CALENDAR_STAGES: TeamCalendar[] = [
-  "caratula",
-  "psych",
-  "draft",
-  "ea",
-  "plcvl",
-  "cvl",
-  "mgm",
-];
-
 const CASE_CALENDAR_ITEMS: CaseDateItem[] = [
-  ...CASE_CALENDAR_STAGES.map((stage) => ({
+  // Etapas en orden del flujo; el deadline va al final como meta.
+  ...TEAM_STAGES.map((stage) => ({
     key: stage,
     label: teamStageShortLabel[stage],
     stage,
