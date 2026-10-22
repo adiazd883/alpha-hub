@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 type Role =
   | "ADMIN"
@@ -2174,6 +2174,11 @@ export default function Home() {
     date.getTime() <= teamMonthRange.end;
 
   // Menú derecho: cada colaborador con sus entregas del mes y su backlog.
+  /*
+    Solo aparecen los colaboradores que tienen entregas en los
+    tipos seleccionados (si nadie de EA hace Draft, no sale al
+    filtrar por Draft).
+  */
   const teamMembers = useMemo(() => {
     const summary = new Map<
       string,
@@ -2181,6 +2186,10 @@ export default function Home() {
     >();
 
     teamEvents.forEach((event) => {
+      if (hiddenTeamStages.includes(event.stage)) {
+        return;
+      }
+
       const entry = summary.get(event.member) || {
         month: 0,
         backlog: 0,
@@ -2213,7 +2222,7 @@ export default function Home() {
 
         return a.member.localeCompare(b.member);
       });
-  }, [teamEvents, teamMonthRange]);
+  }, [teamEvents, teamMonthRange, hiddenTeamStages]);
 
   const selectedTeamMembers = teamMembers.filter(
     (item) => !hiddenTeamMembers.includes(item.member)
@@ -2252,6 +2261,78 @@ export default function Home() {
   const visibleMonthTeamEvents = visibleTeamEvents.filter(
     (event) => isInTeamMonth(event.date)
   );
+
+  /*
+    Resumen al lado de cada semana: total de entregas y desglose
+    por colaborador (o por tipo si solo hay un colaborador).
+  */
+  function renderTeamWeekSummary(week: Date[]) {
+    const start = week[0].getTime();
+    const end = addDays(week[week.length - 1], 1).getTime();
+
+    const events = visibleTeamEvents.filter(
+      (event) =>
+        event.date.getTime() >= start && event.date.getTime() < end
+    );
+
+    const delivered = events.filter((event) => event.delivered).length;
+
+    const breakdown = new Map<string, number>();
+
+    events.forEach((event) => {
+      const key = showTeamEventMember
+        ? event.member || "Sin asignar"
+        : teamStageShortLabel[event.stage];
+
+      breakdown.set(key, (breakdown.get(key) || 0) + 1);
+    });
+
+    const rows = Array.from(breakdown.entries()).sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+    );
+
+    const max = rows[0]?.[1] || 1;
+    const shown = rows.slice(0, 6);
+    const rest = rows.slice(6);
+
+    return (
+      <div className="calendarWeekSummary">
+        <span className="weekSummaryLabel">
+          Sem {getIsoWeekNumber(week[0])}
+        </span>
+
+        <strong className="weekSummaryTotal">{events.length}</strong>
+
+        <span className="weekSummarySub">
+          {events.length === 1 ? "entrega" : "entregas"}
+          {delivered > 0 && ` · ${delivered} ✓`}
+        </span>
+
+        {shown.length > 0 && (
+          <ul className="weekSummaryBreakdown">
+            {shown.map(([name, count]) => (
+              <li key={name} title={`${name}: ${count}`}>
+                <span className="weekSummaryName">{name}</span>
+                <span className="weekSummaryBar">
+                  <i style={{ width: `${(count / max) * 100}%` }} />
+                </span>
+                <b>{count}</b>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {rest.length > 0 && (
+          <span
+            className="weekSummaryMore"
+            title={rest.map(([name, count]) => `${name}: ${count}`).join("\n")}
+          >
+            +{rest.length} más
+          </span>
+        )}
+      </div>
+    );
+  }
 
   function toggleTeamMember(member: string) {
     setHiddenTeamMembers((current) =>
@@ -3249,6 +3330,16 @@ export default function Home() {
 
       return days;
     }, [calendarMonth]);
+
+  const teamCalendarWeeks = useMemo(() => {
+    const weeks: Date[][] = [];
+
+    for (let i = 0; i < calendarDays.length; i += 7) {
+      weeks.push(calendarDays.slice(i, i + 7));
+    }
+
+    return weeks;
+  }, [calendarDays]);
 
   const nwCalendarDays = useMemo(() => {
     const year = nwCalendarMonth.getFullYear();
@@ -5279,6 +5370,12 @@ export default function Home() {
                           </span>
                         </button>
                       ))}
+
+                      {!teamMembers.length && (
+                        <p className="teamMenuEmpty">
+                          Nadie tiene entregas en los tipos seleccionados.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -5400,90 +5497,97 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="calendarWeekHeader">
+                <div className="calendarWeekHeader calendarGridWithSummary">
                   {weekDays.map((day) => (
                     <div key={day}>{day}</div>
                   ))}
+                  <div>SEMANA</div>
                 </div>
 
-                <div className="calendarGrid">
-                  {calendarDays.map((day) => {
-                    const isCurrentMonth =
-                      day.getMonth() === calendarMonth.getMonth();
+                <div className="calendarGrid calendarGridWithSummary">
+                  {teamCalendarWeeks.map((week) => (
+                    <Fragment key={week[0].toISOString()}>
+                      {week.map((day) => {
+                        const isCurrentMonth =
+                          day.getMonth() === calendarMonth.getMonth();
 
-                    const isToday = sameDay(day, new Date());
+                        const isToday = sameDay(day, new Date());
 
-                    const dayEvents = visibleTeamEvents.filter(
-                      (event) => sameDay(event.date, day)
-                    );
+                        const dayEvents = visibleTeamEvents.filter(
+                          (event) => sameDay(event.date, day)
+                        );
 
-                    return (
-                      <div
-                        key={day.toISOString()}
-                        className={`calendarDay ${
-                          !isCurrentMonth ? "outsideMonth" : ""
-                        }`}
-                      >
-                        <div className="calendarDayNumber">
-                          <span className={isToday ? "todayNumber" : ""}>
-                            {day.getDate()}
-                          </span>
-                        </div>
+                        return (
+                          <div
+                            key={day.toISOString()}
+                            className={`calendarDay ${
+                              !isCurrentMonth ? "outsideMonth" : ""
+                            }`}
+                          >
+                            <div className="calendarDayNumber">
+                              <span className={isToday ? "todayNumber" : ""}>
+                                {day.getDate()}
+                              </span>
+                            </div>
 
-                        <div className="calendarEvents">
-                          {dayEvents.map((event) => {
-                            const deliveryType = classifyDate(day);
+                            <div className="calendarEvents">
+                              {dayEvents.map((event) => {
+                                const deliveryType = classifyDate(day);
 
-                            return (
-                              <button
-                                key={`${event.stage}-${event.row.__row}`}
-                                className={`calendarEvent ${
-                                  event.delivered
-                                    ? "calendarEventDelivered"
-                                    : deliveryType === "backlog"
-                                    ? "calendarEventBacklog"
-                                    : deliveryType === "pending"
-                                    ? "calendarEventPending"
-                                    : "calendarEventFuture"
-                                } ${
-                                  !event.delivered && !event.member
-                                    ? "calendarEventUnassigned"
-                                    : ""
-                                }`}
-                                title={`${stageLabel(event.stage)} · ${
-                                  event.row["CLIENTE"] || "Sin cliente"
-                                }`}
-                                onClick={() =>
-                                  openTeamCase(event.row, event.stage)
-                                }
-                              >
-                                <strong>
-                                  <b className="teamStageTag">
-                                    {teamStageShortLabel[event.stage]}
-                                  </b>
-                                  {event.row["CLIENTE"] || "Sin cliente"}
-                                </strong>
+                                return (
+                                  <button
+                                    key={`${event.stage}-${event.row.__row}`}
+                                    className={`calendarEvent ${
+                                      event.delivered
+                                        ? "calendarEventDelivered"
+                                        : deliveryType === "backlog"
+                                        ? "calendarEventBacklog"
+                                        : deliveryType === "pending"
+                                        ? "calendarEventPending"
+                                        : "calendarEventFuture"
+                                    } ${
+                                      !event.delivered && !event.member
+                                        ? "calendarEventUnassigned"
+                                        : ""
+                                    }`}
+                                    title={`${stageLabel(event.stage)} · ${
+                                      event.row["CLIENTE"] || "Sin cliente"
+                                    }`}
+                                    onClick={() =>
+                                      openTeamCase(event.row, event.stage)
+                                    }
+                                  >
+                                    <strong>
+                                      <b className="teamStageTag">
+                                        {teamStageShortLabel[event.stage]}
+                                      </b>
+                                      {event.row["CLIENTE"] || "Sin cliente"}
+                                    </strong>
 
-                                {event.delivered ? (
-                                  <span className="deliveredEventLabel">
-                                    ✓ Entregado
-                                  </span>
-                                ) : !event.member ? (
-                                  <span className="unassignedEventLabel">
-                                    Sin asignar
-                                  </span>
-                                ) : showTeamEventMember ? (
-                                  <span>{event.member}</span>
-                                ) : event.status ? (
-                                  <span>{event.status}</span>
-                                ) : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                                    {event.delivered ? (
+                                      <span className="deliveredEventLabel">
+                                        ✓ Entregado
+                                      </span>
+                                    ) : !event.member ? (
+                                      <span className="unassignedEventLabel">
+                                        Sin asignar
+                                      </span>
+                                    ) : showTeamEventMember ? (
+                                      <span>{event.member}</span>
+                                    ) : event.status ? (
+                                      <span>{event.status}</span>
+                                    ) : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {renderTeamWeekSummary(week)}
+                    </Fragment>
+                  ))}
                 </div>
               </section>
             )}

@@ -4008,3 +4008,112 @@ button {
 .teamStageOption.isUnassigned .teamMemberName {
   color: #a74c4c;
 }
+
+.teamMenuEmpty {
+  padding: 10px 8px;
+  color: #8d98a9;
+  font-size: 11px;
+}
+
+/* =========================================================
+   TEAM · RESUMEN SEMANAL
+========================================================= */
+
+.calendarWeekHeader.calendarGridWithSummary,
+.calendarGrid.calendarGridWithSummary {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 150px;
+}
+
+.calendarGridWithSummary .calendarDay:nth-child(7n) {
+  border-right: 1px solid #edf0f4;
+}
+
+.calendarWeekSummary {
+  min-width: 0;
+  padding: 10px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid #edf0f4;
+  background: #fafbfc;
+}
+
+.weekSummaryLabel {
+  color: #8d98a9;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.weekSummaryTotal {
+  margin-top: 4px;
+  color: #1b2945;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.weekSummarySub {
+  margin-top: 3px;
+  color: #8d98a9;
+  font-size: 9px;
+}
+
+.weekSummaryBreakdown {
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  list-style: none;
+}
+
+.weekSummaryBreakdown li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px 14px;
+  align-items: center;
+  gap: 5px;
+  color: #344158;
+  font-size: 8px;
+}
+
+.weekSummaryName {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.weekSummaryBar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8ecf2;
+}
+
+.weekSummaryBar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #4263c1;
+}
+
+.weekSummaryBreakdown b {
+  font-weight: 800;
+  text-align: right;
+}
+
+.weekSummaryMore {
+  margin-top: 6px;
+  color: #8d98a9;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: default;
+}
+
+@media (max-width: 820px) {
+  .calendarWeekHeader.calendarGridWithSummary,
+  .calendarGrid.calendarGridWithSummary {
+    min-width: 1000px;
+  }
+}
