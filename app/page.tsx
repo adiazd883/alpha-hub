@@ -1109,6 +1109,103 @@ const dateToInput = (date: Date) =>
     "0"
   )}-${String(date.getDate()).padStart(2, "0")}`;
 
+type CaseKpiTone =
+  | "ontime"
+  | "early"
+  | "late"
+  | "delivered"
+  | "backlog"
+  | "pending"
+  | "future"
+  | "none";
+
+const caseKpiClass: Record<CaseKpiTone, string> = {
+  ontime: "deliveryDelivered",
+  early: "deliveryDelivered",
+  delivered: "deliveryDelivered",
+  late: "deliveryLate",
+  backlog: "deliveryBacklog",
+  pending: "deliveryPending",
+  future: "deliveryFuture",
+  none: "deliveryNone",
+};
+
+const dayDiff = (a: Date, b: Date) =>
+  Math.round((a.getTime() - b.getTime()) / 86400000);
+
+/*
+  KPI de una fecha del caso según su entrega: si ya se entregó,
+  compara la fecha de entregado contra la esperada (a tiempo,
+  adelantado, tarde); si no, cuánto falta o cuánto lleva de atraso.
+*/
+const caseItemKpi = (
+  row: CaseRow,
+  item: CaseDateItem
+): { label: string; tone: CaseKpiTone } => {
+  const expected = parseDateOnly(row[item.dateHeader] || "");
+  const today = parseDateOnly(dateToInput(new Date())) || new Date();
+
+  if (!item.stage) {
+    if (norm(row["STATUS"] || "") === "SENT TO USCIS") {
+      return { label: "Enviado a USCIS", tone: "delivered" };
+    }
+
+    if (!expected) {
+      return { label: "Sin fecha", tone: "none" };
+    }
+
+    const left = dayDiff(expected, today);
+
+    if (left < 0) {
+      return { label: `Vencido hace ${-left} d`, tone: "backlog" };
+    }
+
+    return {
+      label: left === 0 ? "Vence hoy" : `Faltan ${left} d`,
+      tone: left <= 7 ? "pending" : "future",
+    };
+  }
+
+  if (isStageDelivered(row, item.stage)) {
+    const done = item.doneHeader
+      ? parseDateOnly(row[item.doneHeader] || "")
+      : null;
+
+    if (!done || !expected) {
+      return { label: "Entregado", tone: "delivered" };
+    }
+
+    const diff = dayDiff(done, expected);
+
+    if (diff > 0) {
+      return { label: `Tarde +${diff} d`, tone: "late" };
+    }
+
+    if (diff < 0) {
+      return { label: `Adelantado ${-diff} d`, tone: "early" };
+    }
+
+    return { label: "A tiempo", tone: "ontime" };
+  }
+
+  if (!expected) {
+    return { label: "Sin fecha", tone: "none" };
+  }
+
+  const type = classifyDate(expected);
+
+  if (type === "backlog") {
+    return {
+      label: `Backlog ${dayDiff(today, expected)} d`,
+      tone: "backlog",
+    };
+  }
+
+  return type === "pending"
+    ? { label: "Esta semana", tone: "pending" }
+    : { label: "Próxima", tone: "future" };
+};
+
 // Días (lunes a domingo) que cubren por completo el mes dado.
 const buildMonthDays = (month: Date) => {
   const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -3992,6 +4089,7 @@ export default function Home() {
       delivered: item.stage
         ? isStageDelivered(selectedCase, item.stage)
         : false,
+      kpi: caseItemKpi(selectedCase, item),
     })).filter(
       (
         event
@@ -3999,8 +4097,47 @@ export default function Home() {
         item: CaseDateItem;
         date: Date;
         delivered: boolean;
+        kpi: { label: string; tone: CaseKpiTone };
       } => !!event.date
     );
+  }, [selectedCase]);
+
+  // Resumen de KPIs de las etapas del caso (sin contar el deadline).
+  const caseKpiSummary = useMemo(() => {
+    if (!selectedCase) {
+      return [];
+    }
+
+    const tones = CASE_CALENDAR_ITEMS.filter((item) => item.stage).map(
+      (item) => caseItemKpi(selectedCase, item).tone
+    );
+
+    const count = (...wanted: CaseKpiTone[]) =>
+      tones.filter((tone) => wanted.includes(tone)).length;
+
+    return [
+      {
+        label: "A tiempo / adelantadas",
+        value: count("ontime", "early"),
+        className: "deliveryDelivered",
+      },
+      { label: "Tarde", value: count("late"), className: "deliveryLate" },
+      {
+        label: "Backlog",
+        value: count("backlog"),
+        className: "deliveryBacklog",
+      },
+      {
+        label: "Pendientes",
+        value: count("pending", "future"),
+        className: "deliveryFuture",
+      },
+      {
+        label: "Sin fecha",
+        value: count("none"),
+        className: "deliveryNone",
+      },
+    ];
   }, [selectedCase]);
 
   function openCaseCalendar() {
@@ -4145,6 +4282,8 @@ export default function Home() {
                         className={`calendarEvent ${
                           !event.item.stage
                             ? "calendarEventDeadline"
+                            : event.kpi.tone === "late"
+                            ? "calendarEventLate"
                             : event.delivered
                             ? "calendarEventDelivered"
                             : deliveryType === "backlog"
@@ -4169,11 +4308,8 @@ export default function Home() {
                         </strong>
 
                         <span>
-                          {!event.item.stage
-                            ? "Deadline"
-                            : event.delivered
-                            ? "✓ Entregado"
-                            : "Esperado"}
+                          {event.delivered ? "✓ " : ""}
+                          {event.kpi.label}
                         </span>
                       </button>
                     ))}
@@ -4184,11 +4320,21 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="caseKpiSummary">
+          {caseKpiSummary.map((item) => (
+            <div key={item.label} className={`caseKpiStat ${item.className}`}>
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="caseDateList">
           <div className="caseDateListHeader">
             <div>ENTREGA</div>
             <div>FECHA ESPERADA</div>
             <div>ENTREGADO</div>
+            <div>KPI</div>
           </div>
 
           {CASE_CALENDAR_ITEMS.map((item) => {
@@ -4196,6 +4342,8 @@ export default function Home() {
             const done = item.doneHeader
               ? selectedCase[item.doneHeader] || ""
               : "";
+
+            const kpi = caseItemKpi(selectedCase, item);
 
             return (
               <div
@@ -4268,6 +4416,12 @@ export default function Home() {
                       }
                     />
                   )}
+                </div>
+
+                <div>
+                  <span className={`deliveryState ${caseKpiClass[kpi.tone]}`}>
+                    {kpi.label}
+                  </span>
                 </div>
               </div>
             );
