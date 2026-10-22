@@ -1073,8 +1073,6 @@ const teamStageShortLabel: Record<TeamCalendar, string> = {
   cvl: "CVL",
 };
 
-const TEAM_ALL_MEMBERS = "__ALL__";
-
 type TeamEvent = {
   row: CaseRow;
   stage: TeamCalendar;
@@ -1229,8 +1227,11 @@ export default function Home() {
   const [teamViewMode, setTeamViewMode] =
     useState<TeamViewMode>("calendar");
 
-  const [teamMember, setTeamMember] =
-    useState(TEAM_ALL_MEMBERS);
+  // Colaboradores ocultos; vacío = todo el equipo.
+  const [
+    hiddenTeamMembers,
+    setHiddenTeamMembers,
+  ] = useState<string[]>([]);
 
   const [teamMenu, setTeamMenu] =
     useState<"member" | "stage" | null>(null);
@@ -2214,21 +2215,30 @@ export default function Home() {
       });
   }, [teamEvents, teamMonthRange]);
 
-  // Por defecto se ve todo el equipo.
-  const activeTeamMember =
-    teamMember === TEAM_ALL_MEMBERS ||
-    teamMembers.some((item) => item.member === teamMember)
-      ? teamMember
-      : TEAM_ALL_MEMBERS;
+  const selectedTeamMembers = teamMembers.filter(
+    (item) => !hiddenTeamMembers.includes(item.member)
+  );
+
+  const allTeamMembersSelected =
+    selectedTeamMembers.length === teamMembers.length;
+
+  const teamMemberLabel = allTeamMembersSelected
+    ? "Todo el equipo"
+    : selectedTeamMembers.length === 0
+    ? "Ninguno"
+    : selectedTeamMembers.length === 1
+    ? selectedTeamMembers[0].member || "Sin asignar"
+    : `${selectedTeamMembers.length} de ${teamMembers.length}`;
+
+  // Con más de un colaborador, cada entrega muestra de quién es.
+  const showTeamEventMember = selectedTeamMembers.length !== 1;
 
   const memberTeamEvents = useMemo(
     () =>
-      activeTeamMember === TEAM_ALL_MEMBERS
-        ? teamEvents
-        : teamEvents.filter(
-            (event) => event.member === activeTeamMember
-          ),
-    [teamEvents, activeTeamMember]
+      teamEvents.filter(
+        (event) => !hiddenTeamMembers.includes(event.member)
+      ),
+    [teamEvents, hiddenTeamMembers]
   );
 
   const visibleTeamEvents = useMemo(
@@ -2242,6 +2252,29 @@ export default function Home() {
   const visibleMonthTeamEvents = visibleTeamEvents.filter(
     (event) => isInTeamMonth(event.date)
   );
+
+  function toggleTeamMember(member: string) {
+    setHiddenTeamMembers((current) =>
+      current.includes(member)
+        ? current.filter((item) => item !== member)
+        : [...current, member]
+    );
+  }
+
+  // "Todos" funciona para todos y para ninguno.
+  function toggleAllTeamMembers() {
+    setHiddenTeamMembers(
+      allTeamMembersSelected
+        ? teamMembers.map((item) => item.member)
+        : []
+    );
+  }
+
+  function toggleAllTeamStages() {
+    setHiddenTeamStages(
+      hiddenTeamStages.length === 0 ? [...TEAM_STAGES] : []
+    );
+  }
 
   function toggleTeamStage(stage: TeamCalendar) {
     setHiddenTeamStages((current) =>
@@ -5190,43 +5223,43 @@ export default function Home() {
                     }
                   >
                     <span className="teamDropdownLabel">Colaborador</span>
-                    <strong>
-                      {activeTeamMember === TEAM_ALL_MEMBERS
-                        ? "Todo el equipo"
-                        : activeTeamMember || "Sin asignar"}
-                    </strong>
+                    <strong>{teamMemberLabel}</strong>
                     <span className="teamDropdownCaret">▾</span>
                   </button>
 
                   {teamMenu === "member" && (
                     <div className="teamDropdownMenu">
                       <button
-                        className={`teamMemberItem ${
-                          activeTeamMember === TEAM_ALL_MEMBERS ? "active" : ""
-                        }`}
-                        onClick={() => {
-                          setTeamMember(TEAM_ALL_MEMBERS);
-                          setTeamMenu(null);
-                        }}
+                        className="teamStageOption"
+                        onClick={toggleAllTeamMembers}
                       >
-                        <span className="teamMemberAvatar">∑</span>
+                        <span
+                          className={`teamCheck ${
+                            allTeamMembersSelected
+                              ? "checked"
+                              : hiddenTeamMembers.length < teamMembers.length
+                              ? "partial"
+                              : ""
+                          }`}
+                        />
                         <span className="teamMemberName">Todo el equipo</span>
                       </button>
 
                       {teamMembers.map((item) => (
                         <button
                           key={item.member || "__UNASSIGNED__"}
-                          className={`teamMemberItem ${
-                            activeTeamMember === item.member ? "active" : ""
-                          } ${!item.member ? "isUnassigned" : ""}`}
-                          onClick={() => {
-                            setTeamMember(item.member);
-                            setTeamMenu(null);
-                          }}
+                          className={`teamStageOption ${
+                            !item.member ? "isUnassigned" : ""
+                          }`}
+                          onClick={() => toggleTeamMember(item.member)}
                         >
-                          <span className="teamMemberAvatar">
-                            {item.member ? item.member.charAt(0) : "?"}
-                          </span>
+                          <span
+                            className={`teamCheck ${
+                              hiddenTeamMembers.includes(item.member)
+                                ? ""
+                                : "checked"
+                            }`}
+                          />
 
                           <span className="teamMemberName">
                             {item.member || "Sin asignar"}
@@ -5272,11 +5305,15 @@ export default function Home() {
                     <div className="teamDropdownMenu">
                       <button
                         className="teamStageOption"
-                        onClick={() => setHiddenTeamStages([])}
+                        onClick={toggleAllTeamStages}
                       >
                         <span
                           className={`teamCheck ${
-                            hiddenTeamStages.length === 0 ? "checked" : ""
+                            hiddenTeamStages.length === 0
+                              ? "checked"
+                              : hiddenTeamStages.length < TEAM_STAGES.length
+                              ? "partial"
+                              : ""
                           }`}
                         />
                         <span className="teamMemberName">Todos</span>
@@ -5327,9 +5364,7 @@ export default function Home() {
                     </h2>
 
                     <span>
-                      {activeTeamMember === TEAM_ALL_MEMBERS
-                        ? "Todo el equipo"
-                        : activeTeamMember || "Sin asignar"}{" "}
+                      {teamMemberLabel}{" "}
                       ·{" "}
                       {
                         visibleMonthTeamEvents.filter(
@@ -5437,7 +5472,7 @@ export default function Home() {
                                   <span className="unassignedEventLabel">
                                     Sin asignar
                                   </span>
-                                ) : activeTeamMember === TEAM_ALL_MEMBERS ? (
+                                ) : showTeamEventMember ? (
                                   <span>{event.member}</span>
                                 ) : event.status ? (
                                   <span>{event.status}</span>
@@ -5640,9 +5675,7 @@ export default function Home() {
                   <div className="teamTableTop">
                     <div>
                       <p className="eyebrow">
-                        {activeTeamMember === TEAM_ALL_MEMBERS
-                          ? "Todo el equipo"
-                          : activeTeamMember || "Sin asignar"}
+                        {teamMemberLabel}
                       </p>
 
                       <h2>Entregas</h2>
@@ -5694,7 +5727,7 @@ export default function Home() {
                               {teamStageShortLabel[event.stage]}
                             </b>
 
-                            {activeTeamMember === TEAM_ALL_MEMBERS &&
+                            {showTeamEventMember &&
                               (event.member ? (
                                 event.member
                               ) : (
