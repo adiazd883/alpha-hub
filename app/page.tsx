@@ -1086,7 +1086,25 @@ type CaseDateItem = {
   doneHeader: string | null;
 };
 
+// Orden del flujo del caso; el deadline va al final como meta.
+const CASE_CALENDAR_STAGES: TeamCalendar[] = [
+  "caratula",
+  "psych",
+  "draft",
+  "ea",
+  "plcvl",
+  "cvl",
+  "mgm",
+];
+
 const CASE_CALENDAR_ITEMS: CaseDateItem[] = [
+  ...CASE_CALENDAR_STAGES.map((stage) => ({
+    key: stage,
+    label: teamStageShortLabel[stage],
+    stage,
+    dateHeader: calendarDateHeader(stage),
+    doneHeader: doneDateHeader(stage),
+  })),
   {
     key: "deadline",
     label: "Deadline",
@@ -1094,13 +1112,6 @@ const CASE_CALENDAR_ITEMS: CaseDateItem[] = [
     dateHeader: "DEADLINE",
     doneHeader: null,
   },
-  ...TEAM_STAGES.map((stage) => ({
-    key: stage,
-    label: teamStageShortLabel[stage],
-    stage,
-    dateHeader: calendarDateHeader(stage),
-    doneHeader: doneDateHeader(stage),
-  })),
 ];
 
 const dateToInput = (date: Date) =>
