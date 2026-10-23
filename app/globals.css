@@ -4389,3 +4389,326 @@ button {
 
   vertical-align: middle;
 }
+
+/* ======================================================
+   DASHBOARD RFE (vista General)
+====================================================== */
+
+.rfeDashboard {
+  --rfe-series-1: #2a78d6;
+  --rfe-series-2: #eb6834;
+  --rfe-surface: #ffffff;
+  --rfe-grid: #edf0f4;
+  --rfe-axis: #c9d0da;
+  --rfe-ink: #29364d;
+  --rfe-ink-muted: #778397;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 34px;
+}
+
+.rfeSectionHead {
+  margin-bottom: 12px;
+}
+
+.rfeSectionHead h2 {
+  margin: 3px 0 0;
+
+  color: var(--rfe-ink);
+
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.rfeSectionHead p:not(.dashboardSectionEyebrow) {
+  margin: 4px 0 0;
+
+  color: var(--rfe-ink-muted);
+
+  font-size: 11px;
+}
+
+.rfeInvGrid,
+.rfeChartGrid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+@media (min-width: 1200px) {
+  .rfeInvGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .rfeInvGrid,
+  .rfeChartGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.rfeInvCard,
+.rfeChartCard {
+  min-width: 0;
+
+  padding: 16px 18px;
+
+  border: 1px solid #e2e7ee;
+  border-radius: 13px;
+
+  background: var(--rfe-surface);
+
+  box-shadow: 0 3px 14px rgba(24, 38, 66, 0.025);
+}
+
+/* Acento por categoría, igual que en el dashboard RFE. */
+.rfeInvCard {
+  border-top: 3px solid var(--rfe-cat);
+}
+
+.rfeCat-vawaDD { --rfe-cat: #4338ca; }
+.rfeCat-vawaNDD { --rfe-cat: #0f766e; }
+.rfeCat-visaT { --rfe-cat: #a3195b; }
+.rfeCat-otherForms { --rfe-cat: #b45309; }
+
+.rfeInvTitle {
+  color: var(--rfe-ink-muted);
+
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.rfeInvTotal {
+  margin: 4px 0 10px;
+
+  color: var(--rfe-ink);
+
+  font-size: 34px;
+  font-weight: 800;
+
+  letter-spacing: -0.03em;
+}
+
+.rfeInvPills {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+.rfeInvPills span {
+  padding: 4px 9px;
+
+  border-radius: 999px;
+
+  background: #f2f4f8;
+
+  color: var(--rfe-ink-muted);
+
+  font-size: 11px;
+}
+
+.rfeInvPills strong {
+  color: var(--rfe-ink);
+}
+
+.rfeChartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 8px;
+}
+
+.rfeChartTitle {
+  color: var(--rfe-ink);
+
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.rfeChartSub {
+  margin-top: 2px;
+
+  color: var(--rfe-ink-muted);
+
+  font-size: 11px;
+}
+
+.rfeChartSub strong {
+  color: var(--rfe-ink);
+}
+
+.rfeLegend {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  color: var(--rfe-ink-muted);
+
+  font-size: 11px;
+}
+
+.rfeLegend span {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+.rfeSwatchBar {
+  width: 10px;
+  height: 10px;
+
+  border-radius: 2px;
+}
+
+.rfeSwatchLine {
+  width: 14px;
+  height: 2px;
+
+  border-radius: 1px;
+}
+
+.rfeSeries1 { background: var(--rfe-series-1); }
+.rfeSeries2 { background: var(--rfe-series-2); }
+
+.rfeChartScroll {
+  overflow-x: auto;
+}
+
+.rfeChartScroll svg {
+  display: block;
+}
+
+.rfeSeries1Fill { fill: var(--rfe-series-1); }
+.rfeSeries2Fill { fill: var(--rfe-series-2); }
+
+.rfeDim {
+  opacity: 0.35;
+}
+
+.rfeGoalLine {
+  fill: none;
+
+  stroke: var(--rfe-series-2);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Anillo de superficie de 2px donde el punto se cruza con la barra. */
+.rfeGoalDot {
+  fill: var(--rfe-series-2);
+
+  stroke: var(--rfe-surface);
+  stroke-width: 2;
+}
+
+.rfeGridline {
+  stroke: var(--rfe-grid);
+}
+
+.rfeBaseline {
+  stroke: var(--rfe-axis);
+}
+
+.rfeTick {
+  fill: var(--rfe-ink-muted);
+
+  font-size: 10px;
+}
+
+.rfeHit {
+  cursor: pointer;
+
+  outline: none;
+}
+
+.rfeHit:focus-visible rect {
+  stroke: var(--rfe-series-1);
+  stroke-width: 1.5;
+}
+
+.rfeTooltip {
+  min-height: 18px;
+
+  margin-top: 6px;
+
+  color: var(--rfe-ink);
+
+  font-size: 11px;
+}
+
+.rfeTooltip span {
+  color: var(--rfe-ink-muted);
+}
+
+.rfeEmpty {
+  margin: 10px 0 0;
+
+  color: var(--rfe-ink-muted);
+
+  font-size: 12px;
+}
+
+.rfeTableToggle {
+  margin-top: 12px;
+
+  color: var(--rfe-ink-muted);
+
+  font-size: 12px;
+}
+
+.rfeTableToggle summary {
+  cursor: pointer;
+
+  font-weight: 700;
+}
+
+.rfeTableWrap {
+  overflow-x: auto;
+
+  margin-top: 8px;
+}
+
+.rfeTable {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  background: var(--rfe-surface);
+
+  font-size: 12px;
+}
+
+.rfeTable th,
+.rfeTable td {
+  padding: 7px 10px;
+
+  border-bottom: 1px solid #edf0f4;
+
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rfeTable th {
+  color: var(--rfe-ink-muted);
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rfeTable td {
+  color: var(--rfe-ink);
+
+  font-variant-numeric: tabular-nums;
+}
