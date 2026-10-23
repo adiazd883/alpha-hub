@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateSheetCase } from "@/lib/sheets";
-import { USERS } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 
 /*
  * Los calendarios "Deadline Interno" y "Revisión CS" de NW GENERAL
@@ -73,15 +73,17 @@ const REQUIREMENT_OPTIONS = new Set([
 
 export async function POST(req: NextRequest) {
   try {
-    const email = req.cookies.get("alpha_hub_email")?.value;
-    if (!email) {
+    const session = getSession(req);
+    if (!session) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
-    const role = USERS[email.toLowerCase().trim()];
-    if (!role) {
-      return NextResponse.json({ error: "Usuario no autorizado" }, { status: 403 });
+    // NW GENERAL es de Alpha.
+    if (!session.celulas.includes("alpha")) {
+      return NextResponse.json({ error: "No tienes acceso a esta célula" }, { status: 403 });
     }
+
+    const role = session.role;
 
     if (role === "MANAGER" || role === "COORDINATOR") {
       return NextResponse.json({ error: "Tu rol es de solo lectura" }, { status: 403 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { CELULAS, type Celula } from "@/lib/celulas";
 
 type Role =
   | "ADMIN"
@@ -19,6 +20,7 @@ type User = {
   authenticated: boolean;
   email: string | null;
   role: Role | null;
+  celulas: Celula[];
 };
 
 type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview";
@@ -1367,6 +1369,9 @@ export default function Home() {
   const [user, setUser] =
     useState<User | null>(null);
 
+  const [celula, setCelula] =
+    useState<Celula | null>(null);
+
   const [data, setData] =
     useState<{
       title: string;
@@ -1600,14 +1605,33 @@ export default function Home() {
         }
       );
 
-      setUser(
-        await response.json()
+      const json: User =
+        await response.json();
+
+      /*
+       * La célula viaja en la URL (?celula=gamma) para que
+       * cambiar de célula recargue todo desde cero.
+       */
+      const requested =
+        new URLSearchParams(
+          window.location.search
+        ).get("celula");
+
+      setCelula(
+        json.celulas?.find(
+          (c) => c === requested
+        ) ||
+          json.celulas?.[0] ||
+          null
       );
+
+      setUser(json);
     } catch {
       setUser({
         authenticated: false,
         email: null,
         role: null,
+        celulas: [],
       });
     } finally {
       setLoadingUser(false);
@@ -1620,7 +1644,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        "/api/cases",
+        `/api/cases?celula=${celula}`,
         {
           cache: "no-store",
         }
@@ -1740,10 +1764,20 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (user?.authenticated) {
+    if (user?.authenticated && celula) {
       loadCases();
     }
-  }, [user]);
+  }, [user, celula]);
+
+  const hasNwGeneral =
+    celula !== null &&
+    CELULAS[celula].hasNwGeneral;
+
+  function switchCelula(next: Celula) {
+    if (next !== celula) {
+      window.location.search = `?celula=${next}`;
+    }
+  }
 
   async function saveField(
     rowNumber: number,
@@ -1766,6 +1800,8 @@ export default function Home() {
           },
 
           body: JSON.stringify({
+            celula,
+
             row: rowNumber,
 
             changes: {
@@ -1851,6 +1887,8 @@ export default function Home() {
           },
 
           body: JSON.stringify({
+            celula,
+
             row: rowNumber,
 
             columnChanges: {
@@ -3940,7 +3978,7 @@ export default function Home() {
   function openCsReview() {
     setMainView("cs");
 
-    if (!nwLoaded && !nwLoading) {
+    if (hasNwGeneral && !nwLoaded && !nwLoading) {
       loadNwGeneral();
     }
   }
@@ -3958,7 +3996,7 @@ export default function Home() {
   function openMgmReview() {
     setMainView("mgmreview");
 
-    if (!nwLoaded && !nwLoading) {
+    if (hasNwGeneral && !nwLoaded && !nwLoading) {
       loadNwGeneral();
     }
   }
@@ -5164,7 +5202,7 @@ export default function Home() {
   if (loadingUser) {
     return (
       <div className="centerScreen">
-        Cargando Alpha Hub…
+        Cargando RFE Hub…
       </div>
     );
   }
@@ -5174,11 +5212,11 @@ export default function Home() {
       <div className="loginScreen">
         <div className="loginCard">
           <div className="logoMark">
-            A
+            R
           </div>
 
           <h1>
-            Alpha Hub
+            RFE Hub
           </h1>
 
           <p>
@@ -5206,19 +5244,44 @@ export default function Home() {
       <aside className="sidebar">
         <div className="sidebarBrand">
           <div className="logoMark small">
-            A
+            {celula
+              ? CELULAS[celula].label.charAt(0)
+              : "A"}
           </div>
 
           <div className="brandWords">
             <strong>
-              ALPHA
+              {celula
+                ? CELULAS[celula].label.toUpperCase()
+                : "ALPHA"}
             </strong>
 
             <span>
-              HUB
+              RFE HUB
             </span>
           </div>
         </div>
+
+        {user.celulas.length > 1 && (
+          <div
+            className="celulaSwitch"
+            role="group"
+            aria-label="Célula"
+          >
+            {user.celulas.map((c) => (
+              <button
+                key={c}
+                className={
+                  c === celula ? "active" : ""
+                }
+                aria-pressed={c === celula}
+                onClick={() => switchCelula(c)}
+              >
+                {CELULAS[c].label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="navLabel">
           WORKSPACE
@@ -5325,22 +5388,24 @@ export default function Home() {
             </span>
           </button>
 
-          <button
-            className={`navItem ${
-              mainView === "nwgeneral"
-                ? "active"
-                : ""
-            }`}
-            onClick={openNwGeneral}
-          >
-            <span className="navIcon">
-              ▤
-            </span>
+          {hasNwGeneral && (
+            <button
+              className={`navItem ${
+                mainView === "nwgeneral"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={openNwGeneral}
+            >
+              <span className="navIcon">
+                ▤
+              </span>
 
-            <span>
-              NW General
-            </span>
-          </button>
+              <span>
+                NW General
+              </span>
+            </button>
+          )}
 
           <p className="navSectionLabel">
             Vistas combinadas
