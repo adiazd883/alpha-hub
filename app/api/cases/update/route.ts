@@ -8,8 +8,12 @@ import {
 } from "@/lib/sheets";
 
 import {
-  USERS,
-} from "@/lib/auth";
+  getSession,
+} from "@/lib/session";
+
+import {
+  isCelula,
+} from "@/lib/celulas";
 
 /*
  * Estas son las únicas columnas
@@ -27,12 +31,10 @@ export async function POST(
   req: NextRequest
 ) {
   try {
-    const email =
-      req.cookies.get(
-        "alpha_hub_email"
-      )?.value;
+    const session =
+      getSession(req);
 
-    if (!email) {
+    if (!session) {
       return NextResponse.json(
         {
           error:
@@ -44,27 +46,8 @@ export async function POST(
       );
     }
 
-    const normalizedEmail =
-      email
-        .toLowerCase()
-        .trim();
-
     const role =
-      USERS[
-        normalizedEmail
-      ];
-
-    if (!role) {
-      return NextResponse.json(
-        {
-          error:
-            "Usuario no autorizado",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
+      session.role;
 
     /*
      * Manager y Coordinator
@@ -88,6 +71,26 @@ export async function POST(
 
     const body =
       await req.json();
+
+    const celula =
+      body.celula || "alpha";
+
+    if (
+      !isCelula(celula) ||
+      !session.celulas.includes(
+        celula
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "No tienes acceso a esta célula",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
 
     const row =
       Number(body.row);
@@ -229,6 +232,7 @@ export async function POST(
     }
 
     await updateCase(
+      celula,
       row,
       changes,
       columnChanges

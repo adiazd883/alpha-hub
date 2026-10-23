@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { USERS } from "@/lib/auth";
+import {
+  SESSION_COOKIE,
+  SESSION_MAX_AGE,
+  createSessionToken,
+} from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
@@ -57,7 +62,7 @@ export async function GET(req: Request) {
 
     if (!role) {
       return new NextResponse(
-        "Acceso denegado. Esta cuenta no está autorizada para Alpha Hub.",
+        "Acceso denegado. Esta cuenta no está autorizada para el Hub.",
         { status: 403 }
       );
     }
@@ -66,21 +71,21 @@ export async function GET(req: Request) {
       new URL("/", "https://alpha-hub-ten.vercel.app")
     );
 
-    response.cookies.set("alpha_hub_email", email, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 8,
-    });
+    response.cookies.set(
+      SESSION_COOKIE,
+      createSessionToken(email),
+      {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: SESSION_MAX_AGE,
+      }
+    );
 
-    response.cookies.set("alpha_hub_role", role, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 8,
-    });
+    // Cookies sin firma de la versión anterior.
+    response.cookies.delete("alpha_hub_email");
+    response.cookies.delete("alpha_hub_role");
 
     return response;
   } catch (e) {

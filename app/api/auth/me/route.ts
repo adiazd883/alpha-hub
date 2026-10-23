@@ -1,31 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { USERS } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
-  const email = req.cookies.get("alpha_hub_email")?.value;
+  const session = getSession(req);
 
-  if (!email) {
+  if (!session) {
     return NextResponse.json({
       authenticated: false,
       email: null,
       role: null,
-    });
-  }
-
-  const normalizedEmail = email.toLowerCase().trim();
-  const role = USERS[normalizedEmail];
-
-  if (!role) {
-    return NextResponse.json({
-      authenticated: false,
-      email: null,
-      role: null,
+      celulas: [],
     });
   }
 
   return NextResponse.json({
     authenticated: true,
-    email: normalizedEmail,
-    role,
+    ...session,
   });
 }

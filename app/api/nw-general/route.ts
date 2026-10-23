@@ -1,7 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { readSheetCases } from "@/lib/sheets";
+import { getSession } from "@/lib/session";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = getSession(req);
+
+  if (!session) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
+  // NW GENERAL es de Alpha.
+  if (!session.celulas.includes("alpha")) {
+    return NextResponse.json({ error: "No tienes acceso a esta célula" }, { status: 403 });
+  }
+
   try {
     return NextResponse.json(await readSheetCases("NW GENERAL"));
   } catch (e) {

@@ -1,4 +1,8 @@
 import { google } from "googleapis";
+import {
+  type Celula,
+  spreadsheetIdFor,
+} from "@/lib/celulas";
 
 function client() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -26,17 +30,13 @@ async function getSheets() {
   });
 }
 
-export async function getTargetSheet() {
+export async function getTargetSheet(
+  celula: Celula
+) {
   const sheets = await getSheets();
 
   const spreadsheetId =
-    process.env.GOOGLE_SPREADSHEET_ID;
-
-  if (!spreadsheetId) {
-    throw new Error(
-      "Missing GOOGLE_SPREADSHEET_ID"
-    );
-  }
+    spreadsheetIdFor(celula);
 
   const meta =
     await sheets.spreadsheets.get({
@@ -67,12 +67,105 @@ export async function getTargetSheet() {
   };
 }
 
-export async function readCases() {
+/*
+ * Todas las células usan el mismo formato de ADMINs,
+ * pero solo en Alpha se renombraron los headers repetidos
+ * (ej. "EXPECTED DONE" -> "EA EXPECTED DONE"). El hub busca
+ * columnas por esos nombres, así que para otra célula
+ * tomamos los headers de Alpha columna por columna.
+ *
+ * Si alguien mueve columnas en una Sheet, estas anclas ya
+ * no coinciden y preferimos fallar antes que leer o
+ * escribir la columna equivocada.
+ */
+const ADMINS_ANCHORS: [number, string][] = [
+  [0, "DUE DATE/NO DUE DATE"],
+  [1, "CLIENTE"],
+  [2, "ID"],
+  [3, "RECEIPT NUMBER"],
+  [6, "DEADLINE"],
+  [7, "COMMITMENT"],
+  [9, "PARALEGAL"],
+  [24, "PSYCH"],
+  [25, "DCL STATUS"],
+  [30, "DOE STATUS"],
+  [65, "PARALEGAL"],
+  [75, "PARALEGAL"],
+  [95, "LINK RFE"],
+];
+
+function checkAnchors(
+  headers: string[],
+  label: string
+) {
+  const broken = ADMINS_ANCHORS.find(
+    ([index, name]) =>
+      normal(headers[index] || "") !==
+      normal(name)
+  );
+
+  if (broken) {
+    throw new Error(
+      `Las columnas de ADMINs (${label}) no están en el orden esperado: ` +
+        `la columna ${columnName(broken[0] + 1)} debería ser "${broken[1]}"`
+    );
+  }
+}
+
+async function readHeaderRow(
+  sheets: Awaited<ReturnType<typeof getSheets>>,
+  spreadsheetId: string,
+  title: string
+) {
+  const res =
+    await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `'${title.replace(
+        /'/g,
+        "''"
+      )}'!2:2`,
+    });
+
+  return (res.data.values?.[0] || []).map(
+    (v) => String(v ?? "")
+  );
+}
+
+async function alignedHeaders(
+  celula: Celula,
+  localHeaders: string[]
+) {
+  if (celula === "alpha") {
+    return localHeaders;
+  }
+
+  const alpha =
+    await getTargetSheet("alpha");
+
+  const alphaHeaders =
+    await readHeaderRow(
+      alpha.sheets,
+      alpha.spreadsheetId,
+      alpha.title
+    );
+
+  checkAnchors(alphaHeaders, "alpha");
+  checkAnchors(localHeaders, celula);
+
+  return localHeaders.map(
+    (header, index) =>
+      alphaHeaders[index] || header
+  );
+}
+
+export async function readCases(
+  celula: Celula
+) {
   const {
     sheets,
     spreadsheetId,
     title,
-  } = await getTargetSheet();
+  } = await getTargetSheet(celula);
 
   const range =
     `'${title.replace(
@@ -102,8 +195,11 @@ export async function readCases() {
   }
 
   const headers =
-    values[0].map((v) =>
-      String(v ?? "")
+    await alignedHeaders(
+      celula,
+      values[0].map((v) =>
+        String(v ?? "")
+      )
     );
 
   const rows = values
@@ -194,6 +290,7 @@ const normal = (
     .replace(/\s+/g, " ");
 
 export async function updateCase(
+  celula: Celula,
   rowNumber: number,
   changes: Record<
     string,
@@ -208,7 +305,7 @@ export async function updateCase(
     sheets,
     spreadsheetId,
     title,
-  } = await getTargetSheet();
+  } = await getTargetSheet(celula);
 
   if (
     !Number.isInteger(
@@ -233,22 +330,15 @@ export async function updateCase(
   if (
     Object.keys(changes).length
   ) {
-    const current =
-      await sheets.spreadsheets.values.get(
-        {
+    const headers =
+      await alignedHeaders(
+        celula,
+        await readHeaderRow(
+          sheets,
           spreadsheetId,
-          range:
-            `'${title.replace(
-              /'/g,
-              "''"
-            )}'!2:2`,
-        }
+          title
+        )
       );
-
-    const headers = (
-      current.data.values?.[0] ||
-      []
-    ).map(String);
 
     Object.entries(
       changes
@@ -375,14 +465,9 @@ async function getSheetByTitle(
 ) {
   const sheets = await getSheets();
 
+  // NW GENERAL solo existe en la Sheet de Alpha.
   const spreadsheetId =
-    process.env.GOOGLE_SPREADSHEET_ID;
-
-  if (!spreadsheetId) {
-    throw new Error(
-      "Missing GOOGLE_SPREADSHEET_ID"
-    );
-  }
+    spreadsheetIdFor("alpha");
 
   const meta =
     await sheets.spreadsheets.get({
