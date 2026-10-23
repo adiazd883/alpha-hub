@@ -16,6 +16,28 @@ type CaseRow = Record<string, string> & {
   __row: string;
 };
 
+/*
+ * "general" junta todas las células del usuario (Manager,
+ * Coordinator y Admin). Cada fila guarda su célula en
+ * __celula para saber a qué Sheet escribir.
+ */
+type Vista = Celula | "general";
+
+const vistaLabel = (vista: Vista) =>
+  vista === "general"
+    ? "General"
+    : CELULAS[vista].label;
+
+// El número de fila se repite entre células.
+const rowKey = (row: CaseRow) =>
+  `${row.__celula || ""}-${row.__row}`;
+
+// Con más de una célula, General va primero.
+const vistasFor = (user: User): Vista[] =>
+  user.celulas.length > 1
+    ? ["general", ...user.celulas]
+    : user.celulas;
+
 type User = {
   authenticated: boolean;
   email: string | null;
@@ -1370,7 +1392,7 @@ export default function Home() {
     useState<User | null>(null);
 
   const [celula, setCelula] =
-    useState<Celula | null>(null);
+    useState<Vista | null>(null);
 
   const [data, setData] =
     useState<{
@@ -1617,11 +1639,13 @@ export default function Home() {
           window.location.search
         ).get("celula");
 
+      const vistas = vistasFor(json);
+
       setCelula(
-        json.celulas?.find(
-          (c) => c === requested
+        vistas.find(
+          (v) => v === requested
         ) ||
-          json.celulas?.[0] ||
+          vistas[0] ||
           null
       );
 
@@ -1643,24 +1667,55 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await fetch(
-        `/api/cases?celula=${celula}`,
-        {
-          cache: "no-store",
-        }
-      );
-
-      const json =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          json.error ||
-            "No se pudieron cargar los casos"
-        );
+      if (!celula || !user) {
+        return;
       }
 
-      setData(json);
+      const targets: Celula[] =
+        celula === "general"
+          ? user.celulas
+          : [celula];
+
+      const results = await Promise.all(
+        targets.map(async (target) => {
+          const response = await fetch(
+            `/api/cases?celula=${target}`,
+            {
+              cache: "no-store",
+            }
+          );
+
+          const json =
+            await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              json.error ||
+                `No se pudieron cargar los casos de ${CELULAS[target].label}`
+            );
+          }
+
+          return { target, json };
+        })
+      );
+
+      /*
+       * Los headers de cada célula ya vienen alineados a los
+       * de Alpha, así que basta con los de la primera.
+       */
+      setData({
+        title: results[0].json.title,
+        headers: results[0].json.headers,
+        rows: results.flatMap(
+          ({ target, json }) =>
+            (json.rows as CaseRow[]).map(
+              (row) => ({
+                ...row,
+                __celula: target,
+              })
+            )
+        ),
+      });
     } catch (e) {
       setError(
         e instanceof Error
@@ -1770,10 +1825,16 @@ export default function Home() {
   }, [user, celula]);
 
   const hasNwGeneral =
-    celula !== null &&
-    CELULAS[celula].hasNwGeneral;
+    celula === "general"
+      ? !!user?.celulas.some(
+          (c) => CELULAS[c].hasNwGeneral
+        )
+      : celula !== null &&
+        CELULAS[celula].hasNwGeneral;
 
-  function switchCelula(next: Celula) {
+  const isGeneral = celula === "general";
+
+  function switchCelula(next: Vista) {
     if (next !== celula) {
       window.location.search = `?celula=${next}`;
     }
@@ -1784,6 +1845,10 @@ export default function Home() {
     header: string,
     value: string
   ) {
+    // En General la célula sale del caso abierto.
+    const target =
+      selectedCase?.__celula || celula;
+
     setSavingField(header);
     setMessage("");
     setError("");
@@ -1800,7 +1865,7 @@ export default function Home() {
           },
 
           body: JSON.stringify({
-            celula,
+            celula: target,
 
             row: rowNumber,
 
@@ -1827,7 +1892,8 @@ export default function Home() {
         rows: prev.rows.map(
           (row) =>
             row.__row ===
-            String(rowNumber)
+              String(rowNumber) &&
+            row.__celula === target
               ? {
                   ...row,
                   [header]: value,
@@ -1838,7 +1904,8 @@ export default function Home() {
 
       setSelectedCase((prev) =>
         prev?.__row ===
-        String(rowNumber)
+          String(rowNumber) &&
+        prev?.__celula === target
           ? {
               ...prev,
               [header]: value,
@@ -1871,6 +1938,9 @@ export default function Home() {
     localHeader: string,
     value: string
   ) {
+    const target =
+      selectedCase?.__celula || celula;
+
     setSavingField(localHeader);
     setMessage("");
     setError("");
@@ -1887,7 +1957,7 @@ export default function Home() {
           },
 
           body: JSON.stringify({
-            celula,
+            celula: target,
 
             row: rowNumber,
 
@@ -1914,7 +1984,8 @@ export default function Home() {
         rows: prev.rows.map(
           (row) =>
             row.__row ===
-            String(rowNumber)
+              String(rowNumber) &&
+            row.__celula === target
               ? {
                   ...row,
                   [localHeader]:
@@ -1926,7 +1997,8 @@ export default function Home() {
 
       setSelectedCase((prev) =>
         prev?.__row ===
-        String(rowNumber)
+          String(rowNumber) &&
+        prev?.__celula === target
           ? {
               ...prev,
               [localHeader]:
@@ -5244,7 +5316,9 @@ export default function Home() {
       <aside className="sidebar">
         <div className="sidebarBrand">
           <div className="logoMark small">
-            {celula
+            {celula === "general"
+              ? "R"
+              : celula
               ? CELULAS[celula].label.charAt(0)
               : "A"}
           </div>
@@ -5252,7 +5326,7 @@ export default function Home() {
           <div className="brandWords">
             <strong>
               {celula
-                ? CELULAS[celula].label.toUpperCase()
+                ? vistaLabel(celula).toUpperCase()
                 : "ALPHA"}
             </strong>
 
@@ -5262,22 +5336,22 @@ export default function Home() {
           </div>
         </div>
 
-        {user.celulas.length > 1 && (
+        {vistasFor(user).length > 1 && (
           <div
             className="celulaSwitch"
             role="group"
             aria-label="Célula"
           >
-            {user.celulas.map((c) => (
+            {vistasFor(user).map((v) => (
               <button
-                key={c}
+                key={v}
                 className={
-                  c === celula ? "active" : ""
+                  v === celula ? "active" : ""
                 }
-                aria-pressed={c === celula}
-                onClick={() => switchCelula(c)}
+                aria-pressed={v === celula}
+                onClick={() => switchCelula(v)}
               >
-                {CELULAS[c].label}
+                {vistaLabel(v)}
               </button>
             ))}
           </div>
@@ -5762,9 +5836,7 @@ export default function Home() {
                 {filteredCases.map(
                   (row) => (
                     <button
-                      key={
-                        row.__row
-                      }
+                      key={rowKey(row)}
                       className="caseTableRow"
                       onClick={() =>
                         openGeneralCase(
@@ -5789,6 +5861,15 @@ export default function Home() {
                               "CLIENTE"
                             ] ||
                               "Sin cliente"}
+
+                            {isGeneral &&
+                              row.__celula && (
+                                <span className="celulaTag">
+                                  {vistaLabel(
+                                    row.__celula as Celula
+                                  )}
+                                </span>
+                              )}
                           </strong>
 
                           <span>
@@ -6137,7 +6218,7 @@ export default function Home() {
 
                                 return (
                                   <button
-                                    key={`${event.stage}-${event.row.__row}`}
+                                    key={`${event.stage}-${rowKey(event.row)}`}
                                     className={`calendarEvent ${
                                       event.delivered
                                         ? "calendarEventDelivered"
@@ -6405,7 +6486,7 @@ export default function Home() {
 
                       return (
                         <button
-                          key={`${event.stage}-${event.row.__row}`}
+                          key={`${event.stage}-${rowKey(event.row)}`}
                           className="teamTableRow"
                           onClick={() =>
                             openTeamCase(event.row, event.stage)
@@ -7515,7 +7596,7 @@ export default function Home() {
 
                             return (
                               <button
-                                key={row.__row}
+                                key={rowKey(row)}
                                 className={`calendarEvent ${
                                   completed
                                     ? "calendarEventDelivered"
@@ -7655,7 +7736,7 @@ export default function Home() {
                         {dayEvents.map((event) => {
                           return (
                             <button
-                              key={`${event.origin}-${event.row.__row}`}
+                              key={`${event.origin}-${rowKey(event.row)}`}
                               className={`calendarEvent ${
                                 event.completed
                                   ? "calendarEventDelivered"
@@ -7676,7 +7757,9 @@ export default function Home() {
                               ) : (
                                 <span>
                                   {event.origin === "vawa"
-                                    ? "VAWA"
+                                    ? isGeneral && event.row.__celula
+                                      ? `VAWA · ${vistaLabel(event.row.__celula as Celula)}`
+                                      : "VAWA"
                                     : "NON-VAWA"}
                                 </span>
                               )}
@@ -7806,7 +7889,7 @@ export default function Home() {
                         {dayEvents.map((event) => {
                           return (
                             <button
-                              key={`${event.origin}-${event.row.__row}`}
+                              key={`${event.origin}-${rowKey(event.row)}`}
                               className={`calendarEvent ${
                                 event.completed
                                   ? "calendarEventDelivered"
@@ -7827,7 +7910,9 @@ export default function Home() {
                               ) : (
                                 <span>
                                   {event.origin === "vawa"
-                                    ? "VAWA"
+                                    ? isGeneral && event.row.__celula
+                                      ? `VAWA · ${vistaLabel(event.row.__celula as Celula)}`
+                                      : "VAWA"
                                     : "NON-VAWA"}
                                 </span>
                               )}
@@ -7964,9 +8049,7 @@ export default function Home() {
               {kpiCases.map(
                 (row) => (
                   <button
-                    key={
-                      row.__row
-                    }
+                    key={rowKey(row)}
                     className="drawerCase"
                     onClick={() => {
                       setSelectedKpi(
