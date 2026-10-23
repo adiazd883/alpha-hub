@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { forwardToMetrics, loadRfeDashboard } from "@/lib/rfe/load";
+import { loadRfeDashboard } from "@/lib/rfe/load";
+import { saveCurrentMetrics } from "@/lib/rfe/store";
 import { currentActuals } from "@/lib/rfe/logic";
 import { readCount, readCounts } from "@/lib/rfe/validate";
 
@@ -36,14 +37,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { goals } = await loadRfeDashboard();
+    const { goals, currentWeek, currentMonth } = await loadRfeDashboard();
     const actual = currentActuals(goals);
 
-    await forwardToMetrics("", "POST", {
+    await saveCurrentMetrics({
       weeklyGoal,
       monthlyGoal,
       otherFormsProgress: { weekly: weeklyOther, monthly: monthlyOther },
+      weekKey: currentWeek,
       weeklyActual: { ...actual.weekly, otherForms: weeklyOther },
+      monthKey: currentMonth,
       monthlyActual: { ...actual.monthly, otherForms: monthlyOther },
     });
 

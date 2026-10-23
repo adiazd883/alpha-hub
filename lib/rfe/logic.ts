@@ -233,7 +233,7 @@ export type ManualMetrics = {
   otherFormsProgress: { weekly: number; monthly: number };
 };
 
-export type HistoryEntry = { goal: Counts; actual: Counts };
+export type HistoryEntry = { goal: Counts; actual: Counts; updatedAt?: string };
 
 export type MetricsHistory = {
   weekly: Record<string, HistoryEntry>;
@@ -356,10 +356,73 @@ export function buildRfeDashboard(
   };
 }
 
+export type ProductivityEntry = {
+  goal: number | null;
+  actual: number | null;
+};
+
+export type ProductivityMonth = {
+  key: string;
+  goal: number | null;
+  actual: number | null;
+  // true si el valor viene de la captura manual y no del cierre.
+  manual: boolean;
+};
+
+/*
+ * Productividad mensual VAWA (con + sin deadline). Cada mes usa
+ * lo capturado a mano si existe; si no, el cierre mensual (o el
+ * avance en vivo del mes en curso). El año anterior solo existe
+ * como captura manual.
+ */
+export function buildProductivity(
+  manual: Record<string, ProductivityEntry>,
+  monthlyGoals: Record<RfeCategory, GoalPoint[]>,
+  currentMonth: string
+) {
+  const [year, month] = currentMonth.split("-").map(Number);
+  const keyOf = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}`;
+
+  const derived = (key: string) => {
+    const dd = monthlyGoals.vawaDD.find((p) => p.key === key);
+    const ndd = monthlyGoals.vawaNDD.find((p) => p.key === key);
+    const sum = (a?: number | null, b?: number | null) =>
+      a === null || a === undefined || b === null || b === undefined ? null : a + b;
+    return { goal: sum(dd?.goal, ndd?.goal), actual: sum(dd?.actual, ndd?.actual) };
+  };
+
+  const current: ProductivityMonth[] = [];
+  for (let m = 1; m <= month; m++) {
+    const key = keyOf(year, m);
+    const auto = derived(key);
+    const entry = manual[key];
+    current.push({
+      key,
+      goal: entry?.goal ?? auto.goal,
+      actual: entry?.actual ?? auto.actual,
+      manual: entry?.goal != null || entry?.actual != null,
+    });
+  }
+
+  const previous: ProductivityMonth[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const key = keyOf(year - 1, m);
+    previous.push({
+      key,
+      goal: manual[key]?.goal ?? null,
+      actual: manual[key]?.actual ?? null,
+      manual: true,
+    });
+  }
+
+  return { year, current, previous, entries: manual };
+}
+
 export type RfeDashboardData = ReturnType<typeof buildRfeDashboard> & {
   generatedAt: string;
   goalsError: string | null;
   canEdit: boolean;
+  productivity: ReturnType<typeof buildProductivity>;
 };
 
 /*

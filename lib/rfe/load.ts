@@ -1,35 +1,30 @@
 import { TABS } from "./config";
 import { fetchRfeRows } from "./sheet";
+import { buildProductivity, buildRfeDashboard } from "./logic";
 import {
-  buildRfeDashboard,
-  type ManualMetrics,
-  type MetricsHistory,
-} from "./logic";
+  getManualMetrics,
+  getMetricsHistory,
+  getProductivity,
+} from "./store";
 
 /*
- * Las metas, el avance manual y los cierres viven en el
- * dashboard "Estatus General RFE" (Vercel KV). El hub lee y
- * escribe a través de su API para que los dos muestren lo mismo.
+ * Las metas y los cierres no deben tumbar el dashboard: si la
+ * base no responde, inventario y llegadas se muestran igual.
  */
-export const RFE_METRICS_URL =
-  process.env.RFE_METRICS_URL ||
-  "https://estatus-general-rfe.vercel.app/api/metrics";
-
-async function fetchGoals() {
+async function loadGoals() {
   try {
-    const res = await fetch(RFE_METRICS_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    return {
-      metrics: json.metrics as ManualMetrics,
-      history: json.history as MetricsHistory,
-      goalsError: null,
-    };
+    const [metrics, history, productivity] = await Promise.all([
+      getManualMetrics(),
+      getMetricsHistory(),
+      getProductivity(),
+    ]);
+    return { metrics, history, productivity, goalsError: null };
   } catch (e) {
     return {
       metrics: null,
       history: null,
-      goalsError: `No se pudieron leer las metas del dashboard RFE (${
+      productivity: {},
+      goalsError: `No se pudieron leer las metas (${
         e instanceof Error ? e.message : "error"
       })`,
     };
@@ -42,36 +37,25 @@ export async function loadRfeDashboard() {
       fetchRfeRows(TABS.vawaDueDate, 1),
       fetchRfeRows(TABS.vawaNoDueDate, 1),
       fetchRfeRows(TABS.otherForms, 2),
-      fetchGoals(),
+      loadGoals(),
     ]);
+
+  const dashboard = buildRfeDashboard(
+    dueDateRows,
+    noDueDateRows,
+    otherFormsRows,
+    goals.metrics,
+    goals.history
+  );
 
   return {
     generatedAt: new Date().toISOString(),
     goalsError: goals.goalsError,
-    ...buildRfeDashboard(
-      dueDateRows,
-      noDueDateRows,
-      otherFormsRows,
-      goals.metrics,
-      goals.history
+    ...dashboard,
+    productivity: buildProductivity(
+      goals.productivity,
+      dashboard.goals.monthly,
+      dashboard.currentMonth
     ),
   };
-}
-
-export async function forwardToMetrics(
-  path: "" | "/history",
-  method: "POST" | "PUT",
-  body: unknown
-) {
-  const res = await fetch(`${RFE_METRICS_URL}${path}`, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(json.error || `El dashboard RFE respondió ${res.status}`);
-  }
-  return json;
 }

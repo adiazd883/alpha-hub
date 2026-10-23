@@ -4892,3 +4892,55 @@ button {
 
   cursor: pointer;
 }
+
+.rfeStack {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+.rfeValue {
+  fill: var(--rfe-ink);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.rfeValueOnFill {
+  fill: #fff;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  font-variant-numeric: tabular-nums;
+}
+
+/* Borde de superficie para que el número se lea sobre barra o línea. */
+.rfeHalo {
+  paint-order: stroke;
+
+  stroke: var(--rfe-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.rfeCellInput {
+  width: 70px;
+
+  padding: 5px 7px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 7px;
+
+  color: var(--rfe-ink);
+
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rfeCellInput::placeholder {
+  color: #aab3c2;
+}

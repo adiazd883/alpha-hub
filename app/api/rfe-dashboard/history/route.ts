@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { forwardToMetrics } from "@/lib/rfe/load";
+import { saveHistoryEntries } from "@/lib/rfe/store";
 import { readCounts } from "@/lib/rfe/validate";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "No hay cambios que guardar" }, { status: 400 });
   }
 
-  const entries = [];
+  const entries: Parameters<typeof saveHistoryEntries>[0] = [];
 
   for (const entry of body.entries) {
     const period = entry?.period as keyof typeof KEY_FORMATS;
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    await forwardToMetrics("/history", "PUT", { entries });
+    await saveHistoryEntries(entries);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(
