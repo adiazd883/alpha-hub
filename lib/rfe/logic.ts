@@ -223,77 +223,99 @@ function computeWeeklyArrivals(
   };
 }
 
-// --- Metas semanales: meta (línea) vs avance (barras) ---
+// --- Metas: meta (línea) vs avance (barras), por semana y por mes ---
 
-type Counts = Record<RfeCategory, number>;
+export type Counts = Record<RfeCategory, number>;
 
 export type ManualMetrics = {
   weeklyGoal: Counts;
-  otherFormsProgress: { weekly: number };
+  monthlyGoal: Counts;
+  otherFormsProgress: { weekly: number; monthly: number };
 };
+
+export type HistoryEntry = { goal: Counts; actual: Counts };
 
 export type MetricsHistory = {
-  weekly: Record<string, { goal?: Partial<Counts>; actual?: Partial<Counts> }>;
+  weekly: Record<string, HistoryEntry>;
+  monthly: Record<string, HistoryEntry>;
 };
 
-export type GoalWeek = {
-  weekKey: string;
+export type GoalPeriod = "weekly" | "monthly";
+
+export type GoalPoint = {
+  key: string;
   goal: number | null;
   actual: number | null;
+  // Lo que marca READY FOR MGM REVIEW en la Sheet (null en Other forms).
+  sheet: number | null;
 };
 
-function countByWeek(dates: Date[]) {
+function monthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function countBy(dates: Date[], keyOf: (d: Date) => string) {
   const counts = new Map<string, number>();
   for (const date of dates) {
-    const key = isoWeekKey(date);
+    const key = keyOf(date);
     counts.set(key, (counts.get(key) || 0) + 1);
   }
   return counts;
 }
 
 /*
- * Semana actual: meta vigente + avance en vivo (Other forms es
- * manual). Semanas pasadas: la meta guardada en el histórico y
- * el avance recalculado desde "READY FOR MGM REVIEW"; Other forms
- * no tiene esa fecha en la Sheet, así que usa el histórico.
+ * Periodo en curso: meta vigente y avance en vivo de la Sheet
+ * (Other forms es manual). Periodos pasados: el cierre guardado
+ * (meta y avance); si no hay cierre, el avance de la Sheet.
  */
-function computeWeeklyGoals(
+function computeGoals(
+  period: GoalPeriod,
   delivered: Record<"vawaDD" | "vawaNDD" | "visaT", Date[]>,
   metrics: ManualMetrics | null,
   history: MetricsHistory | null
-): Record<RfeCategory, GoalWeek[]> {
-  const currentWeek = isoWeekKey(businessToday());
-  const weeks = Array.from(
-    new Set([...Object.keys(history?.weekly || {}), currentWeek])
-  )
-    .filter((key) => key <= currentWeek)
+): Record<RfeCategory, GoalPoint[]> {
+  const keyOf = period === "weekly" ? isoWeekKey : monthKey;
+  const current = keyOf(businessToday());
+  const saved = history?.[period] || {};
+  const keys = Array.from(new Set([...Object.keys(saved), current]))
+    .filter((key) => key <= current)
     .sort();
 
-  const counted = {
-    vawaDD: countByWeek(delivered.vawaDD),
-    vawaNDD: countByWeek(delivered.vawaNDD),
-    visaT: countByWeek(delivered.visaT),
+  const sheetCounts = {
+    vawaDD: countBy(delivered.vawaDD, keyOf),
+    vawaNDD: countBy(delivered.vawaNDD, keyOf),
+    visaT: countBy(delivered.visaT, keyOf),
   };
 
-  const result = {} as Record<RfeCategory, GoalWeek[]>;
+  const currentGoal =
+    period === "weekly" ? metrics?.weeklyGoal : metrics?.monthlyGoal;
+  const currentOtherForms =
+    period === "weekly"
+      ? metrics?.otherFormsProgress.weekly
+      : metrics?.otherFormsProgress.monthly;
+
+  const result = {} as Record<RfeCategory, GoalPoint[]>;
 
   for (const category of RFE_CATEGORIES) {
-    result[category] = weeks.map((weekKey) => {
-      const isCurrent = weekKey === currentWeek;
-      const saved = history?.weekly[weekKey];
+    result[category] = keys.map((key) => {
+      const isCurrent = key === current;
+      const closed = saved[key];
+      const sheet =
+        category === "otherForms"
+          ? null
+          : sheetCounts[category].get(key) || 0;
 
       const goal = isCurrent
-        ? metrics?.weeklyGoal[category] ?? null
-        : saved?.goal?.[category] ?? null;
+        ? currentGoal?.[category] ?? null
+        : closed?.goal?.[category] ?? null;
 
-      const actual =
-        category === "otherForms"
-          ? isCurrent
-            ? metrics?.otherFormsProgress.weekly ?? null
-            : saved?.actual?.otherForms ?? null
-          : counted[category].get(weekKey) || 0;
+      const actual = isCurrent
+        ? category === "otherForms"
+          ? currentOtherForms ?? null
+          : sheet
+        : closed?.actual?.[category] ?? sheet;
 
-      return { weekKey, goal, actual };
+      return { key, goal, actual, sheet };
     });
   }
 
@@ -309,6 +331,11 @@ export function buildRfeDashboard(
 ) {
   const due = processVawaDueDate(dueDateRows);
   const noDue = processVawaNoDueDate(noDueDateRows);
+  const delivered = {
+    vawaDD: due.delivered.vawaDD,
+    vawaNDD: noDue.delivered,
+    visaT: due.delivered.visaT,
+  };
 
   return {
     inventory: {
@@ -318,20 +345,36 @@ export function buildRfeDashboard(
       otherForms: processOtherForms(otherFormsRows),
     } satisfies Record<RfeCategory, InventoryBox>,
     arrivals: computeWeeklyArrivals(dueDateRows, noDueDateRows, otherFormsRows),
-    goals: computeWeeklyGoals(
-      {
-        vawaDD: due.delivered.vawaDD,
-        vawaNDD: noDue.delivered,
-        visaT: due.delivered.visaT,
-      },
-      metrics,
-      history
-    ),
+    goals: {
+      weekly: computeGoals("weekly", delivered, metrics, history),
+      monthly: computeGoals("monthly", delivered, metrics, history),
+    },
+    metrics,
+    history,
     currentWeek: isoWeekKey(businessToday()),
+    currentMonth: monthKey(businessToday()),
   };
 }
 
 export type RfeDashboardData = ReturnType<typeof buildRfeDashboard> & {
   generatedAt: string;
   goalsError: string | null;
+  canEdit: boolean;
 };
+
+/*
+ * Avance en vivo del periodo en curso, que el dashboard RFE
+ * guarda como foto del periodo cada vez que se guardan metas.
+ */
+export function currentActuals(
+  goals: Record<GoalPeriod, Record<RfeCategory, GoalPoint[]>>
+) {
+  const pick = (period: GoalPeriod) =>
+    Object.fromEntries(
+      RFE_CATEGORIES.map((c) => {
+        const points = goals[period][c];
+        return [c, points[points.length - 1]?.actual ?? 0];
+      })
+    ) as Counts;
+  return { weekly: pick("weekly"), monthly: pick("monthly") };
+}
