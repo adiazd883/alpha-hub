@@ -26,6 +26,7 @@ export const USERS: Record<string, Role> = {
   "lcamaro@supportmendoza.com": "ANALYST",
   "bcastellanos@supportmendoza.com": "MANAGER",
   "vperez@supportmendoza.com": "COORDINATOR",
+  "aperezn@supportmendoza.com": "TL",
 };
 
 /*
@@ -41,7 +42,9 @@ const ALL_CELULAS_ROLES = new Set<Role>([
  * Célula de cada TL / colaborador.
  * Quien no aparezca aquí pertenece a Alpha.
  */
-export const USER_CELULAS: Record<string, Celula[]> = {};
+export const USER_CELULAS: Record<string, Celula[]> = {
+  "aperezn@supportmendoza.com": ["gamma"],
+};
 
 export function celulasFor(
   email: string,
