@@ -4944,3 +4944,236 @@ button {
 .rfeCellInput::placeholder {
   color: #aab3c2;
 }
+
+/* --- Histórico --- */
+
+.rfeDashboard {
+  --rfe-series-3: #1baf7a;
+  --rfe-slice-other: #b8c0cc;
+  --rfe-slice-empty: #e3e7ed;
+}
+
+.rfeSeries3 { background: var(--rfe-series-3); }
+.rfeSeries3Fill { fill: var(--rfe-series-3); }
+.rfeSliceOther { fill: var(--rfe-slice-other); background: var(--rfe-slice-other); }
+.rfeSliceEmpty { fill: var(--rfe-slice-empty); background: var(--rfe-slice-empty); }
+
+.rfeYearSwitch {
+  flex: 0 1 auto;
+
+  width: auto;
+  max-width: 100%;
+
+  margin: 0;
+
+  overflow-x: auto;
+}
+
+.rfeKpiCard {
+  min-width: 0;
+
+  padding: 14px 18px;
+
+  border: 1px solid #e2e7ee;
+  border-radius: 13px;
+
+  background: var(--rfe-surface);
+}
+
+.rfeKpiCard .rfeInvTitle {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+}
+
+.rfeKpiCard .rfeInvTotal {
+  margin: 4px 0 2px;
+}
+
+.rfeKpiNote {
+  color: var(--rfe-ink-muted);
+
+  font-size: 11px;
+}
+
+.rfeHBars {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-top: 6px;
+}
+
+.rfeHBarRow {
+  display: grid;
+  grid-template-columns: minmax(96px, 38%) minmax(0, 1fr) 68px;
+  align-items: center;
+
+  gap: 10px;
+
+  font-size: 11px;
+
+  outline: none;
+
+  transition: opacity 0.15s;
+}
+
+.rfeHBarLabel {
+  overflow: hidden;
+
+  color: var(--rfe-ink);
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rfeHBarTrack {
+  height: 14px;
+}
+
+.rfeHBarFill {
+  display: block;
+
+  height: 100%;
+  min-width: 2px;
+
+  border-radius: 0 4px 4px 0;
+
+  background: var(--rfe-series-1);
+}
+
+.rfeHBarValue {
+  color: var(--rfe-ink);
+
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  text-align: right;
+}
+
+.rfeHBarValue em {
+  color: var(--rfe-ink-muted);
+
+  font-style: normal;
+  font-weight: 500;
+}
+
+.rfeDimRow {
+  opacity: 0.4;
+}
+
+.rfeDonutWrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+
+  gap: 18px 28px;
+
+  padding: 6px 0;
+}
+
+.rfeSlice {
+  stroke: var(--rfe-surface);
+  stroke-width: 2px;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+.rfeDonutValue {
+  fill: var(--rfe-ink);
+
+  font-size: 26px;
+  font-weight: 800;
+
+  letter-spacing: -0.03em;
+}
+
+.rfeDonutTable {
+  border-collapse: collapse;
+
+  color: var(--rfe-ink);
+
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rfeDonutTable td {
+  padding: 3px 8px;
+
+  text-align: right;
+
+  transition: opacity 0.15s;
+}
+
+.rfeDonutTable td:first-child {
+  text-align: left;
+}
+
+.rfeDonutTable td:last-child {
+  color: var(--rfe-ink-muted);
+}
+
+.rfeDonutTable tr {
+  transition: opacity 0.15s;
+}
+
+.rfeDot {
+  display: inline-block;
+
+  width: 9px;
+  height: 9px;
+
+  margin-right: 7px;
+
+  border-radius: 50%;
+
+  vertical-align: -1px;
+}
+
+.rfeDot.rfeSeries1Fill { background: var(--rfe-series-1); }
+.rfeDot.rfeSeries2Fill { background: var(--rfe-series-2); }
+.rfeDot.rfeSeries3Fill { background: var(--rfe-series-3); }
+
+.rfeYearSwitch button {
+  flex: 0 0 auto;
+
+  padding: 7px 11px;
+}
+
+.rfeKpiGrid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+@media (min-width: 1200px) {
+  .rfeKpiGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .rfeKpiGrid {
+    gap: 10px;
+  }
+
+  .rfeKpiCard {
+    padding: 12px 14px;
+  }
+
+  .rfeKpiCard .rfeInvTotal {
+    font-size: 28px;
+  }
+
+  .rfeYearSwitch {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

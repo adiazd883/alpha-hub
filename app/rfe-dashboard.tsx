@@ -17,6 +17,11 @@ import type {
   ProductivityMonth,
   RfeDashboardData,
 } from "@/lib/rfe/logic";
+import type {
+  HistoricoData,
+  HistoricoYear,
+  ReceiptType,
+} from "@/lib/rfe/historico";
 
 /*
  * Dashboard RFE del área (vista General). Toma la Sheet
@@ -1119,6 +1124,433 @@ function ClosingsTable({
   );
 }
 
+// --- Histórico (Sheet "HISTÓRICO RFE 360") ---
+
+const RECEIPT_TYPES: { key: ReceiptType; label: string; series: number }[] = [
+  { key: "dd", label: "RFE con deadline", series: 1 },
+  { key: "ndd", label: "RFE sin deadline", series: 2 },
+  { key: "noid", label: "NOID / NOIR", series: 3 },
+];
+
+const pct = (n: number, total: number) =>
+  total > 0 ? Math.round((n / total) * 100) : 0;
+
+function HistoricoKpis({ data }: { data: HistoricoYear }) {
+  const counted = data.months.reduce(
+    (acc, m) => {
+      acc.dd += m.dd;
+      acc.ndd += m.ndd;
+      acc.noid += m.noid;
+      return acc;
+    },
+    { dd: 0, ndd: 0, noid: 0 }
+  );
+  const total = data.total;
+
+  return (
+    <div className="rfeKpiGrid">
+      <div className="rfeKpiCard">
+        <div className="rfeInvTitle">Recibos {data.year}</div>
+        <div className="rfeInvTotal">{total}</div>
+        <div className="rfeKpiNote">
+          {data.outOfYear > 0
+            ? `${data.outOfYear} con fecha de otro año, fuera de la gráfica mensual`
+            : "Casos VAWA con recibo en el año"}
+        </div>
+      </div>
+
+      {RECEIPT_TYPES.map((t) => (
+        <div className="rfeKpiCard" key={t.key}>
+          <div className="rfeInvTitle">
+            <i className={`rfeSwatchBar rfeSeries${t.series}`} /> {t.label}
+          </div>
+          <div className="rfeInvTotal">{counted[t.key]}</div>
+          <div className="rfeKpiNote">{pct(counted[t.key], total)}% del año</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Recibos por mes: tres columnas por mes (RFE DD, RFE NDD, NOID).
+function ReceiptsChart({ data }: { data: HistoricoYear }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const { ref, width } = useWidth();
+
+  const frame = chartFrame(
+    12,
+    Math.max(1, ...data.months.map((m) => Math.max(m.dd, m.ndd, m.noid))),
+    width,
+    120
+  );
+  const { SLOT } = frame;
+  const BAR = Math.max(6, Math.min(24, Math.floor((SLOT - 14) / 3)));
+  const group = BAR * 3 + 4;
+  const hovered = hover !== null ? data.months[hover] : null;
+
+  return (
+    <div className="rfeChartCard">
+      <div className="rfeChartHead">
+        <div>
+          <div className="rfeChartTitle">Recibos por mes y tipo, {data.year}</div>
+          <div className="rfeChartSub">Mes de la fecha del recibo</div>
+        </div>
+
+        <div className="rfeLegend">
+          {RECEIPT_TYPES.map((t) => (
+            <span key={t.key}>
+              <i className={`rfeSwatchBar rfeSeries${t.series}`} /> {t.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="rfeChartScroll" ref={ref}>
+        <svg
+          width={frame.width}
+          height={frame.height}
+          role="img"
+          aria-label={`Recibos VAWA por mes y tipo en ${data.year}`}
+        >
+          <Gridlines frame={frame} />
+
+          {MONTHS.map((label, i) => {
+            const m = data.months[i];
+            const start = frame.slotX(i) + (SLOT - group) / 2;
+            const monthTotal = m.dd + m.ndd + m.noid;
+            const top = frame.baseY - frame.scaleY(Math.max(m.dd, m.ndd, m.noid));
+            return (
+              <g
+                key={label}
+                tabIndex={0}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
+                className="rfeHit"
+              >
+                <rect x={frame.slotX(i)} y={PAD_TOP} width={SLOT} height={PLOT_HEIGHT} fill="transparent" />
+                {RECEIPT_TYPES.map((t, k) => {
+                  const h = frame.scaleY(m[t.key]);
+                  return (
+                    <path
+                      key={t.key}
+                      d={columnPath(start + k * (BAR + 2), frame.baseY - h, BAR, h, true)}
+                      className={`rfeSeries${t.series}Fill ${hover !== null && hover !== i ? "rfeDim" : ""}`}
+                    />
+                  );
+                })}
+                {monthTotal > 0 && (
+                  <text
+                    x={frame.slotX(i) + SLOT / 2}
+                    y={top - 5}
+                    textAnchor="middle"
+                    className="rfeValue"
+                  >
+                    {monthTotal}
+                  </text>
+                )}
+                <text
+                  x={frame.slotX(i) + SLOT / 2}
+                  y={frame.height - 6}
+                  textAnchor="middle"
+                  className="rfeTick"
+                >
+                  {label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <div className="rfeTooltip">
+        {hovered && hover !== null ? (
+          <>
+            <strong>
+              {MONTHS[hover]} {data.year}
+            </strong>{" "}
+            · {hovered.dd + hovered.ndd + hovered.noid} recibos ·{" "}
+            {RECEIPT_TYPES.map((t) => `${t.label} ${hovered[t.key]}`).join(" · ")}
+          </>
+        ) : (
+          <span>El número sobre cada mes es el total. Pasa el cursor para ver el detalle.</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Qué pide cada RFE: casillas marcadas por solicitud.
+const REQUEST_LABELS: Record<string, string> = {
+  "INCOMPLETE PETITION": "Incomplete petition",
+  SIGNATURE: "Signature",
+  CREDIBILITY: "Credibility",
+  RELATIONSHIP: "Relationship",
+  "LEGAL STATUS": "Legal status",
+  RESIDENCE: "Residence",
+  GMC: "GMC",
+  ABUSE: "Abuse",
+  "GFM/BONA FIDE": "GFM / Bona fide",
+  "DIRECCIÓN": "Dirección",
+  "MEDICAL RECORDS": "Medical records",
+  "MENTAL HEALTH MEDICAL RECORD": "Mental health medical record",
+};
+
+function RequestsChart({ data }: { data: HistoricoYear }) {
+  const [hover, setHover] = useState<string | null>(null);
+  const max = Math.max(1, ...data.requests.map((r) => r.count));
+  const hovered = data.requests.find((r) => r.name === hover);
+
+  return (
+    <div className="rfeChartCard">
+      <div className="rfeChartHead">
+        <div>
+          <div className="rfeChartTitle">Qué pide el RFE, {data.year}</div>
+          <div className="rfeChartSub">
+            Casos que piden cada solicitud · % sobre {data.total} casos
+          </div>
+        </div>
+      </div>
+
+      <div className="rfeHBars">
+        {data.requests.map((r) => (
+          <div
+            key={r.name}
+            className={`rfeHBarRow ${hover && hover !== r.name ? "rfeDimRow" : ""}`}
+            tabIndex={0}
+            onMouseEnter={() => setHover(r.name)}
+            onMouseLeave={() => setHover(null)}
+            onFocus={() => setHover(r.name)}
+            onBlur={() => setHover(null)}
+          >
+            <span className="rfeHBarLabel">{REQUEST_LABELS[r.name] || r.name}</span>
+            <span className="rfeHBarTrack">
+              <span
+                className="rfeHBarFill"
+                style={{ width: `${(r.count / max) * 100}%` }}
+              />
+            </span>
+            <span className="rfeHBarValue">
+              {r.count} <em>{pct(r.count, data.total)}%</em>
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="rfeTooltip">
+        {hovered ? (
+          <>
+            <strong>{REQUEST_LABELS[hovered.name] || hovered.name}</strong> ·{" "}
+            {hovered.count} de {data.total} casos ({pct(hovered.count, data.total)}%)
+          </>
+        ) : (
+          <span>Un caso puede pedir varias cosas, por eso los % no suman 100.</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/*
+ * Año en que el caso llegó con USCIS. Los 3 años con más casos
+ * llevan color; el resto se junta en "Otros años" (gris) y la
+ * tabla de al lado muestra todos.
+ */
+function arcPath(cx: number, cy: number, r: number, inner: number, a0: number, a1: number) {
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  const p = (rad: number, a: number) =>
+    `${cx + rad * Math.sin(a)},${cy - rad * Math.cos(a)}`;
+  return `M${p(r, a0)}A${r},${r} 0 ${large} 1 ${p(r, a1)}L${p(inner, a1)}A${inner},${inner} 0 ${large} 0 ${p(inner, a0)}Z`;
+}
+
+function UscisDonut({ data }: { data: HistoricoYear }) {
+  const [hover, setHover] = useState<string | null>(null);
+  const total = data.uscisYears.reduce((s, y) => s + y.count, 0);
+
+  const dated = data.uscisYears.filter((y) => y.year !== null);
+  const top = [...dated]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+    .map((y) => y.year as number)
+    .sort((a, b) => a - b);
+  const colorOf = (year: number | null) => {
+    if (year === null) return "rfeSliceEmpty";
+    const k = top.indexOf(year);
+    return k >= 0 ? `rfeSeries${k + 1}Fill` : "rfeSliceOther";
+  };
+
+  const others = dated.filter((y) => !top.includes(y.year as number));
+  const noDate = data.uscisYears.find((y) => y.year === null);
+  const slices = [
+    ...top.map((year) => ({
+      id: String(year),
+      label: String(year),
+      count: dated.find((y) => y.year === year)!.count,
+      cls: colorOf(year),
+    })),
+    ...(others.length
+      ? [{
+          id: "otros",
+          label: "Otros años",
+          count: others.reduce((s, y) => s + y.count, 0),
+          cls: "rfeSliceOther",
+        }]
+      : []),
+    ...(noDate
+      ? [{ id: "sin", label: "Sin fecha", count: noDate.count, cls: "rfeSliceEmpty" }]
+      : []),
+  ];
+
+  const leader = [...dated].sort((a, b) => b.count - a.count)[0];
+  const sliceOfRow = (year: number | null) =>
+    year === null ? "sin" : top.includes(year) ? String(year) : "otros";
+  const active = hover ? slices.find((s) => s.id === hover) : null;
+
+  const SIZE = 184;
+  const R = SIZE / 2 - 4;
+  const INNER = R - 26;
+  let angle = 0;
+
+  return (
+    <div className="rfeChartCard">
+      <div className="rfeChartHead">
+        <div>
+          <div className="rfeChartTitle">
+            Año en que llegó con USCIS, recibos {data.year}
+          </div>
+          <div className="rfeChartSub">De qué años son los casos que se están trabajando</div>
+        </div>
+      </div>
+
+      <div className="rfeDonutWrap">
+        <svg
+          width={SIZE}
+          height={SIZE}
+          role="img"
+          aria-label={`Año de llegada con USCIS de los recibos ${data.year}`}
+        >
+          {total > 0 &&
+            slices.map((s) => {
+              const a0 = angle;
+              const a1 = angle + (s.count / total) * Math.PI * 2;
+              angle = a1;
+              // Un solo segmento: círculo completo.
+              const d =
+                s.count === total
+                  ? arcPath(SIZE / 2, SIZE / 2, R, INNER, 0, Math.PI * 2 - 0.0001)
+                  : arcPath(SIZE / 2, SIZE / 2, R, INNER, a0, a1);
+              return (
+                <path
+                  key={s.id}
+                  d={d}
+                  className={`${s.cls} rfeSlice ${hover && hover !== s.id ? "rfeDim" : ""}`}
+                  tabIndex={0}
+                  onMouseEnter={() => setHover(s.id)}
+                  onMouseLeave={() => setHover(null)}
+                  onFocus={() => setHover(s.id)}
+                  onBlur={() => setHover(null)}
+                />
+              );
+            })}
+          <text x={SIZE / 2} y={SIZE / 2 - 4} textAnchor="middle" className="rfeDonutValue">
+            {active ? `${pct(active.count, total)}%` : leader ? `${pct(leader.count, total)}%` : "—"}
+          </text>
+          <text x={SIZE / 2} y={SIZE / 2 + 15} textAnchor="middle" className="rfeTick">
+            {active ? active.label : leader ? `llegó en ${leader.year}` : "sin datos"}
+          </text>
+        </svg>
+
+        <table className="rfeDonutTable">
+          <tbody>
+            {data.uscisYears.map((y) => {
+              const id = sliceOfRow(y.year);
+              return (
+                <tr
+                  key={y.year ?? "sin"}
+                  className={hover && hover !== id ? "rfeDimRow" : ""}
+                  onMouseEnter={() => setHover(id)}
+                  onMouseLeave={() => setHover(null)}
+                >
+                  <td>
+                    <i className={`rfeDot ${colorOf(y.year)}`} />
+                    {y.year ?? "Sin fecha"}
+                  </td>
+                  <td>{y.count}</td>
+                  <td>{pct(y.count, total)}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function HistoricoSection() {
+  const [data, setData] = useState<HistoricoData | null>(null);
+  const [year, setYear] = useState<number | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/rfe-dashboard/historico", { cache: "no-store" })
+      .then(async (response) => {
+        const json = await response.json();
+        if (!response.ok) {
+          throw new Error(json.error || "No se pudo cargar el histórico");
+        }
+        setData(json);
+        setYear((y) => y ?? json.years.at(-1)?.year ?? null);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"));
+  }, []);
+
+  const selected = data?.years.find((y) => y.year === year);
+
+  return (
+    <section>
+      <div className="rfeSectionHeadRow">
+        <div className="rfeSectionHead">
+          <p className="dashboardSectionEyebrow">HISTÓRICO</p>
+          <h2>Histórico de RFEs VAWA</h2>
+          <p>Recibos de cada año según la Sheet HISTÓRICO RFE 360.</p>
+        </div>
+
+        {data && (
+          <div className="celulaSwitch rfeYearSwitch" role="group" aria-label="Año">
+            {data.years.map((y) => (
+              <button
+                key={y.year}
+                className={y.year === year ? "active" : ""}
+                aria-pressed={y.year === year}
+                onClick={() => setYear(y.year)}
+              >
+                {y.year}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {error && <div className="errorBanner">{error}</div>}
+
+      {!data && !error && <div className="loadingCard">Cargando histórico…</div>}
+
+      {selected && (
+        <div className="rfeStack">
+          <HistoricoKpis data={selected} />
+          <ReceiptsChart data={selected} />
+          <div className="rfeChartGrid">
+            <RequestsChart data={selected} />
+            <UscisDonut data={selected} />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function RfeDashboard() {
   const [data, setData] = useState<RfeDashboardData | null>(null);
   const [period, setPeriod] = useState<GoalPeriod>("weekly");
@@ -1157,7 +1589,7 @@ export default function RfeDashboard() {
 
           <h1>Dashboard RFE</h1>
 
-          <p>Inventario, metas semanales y llegadas de toda el área.</p>
+          <p>Inventario, productividad, metas, llegadas e histórico de toda el área.</p>
         </div>
 
         <button className="refreshButton" onClick={load}>
@@ -1300,6 +1732,8 @@ export default function RfeDashboard() {
                 ))}
               </div>
             </section>
+
+            <HistoricoSection />
           </div>
         )
       )}
