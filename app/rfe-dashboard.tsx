@@ -10,20 +10,32 @@ import {
 } from "@/lib/rfe/config";
 import type {
   ArrivalWeek,
-  GoalWeek,
+  Counts,
+  GoalPeriod,
+  GoalPoint,
   InventoryBox,
+  ProductivityMonth,
   RfeDashboardData,
 } from "@/lib/rfe/logic";
 
 /*
  * Dashboard RFE del área (vista General). Toma la Sheet
  * general de RFE con las mismas reglas del dashboard
- * "Estatus General RFE"; las metas se leen de ese dashboard.
+ * "Estatus General RFE". Las metas, el avance manual y los
+ * cierres se leen y guardan en ese mismo dashboard.
  */
 
 function weekLabel(weekKey: string) {
   const match = /W(\d+)$/.exec(weekKey);
   return match ? `S${Number(match[1])}` : weekKey;
+}
+
+const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+function periodLabel(period: GoalPeriod, key: string) {
+  if (period === "weekly") return weekLabel(key);
+  const [year, month] = key.split("-").map(Number);
+  return `${MONTHS[month - 1]} ${String(year).slice(2)}`;
 }
 
 function niceCeil(n: number) {
@@ -79,10 +91,11 @@ function useWidth() {
 function chartFrame(
   count: number,
   maxValue: number,
-  available: number
+  available: number,
+  maxSlot = 64
 ) {
   const SLOT = Math.min(
-    64,
+    maxSlot,
     Math.max(28, (available - PAD_LEFT - PAD_RIGHT) / Math.max(count, 1))
   );
   const BAR = Math.min(24, Math.round(SLOT * 0.55));
@@ -167,10 +180,12 @@ function InventoryCard({
 
 function GoalChart({
   category,
+  period,
   weeks,
 }: {
   category: RfeCategory;
-  weeks: GoalWeek[];
+  period: GoalPeriod;
+  weeks: GoalPoint[];
 }) {
   const [hover, setHover] = useState<string | null>(null);
   const { ref, width } = useWidth();
@@ -197,7 +212,7 @@ function GoalChart({
   });
   if (current) segments.push(current);
 
-  const hovered = weeks.find((w) => w.weekKey === hover);
+  const hovered = weeks.find((w) => w.key === hover);
   const last = weeks[weeks.length - 1];
 
   return (
@@ -208,7 +223,8 @@ function GoalChart({
 
           {last && (
             <div className="rfeChartSub">
-              Semana actual: <strong>{last.actual ?? "—"}</strong> de{" "}
+              {period === "weekly" ? "Semana actual" : "Mes actual"}:{" "}
+              <strong>{last.actual ?? "—"}</strong> de{" "}
               {last.goal ?? "—"}
             </div>
           )}
@@ -230,7 +246,7 @@ function GoalChart({
           width={frame.width}
           height={frame.height}
           role="img"
-          aria-label={`Avance contra meta por semana, ${CATEGORY_LABELS[category]}`}
+          aria-label={`Avance contra meta, ${CATEGORY_LABELS[category]}`}
         >
           <Gridlines frame={frame} />
 
@@ -239,10 +255,10 @@ function GoalChart({
             const x = center(i) - BAR / 2;
             return (
               <path
-                key={w.weekKey}
+                key={w.key}
                 d={columnPath(x, frame.baseY - h, BAR, h, true)}
                 className={`rfeSeries1Fill ${
-                  hover && hover !== w.weekKey ? "rfeDim" : ""
+                  hover && hover !== w.key ? "rfeDim" : ""
                 }`}
               />
             );
@@ -255,7 +271,7 @@ function GoalChart({
           {weeks.map((w, i) =>
             w.goal === null ? null : (
               <circle
-                key={w.weekKey}
+                key={w.key}
                 cx={center(i)}
                 cy={goalY(w.goal)}
                 r={4}
@@ -266,11 +282,11 @@ function GoalChart({
 
           {weeks.map((w, i) => (
             <g
-              key={w.weekKey}
+              key={w.key}
               tabIndex={0}
-              onMouseEnter={() => setHover(w.weekKey)}
+              onMouseEnter={() => setHover(w.key)}
               onMouseLeave={() => setHover(null)}
-              onFocus={() => setHover(w.weekKey)}
+              onFocus={() => setHover(w.key)}
               onBlur={() => setHover(null)}
               className="rfeHit"
             >
@@ -288,7 +304,7 @@ function GoalChart({
                 textAnchor="middle"
                 className="rfeTick"
               >
-                {weekLabel(w.weekKey)}
+                {periodLabel(period, w.key)}
               </text>
             </g>
           ))}
@@ -298,14 +314,14 @@ function GoalChart({
       <div className="rfeTooltip">
         {hovered ? (
           <>
-            <strong>{weekLabel(hovered.weekKey)}</strong> · Avance{" "}
+            <strong>{periodLabel(period, hovered.key)}</strong> · Avance{" "}
             {hovered.actual ?? "—"} · Meta {hovered.goal ?? "—"}
             {hovered.goal && hovered.actual !== null
               ? ` · ${Math.round((hovered.actual / hovered.goal) * 100)}%`
               : ""}
           </>
         ) : (
-          <span>Pasa el cursor sobre una semana para ver el detalle</span>
+          <span>Pasa el cursor sobre un periodo para ver el detalle</span>
         )}
       </div>
     </div>
@@ -430,36 +446,670 @@ function ArrivalsChart({
   );
 }
 
-function DataTable({
-  goals,
+const monthName = (key: string) => MONTHS[Number(key.slice(5)) - 1];
+
+/*
+ * Productividad mensual VAWA del año: barras = enviados a MGM
+ * Review, línea = meta. Con etiquetas de valor, como en la
+ * gráfica que se llevaba a mano.
+ */
+function ProductivityChart({
+  year,
+  months,
 }: {
-  goals: Record<RfeCategory, GoalWeek[]>;
+  year: number;
+  months: ProductivityMonth[];
 }) {
-  const weeks = goals.vawaDD.map((w) => w.weekKey);
+  const [hover, setHover] = useState<string | null>(null);
+  const { ref, width } = useWidth();
+
+  const frame = chartFrame(
+    months.length,
+    Math.max(1, ...months.map((m) => Math.max(m.goal ?? 0, m.actual ?? 0))),
+    width,
+    110
+  );
+  const { SLOT, BAR } = frame;
+  const center = (i: number) => frame.slotX(i) + SLOT / 2;
+  const y = (v: number) => frame.baseY - frame.scaleY(v);
+
+  const segments: string[] = [];
+  let current = "";
+  months.forEach((m, i) => {
+    if (m.goal === null) {
+      if (current) segments.push(current);
+      current = "";
+      return;
+    }
+    current += `${current ? "L" : "M"}${center(i)},${y(m.goal)}`;
+  });
+  if (current) segments.push(current);
+
+  const hovered = months.find((m) => m.key === hover);
+
   return (
-    <details className="rfeTableToggle">
-      <summary>Ver metas en tabla</summary>
+    <div className="rfeChartCard">
+      <div className="rfeChartHead">
+        <div>
+          <div className="rfeChartTitle">
+            Clientes 360 enviados a MGM Review en {year}
+          </div>
+          <div className="rfeChartSub">VAWA con y sin deadline</div>
+        </div>
+
+        <div className="rfeLegend">
+          <span>
+            <i className="rfeSwatchBar rfeSeries1" /> Productividad mensual
+          </span>
+          <span>
+            <i className="rfeSwatchLine rfeSeries2" /> Meta mensual
+          </span>
+        </div>
+      </div>
+
+      <div className="rfeChartScroll" ref={ref}>
+        <svg
+          width={frame.width}
+          height={frame.height}
+          role="img"
+          aria-label={`Productividad mensual VAWA ${year} contra meta`}
+        >
+          <Gridlines frame={frame} />
+
+          {months.map((m, i) => {
+            const h = frame.scaleY(m.actual ?? 0);
+            const x = center(i) - BAR / 2;
+            const inside = h >= 20;
+            return (
+              <g key={m.key}>
+                <path
+                  d={columnPath(x, frame.baseY - h, BAR, h, true)}
+                  className={`rfeSeries1Fill ${hover && hover !== m.key ? "rfeDim" : ""}`}
+                />
+                {m.actual !== null && (
+                  <text
+                    x={center(i)}
+                    y={inside ? frame.baseY - h + 13 : frame.baseY - h - 5}
+                    textAnchor="middle"
+                    className={inside ? "rfeValueOnFill" : "rfeValue"}
+                  >
+                    {m.actual}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {segments.map((d) => (
+            <path key={d} d={d} className="rfeGoalLine" />
+          ))}
+
+          {months.map((m, i) =>
+            m.goal === null ? null : (
+              <g key={m.key}>
+                <circle cx={center(i)} cy={y(m.goal)} r={4} className="rfeGoalDot" />
+                <text
+                  x={center(i)}
+                  y={y(m.goal) - 9}
+                  textAnchor="middle"
+                  className="rfeValue rfeHalo"
+                >
+                  {m.goal}
+                </text>
+              </g>
+            )
+          )}
+
+          {months.map((m, i) => (
+            <g
+              key={m.key}
+              tabIndex={0}
+              onMouseEnter={() => setHover(m.key)}
+              onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(m.key)}
+              onBlur={() => setHover(null)}
+              className="rfeHit"
+            >
+              <rect x={frame.slotX(i)} y={PAD_TOP} width={SLOT} height={PLOT_HEIGHT} fill="transparent" />
+              <text x={center(i)} y={frame.height - 6} textAnchor="middle" className="rfeTick">
+                {monthName(m.key)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <div className="rfeTooltip">
+        {hovered ? (
+          <>
+            <strong>{monthName(hovered.key)} {year}</strong> · Productividad{" "}
+            {hovered.actual ?? "—"} · Meta {hovered.goal ?? "—"}
+            {hovered.goal && hovered.actual !== null
+              ? ` · ${Math.round((hovered.actual / hovered.goal) * 100)}%`
+              : ""}
+            {hovered.manual ? " · capturado a mano" : " · del cierre mensual"}
+          </>
+        ) : (
+          <span>Pasa el cursor sobre un mes para ver el detalle</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Comparativa mensual de enviados a MGM Review: año actual vs anterior.
+function ComparisonChart({
+  year,
+  current,
+  previous,
+}: {
+  year: number;
+  current: ProductivityMonth[];
+  previous: ProductivityMonth[];
+}) {
+  const [hover, setHover] = useState<number | null>(null);
+  const { ref, width } = useWidth();
+
+  const value = (list: ProductivityMonth[], i: number) => list[i]?.actual ?? null;
+  const frame = chartFrame(
+    12,
+    Math.max(1, ...[...current, ...previous].map((m) => m.actual ?? 0)),
+    width,
+    110
+  );
+  const { SLOT } = frame;
+  const BAR = Math.min(24, Math.floor((SLOT - 10) / 2));
+
+  return (
+    <div className="rfeChartCard">
+      <div className="rfeChartHead">
+        <div>
+          <div className="rfeChartTitle">
+            Comparativa mensual de casos enviados a MGM Review, {year - 1} vs {year}
+          </div>
+          <div className="rfeChartSub">VAWA con y sin deadline</div>
+        </div>
+
+        <div className="rfeLegend">
+          <span>
+            <i className="rfeSwatchBar rfeSeries1" /> {year}
+          </span>
+          <span>
+            <i className="rfeSwatchBar rfeSeries2" /> {year - 1}
+          </span>
+        </div>
+      </div>
+
+      <div className="rfeChartScroll" ref={ref}>
+        <svg
+          width={frame.width}
+          height={frame.height}
+          role="img"
+          aria-label={`Casos enviados a MGM Review por mes, ${year} contra ${year - 1}`}
+        >
+          <Gridlines frame={frame} />
+
+          {MONTHS.map((label, i) => {
+            const mid = frame.slotX(i) + SLOT / 2;
+            const bars = [
+              { v: value(current, i), x: mid - BAR - 1, cls: "rfeSeries1Fill" },
+              { v: value(previous, i), x: mid + 1, cls: "rfeSeries2Fill" },
+            ];
+            return (
+              <g
+                key={label}
+                tabIndex={0}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
+                className="rfeHit"
+              >
+                <rect x={frame.slotX(i)} y={PAD_TOP} width={SLOT} height={PLOT_HEIGHT} fill="transparent" />
+                {bars.map((b) => {
+                  if (b.v === null) return null;
+                  const h = frame.scaleY(b.v);
+                  return (
+                    <g key={b.cls}>
+                      <path
+                        d={columnPath(b.x, frame.baseY - h, BAR, h, true)}
+                        className={`${b.cls} ${hover !== null && hover !== i ? "rfeDim" : ""}`}
+                      />
+                      <text
+                        x={b.x + BAR / 2}
+                        y={frame.baseY - h - 5}
+                        textAnchor="middle"
+                        className="rfeValue"
+                      >
+                        {b.v}
+                      </text>
+                    </g>
+                  );
+                })}
+                <text x={mid} y={frame.height - 6} textAnchor="middle" className="rfeTick">
+                  {label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <div className="rfeTooltip">
+        {hover !== null ? (
+          <>
+            <strong>{MONTHS[hover]}</strong> · {year}: {value(current, hover) ?? "—"} ·{" "}
+            {year - 1}: {value(previous, hover) ?? "—"}
+          </>
+        ) : (
+          <span>Pasa el cursor sobre un mes para ver el detalle</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/*
+ * Captura manual de la productividad VAWA. En blanco = el mes
+ * toma su cierre mensual (lo que se ve como sugerencia gris).
+ */
+function ProductivityEditor({
+  data,
+  onSaved,
+}: {
+  data: RfeDashboardData;
+  onSaved: () => void;
+}) {
+  const { year, current, entries } = data.productivity;
+  const keys = MONTHS.map((_, i) => String(i + 1).padStart(2, "0"));
+  const initial = () =>
+    Object.fromEntries(
+      [...keys.map((m) => `${year}-${m}`), ...keys.map((m) => `${year - 1}-${m}`)].map((key) => [
+        key,
+        {
+          goal: entries[key]?.goal != null ? String(entries[key].goal) : "",
+          actual: entries[key]?.actual != null ? String(entries[key].actual) : "",
+        },
+      ])
+    );
+  const [draft, setDraft] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState("");
+
+  const set = (key: string, field: "goal" | "actual", value: string) =>
+    setDraft((d) => ({ ...d, [key]: { ...d[key], [field]: value } }));
+
+  async function save() {
+    const start = initial();
+    const months = Object.fromEntries(
+      Object.entries(draft)
+        .filter(([key, v]) => v.goal !== start[key].goal || v.actual !== start[key].actual)
+        .map(([key, v]) => [key, { goal: v.goal, actual: v.actual }])
+    );
+    if (!Object.keys(months).length) return;
+
+    setSaving(true);
+    setStatus("");
+    try {
+      await send("/api/rfe-dashboard/productivity", "PUT", { months });
+      setStatus("Guardado");
+      onSaved();
+    } catch (err) {
+      setStatus(`No se guardó: ${err instanceof Error ? err.message : "error"}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const auto = (key: string, field: "goal" | "actual") => {
+    const month = current.find((m) => m.key === key);
+    return month && !entries[key] && month[field] !== null ? String(month[field]) : "";
+  };
+
+  return (
+    <details className="rfeEditPanel">
+      <summary>Editar productividad mensual VAWA</summary>
+
+      <p className="rfeEditHelp">
+        Valores capturados a mano. Si dejas un mes de {year} en blanco, toma su
+        cierre mensual (VAWA con + sin deadline), que aparece en gris.
+      </p>
 
       <div className="rfeTableWrap">
         <table className="rfeTable">
           <thead>
             <tr>
-              <th>Semana</th>
+              <th>Mes</th>
+              <th>Meta {year}</th>
+              <th>Productividad {year}</th>
+              <th>Productividad {year - 1}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {keys.map((m, i) => {
+              const key = `${year}-${m}`;
+              const prev = `${year - 1}-${m}`;
+              return (
+                <tr key={m}>
+                  <td>{MONTHS[i]}</td>
+                  {(["goal", "actual"] as const).map((field) => (
+                    <td key={field}>
+                      <input
+                        className="rfeCellInput"
+                        type="number"
+                        min="0"
+                        aria-label={`${field === "goal" ? "Meta" : "Productividad"} ${MONTHS[i]} ${year}`}
+                        placeholder={auto(key, field)}
+                        value={draft[key][field]}
+                        onChange={(e) => set(key, field, e.target.value)}
+                      />
+                    </td>
+                  ))}
+                  <td>
+                    <input
+                      className="rfeCellInput"
+                      type="number"
+                      min="0"
+                      aria-label={`Productividad ${MONTHS[i]} ${year - 1}`}
+                      value={draft[prev].actual}
+                      onChange={(e) => set(prev, "actual", e.target.value)}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="rfeEditActions">
+        <button className="rfePrimaryButton" type="button" onClick={save} disabled={saving}>
+          {saving ? "Guardando…" : "Guardar"}
+        </button>
+        {status && <span>{status}</span>}
+      </div>
+    </details>
+  );
+}
+
+async function send(url: string, method: string, body: unknown) {
+  const response = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(json.error || "No se pudo guardar");
+  }
+}
+
+type Draft = Record<RfeCategory, string>;
+
+const toDraft = (counts: Partial<Counts> | undefined): Draft =>
+  Object.fromEntries(
+    RFE_CATEGORIES.map((c) => [c, String(counts?.[c] ?? 0)])
+  ) as Draft;
+
+/*
+ * Metas del periodo en curso (semana y mes) y avance manual de
+ * Other forms. VAWA y VISA T se cuentan solos desde la Sheet.
+ */
+function GoalsEditor({
+  data,
+  onSaved,
+}: {
+  data: RfeDashboardData;
+  onSaved: () => void;
+}) {
+  const metrics = data.metrics;
+  const [weekly, setWeekly] = useState(() => toDraft(metrics?.weeklyGoal));
+  const [monthly, setMonthly] = useState(() => toDraft(metrics?.monthlyGoal));
+  const [other, setOther] = useState(() => ({
+    weekly: String(metrics?.otherFormsProgress.weekly ?? 0),
+    monthly: String(metrics?.otherFormsProgress.monthly ?? 0),
+  }));
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState("");
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setStatus("");
+    try {
+      await send("/api/rfe-dashboard/metrics", "POST", {
+        weeklyGoal: weekly,
+        monthlyGoal: monthly,
+        otherFormsProgress: other,
+      });
+      setStatus("Guardado");
+      onSaved();
+    } catch (err) {
+      setStatus(`No se guardó: ${err instanceof Error ? err.message : "error"}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const column = (
+    title: string,
+    draft: Draft,
+    setDraft: (d: Draft) => void,
+    otherKey: "weekly" | "monthly"
+  ) => (
+    <fieldset className="rfeEditColumn">
+      <legend>{title}</legend>
+
+      {RFE_CATEGORIES.map((c) => (
+        <label key={c}>
+          <span>Meta · {CATEGORY_LABELS[c]}</span>
+          <input
+            type="number"
+            min="0"
+            value={draft[c]}
+            onChange={(e) => setDraft({ ...draft, [c]: e.target.value })}
+          />
+        </label>
+      ))}
+
+      <label>
+        <span>Avance · Other forms (manual)</span>
+        <input
+          type="number"
+          min="0"
+          value={other[otherKey]}
+          onChange={(e) => setOther({ ...other, [otherKey]: e.target.value })}
+        />
+      </label>
+    </fieldset>
+  );
+
+  return (
+    <details className="rfeEditPanel">
+      <summary>Editar metas y avance</summary>
+
+      <p className="rfeEditHelp">
+        El avance de VAWA con deadline, VAWA sin deadline y VISA T se cuenta
+        solo desde READY FOR MGM REVIEW. Other forms no tiene esa fecha, por eso
+        su avance se captura aquí.
+      </p>
+
+      <form onSubmit={save}>
+        <div className="rfeEditColumns">
+          {column(`Semana en curso (${periodLabel("weekly", data.currentWeek)})`, weekly, setWeekly, "weekly")}
+          {column(`Mes en curso (${periodLabel("monthly", data.currentMonth)})`, monthly, setMonthly, "monthly")}
+        </div>
+
+        <div className="rfeEditActions">
+          <button className="rfePrimaryButton" type="submit" disabled={saving}>
+            {saving ? "Guardando…" : "Guardar"}
+          </button>
+          {status && <span>{status}</span>}
+        </div>
+      </form>
+    </details>
+  );
+}
+
+/*
+ * Cierres: meta y avance final de cada semana o mes. Quien
+ * edita puede corregirlos; "hoja: N" toma lo que marca la Sheet.
+ */
+function ClosingsTable({
+  data,
+  period,
+  onSaved,
+}: {
+  data: RfeDashboardData;
+  period: GoalPeriod;
+  onSaved: () => void;
+}) {
+  const points = data.goals[period];
+  const keys = points.vawaDD.map((p) => p.key).reverse();
+  const [drafts, setDrafts] = useState<Record<string, { goal: Draft; actual: Draft }> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const pointOf = (c: RfeCategory, key: string) =>
+    points[c].find((p) => p.key === key);
+
+  function startEditing() {
+    setError("");
+    setDrafts(
+      Object.fromEntries(
+        keys.map((key) => {
+          const goal = {} as Counts;
+          const actual = {} as Counts;
+          for (const c of RFE_CATEGORIES) {
+            goal[c] = pointOf(c, key)?.goal ?? 0;
+            actual[c] = pointOf(c, key)?.actual ?? 0;
+          }
+          return [key, { goal: toDraft(goal), actual: toDraft(actual) }];
+        })
+      )
+    );
+  }
+
+  function update(key: string, kind: "goal" | "actual", c: RfeCategory, value: string) {
+    setDrafts((d) =>
+      d ? { ...d, [key]: { ...d[key], [kind]: { ...d[key][kind], [c]: value } } } : d
+    );
+  }
+
+  async function save() {
+    if (!drafts) return;
+    const entries = keys
+      .filter((key) =>
+        RFE_CATEGORIES.some(
+          (c) =>
+            Number(drafts[key].goal[c]) !== (pointOf(c, key)?.goal ?? 0) ||
+            Number(drafts[key].actual[c]) !== (pointOf(c, key)?.actual ?? 0)
+        )
+      )
+      .map((key) => ({ period, key, ...drafts[key] }));
+
+    if (!entries.length) {
+      setDrafts(null);
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      await send("/api/rfe-dashboard/history", "PUT", { entries });
+      setDrafts(null);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <details className="rfeTableToggle">
+      <summary>
+        {period === "weekly" ? "Cierres por semana" : "Cierres por mes"}
+      </summary>
+
+      {data.canEdit && (
+        <div className="rfeEditActions">
+          {drafts ? (
+            <>
+              <button className="rfePrimaryButton" onClick={save} disabled={saving} type="button">
+                {saving ? "Guardando…" : "Guardar cierres"}
+              </button>
+              <button className="refreshButton" onClick={() => setDrafts(null)} disabled={saving} type="button">
+                Cancelar
+              </button>
+            </>
+          ) : (
+            <button className="refreshButton" onClick={startEditing} type="button">
+              Editar cierres
+            </button>
+          )}
+          {error && <span className="rfeError">No se guardó: {error}</span>}
+        </div>
+      )}
+
+      <div className="rfeTableWrap">
+        <table className="rfeTable">
+          <thead>
+            <tr>
+              <th>{period === "weekly" ? "Semana" : "Mes"}</th>
               {RFE_CATEGORIES.map((c) => (
-                <th key={c}>{CATEGORY_LABELS[c]}</th>
+                <th key={c}>{CATEGORY_LABELS[c]} · avance / meta</th>
               ))}
             </tr>
           </thead>
 
           <tbody>
-            {weeks.map((weekKey, i) => (
-              <tr key={weekKey}>
-                <td>{weekLabel(weekKey)}</td>
-                {RFE_CATEGORIES.map((c) => (
-                  <td key={c}>
-                    {goals[c][i].actual ?? "—"} / {goals[c][i].goal ?? "—"}
-                  </td>
-                ))}
+            {keys.map((key) => (
+              <tr key={key}>
+                <td>{periodLabel(period, key)}</td>
+                {RFE_CATEGORIES.map((c) => {
+                  const point = pointOf(c, key);
+                  const draft = drafts?.[key];
+                  if (!draft) {
+                    return (
+                      <td key={c}>
+                        {point?.actual ?? "—"} / {point?.goal ?? "—"}
+                      </td>
+                    );
+                  }
+                  return (
+                    <td key={c}>
+                      <div className="rfePairInputs">
+                        <input
+                          type="number"
+                          min="0"
+                          aria-label={`Avance ${CATEGORY_LABELS[c]} ${periodLabel(period, key)}`}
+                          value={draft.actual[c]}
+                          onChange={(e) => update(key, "actual", c, e.target.value)}
+                        />
+                        <span>/</span>
+                        <input
+                          type="number"
+                          min="0"
+                          aria-label={`Meta ${CATEGORY_LABELS[c]} ${periodLabel(period, key)}`}
+                          value={draft.goal[c]}
+                          onChange={(e) => update(key, "goal", c, e.target.value)}
+                        />
+                      </div>
+                      {point?.sheet !== null && point?.sheet !== undefined && (
+                        <button
+                          type="button"
+                          className="rfeSheetHint"
+                          title="Usar este valor como avance"
+                          onClick={() => update(key, "actual", c, String(point.sheet))}
+                        >
+                          hoja: {point.sheet}
+                        </button>
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -471,6 +1121,7 @@ function DataTable({
 
 export default function RfeDashboard() {
   const [data, setData] = useState<RfeDashboardData | null>(null);
+  const [period, setPeriod] = useState<GoalPeriod>("weekly");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -540,26 +1191,93 @@ export default function RfeDashboard() {
 
             <section>
               <div className="rfeSectionHead">
-                <p className="dashboardSectionEyebrow">DESEMPEÑO</p>
-                <h2>Avance vs meta por semana</h2>
+                <p className="dashboardSectionEyebrow">PRODUCTIVIDAD</p>
+                <h2>Productividad mensual VAWA</h2>
                 <p>
-                  Barras: entregas a revisión (MGM Review) de la semana. Línea:
-                  meta semanal capturada en el dashboard RFE. Other forms usa el
-                  avance capturado a mano.
+                  Clientes 360 (VAWA con y sin deadline) enviados a MGM Review
+                  por mes.
                 </p>
+              </div>
+
+              {data.canEdit && !data.goalsError && (
+                <ProductivityEditor
+                  key={data.generatedAt}
+                  data={data}
+                  onSaved={load}
+                />
+              )}
+
+              <div className="rfeStack">
+                <ProductivityChart
+                  year={data.productivity.year}
+                  months={data.productivity.current}
+                />
+
+                <ComparisonChart
+                  year={data.productivity.year}
+                  current={data.productivity.current}
+                  previous={data.productivity.previous}
+                />
+              </div>
+            </section>
+
+            <section>
+              <div className="rfeSectionHeadRow">
+                <div className="rfeSectionHead">
+                  <p className="dashboardSectionEyebrow">DESEMPEÑO</p>
+                  <h2>
+                    Avance vs meta por {period === "weekly" ? "semana" : "mes"}
+                  </h2>
+                  <p>
+                    Barras: entregas a revisión (MGM Review). Línea: meta.
+                    Periodos cerrados muestran su cierre; el periodo en curso,
+                    el avance en vivo. Other forms usa el avance capturado a mano.
+                  </p>
+                </div>
+
+                <div className="celulaSwitch rfePeriodSwitch" role="group" aria-label="Periodo">
+                  {(["weekly", "monthly"] as const).map((p) => (
+                    <button
+                      key={p}
+                      className={p === period ? "active" : ""}
+                      aria-pressed={p === period}
+                      onClick={() => setPeriod(p)}
+                    >
+                      {p === "weekly" ? "Semana" : "Mes"}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {data.goalsError && (
                 <div className="errorBanner">{data.goalsError}</div>
               )}
 
+              {data.canEdit && data.metrics && (
+                <GoalsEditor
+                  key={data.generatedAt}
+                  data={data}
+                  onSaved={load}
+                />
+              )}
+
               <div className="rfeChartGrid">
                 {RFE_CATEGORIES.map((c) => (
-                  <GoalChart key={c} category={c} weeks={data.goals[c]} />
+                  <GoalChart
+                    key={c}
+                    category={c}
+                    period={period}
+                    weeks={data.goals[period][c]}
+                  />
                 ))}
               </div>
 
-              <DataTable goals={data.goals} />
+              <ClosingsTable
+                key={`${period}-${data.generatedAt}`}
+                data={data}
+                period={period}
+                onSaved={load}
+              />
             </section>
 
             <section>
