@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
+import RfeDashboard from "./rfe-dashboard";
 
 type Role =
   | "ADMIN"
@@ -45,7 +46,7 @@ type User = {
   celulas: Celula[];
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -5362,6 +5363,23 @@ export default function Home() {
         </div>
 
         <nav className="sidebarNav">
+          {isGeneral && (
+            <button
+              className={`navItem ${
+                mainView === "rfe" ? "active" : ""
+              }`}
+              onClick={() => setMainView("rfe")}
+            >
+              <span className="navIcon">
+                ◧
+              </span>
+
+              <span>
+                Dashboard RFE
+              </span>
+            </button>
+          )}
+
           <button
             className={`navItem ${
               mainView ===
@@ -5558,6 +5576,10 @@ export default function Home() {
           <div className="errorBanner">
             {error}
           </div>
+        )}
+
+        {mainView === "rfe" && isGeneral && (
+          <RfeDashboard />
         )}
 
         {mainView ===

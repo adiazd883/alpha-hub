@@ -21,7 +21,7 @@ function client() {
   });
 }
 
-async function getSheets() {
+export async function getSheets() {
   const auth = client();
 
   return google.sheets({
