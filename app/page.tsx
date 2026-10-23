@@ -5202,7 +5202,7 @@ export default function Home() {
   if (loadingUser) {
     return (
       <div className="centerScreen">
-        Cargando Alpha Hub…
+        Cargando RFE Hub…
       </div>
     );
   }
@@ -5212,11 +5212,11 @@ export default function Home() {
       <div className="loginScreen">
         <div className="loginCard">
           <div className="logoMark">
-            A
+            R
           </div>
 
           <h1>
-            Alpha Hub
+            RFE Hub
           </h1>
 
           <p>
@@ -5257,7 +5257,7 @@ export default function Home() {
             </strong>
 
             <span>
-              HUB
+              RFE HUB
             </span>
           </div>
         </div>
