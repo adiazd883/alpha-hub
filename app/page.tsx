@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import RfeDashboard from "./rfe-dashboard";
+import Regresos from "./regresos";
 
 type Role =
   | "ADMIN"
@@ -46,7 +47,7 @@ type User = {
   celulas: Celula[];
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -1834,6 +1835,22 @@ export default function Home() {
         CELULAS[celula].hasNwGeneral;
 
   const isGeneral = celula === "general";
+
+  // Clientes de la Sheet para ligar cada regreso a su caso.
+  const regresoCases = useMemo(
+    () =>
+      data.rows
+        .filter((row) => (row["CLIENTE"] || "").trim())
+        .map((row) => ({
+          cliente: row["CLIENTE"].trim(),
+          id: (row["ID"] || "").trim(),
+          receipt: (row["RECEIPT NUMBER"] || "").trim(),
+          celula: ((row.__celula ||
+            (celula === "general" ? "" : celula) ||
+            "alpha") as Celula),
+        })),
+    [data.rows, celula]
+  );
 
   function switchCelula(next: Vista) {
     if (next !== celula) {
@@ -5480,6 +5497,21 @@ export default function Home() {
             </span>
           </button>
 
+          <button
+            className={`navItem ${
+              mainView === "regresos" ? "active" : ""
+            }`}
+            onClick={() => setMainView("regresos")}
+          >
+            <span className="navIcon">
+              ↺
+            </span>
+
+            <span>
+              Regresos
+            </span>
+          </button>
+
           {hasNwGeneral && (
             <button
               className={`navItem ${
@@ -5580,6 +5612,20 @@ export default function Home() {
 
         {mainView === "rfe" && isGeneral && (
           <RfeDashboard />
+        )}
+
+        {mainView === "regresos" && user.role && celula && (
+          <Regresos
+            role={user.role}
+            email={user.email || ""}
+            celulas={user.celulas}
+            defaultCelula={
+              celula === "general"
+                ? user.celulas[0]
+                : celula
+            }
+            cases={regresoCases}
+          />
         )}
 
         {mainView ===
