@@ -32,7 +32,7 @@ function credentials() {
   return { url, token };
 }
 
-async function redis(command: (string | number)[]) {
+export async function redis(command: (string | number)[]) {
   const { url, token } = credentials();
   const res = await fetch(url, {
     method: "POST",
@@ -50,13 +50,13 @@ async function redis(command: (string | number)[]) {
   return json.result;
 }
 
-async function getJson<T>(key: string): Promise<T | null> {
+export async function getJson<T>(key: string): Promise<T | null> {
   const raw = await redis(["GET", key]);
   if (raw === null || raw === undefined) return null;
   return typeof raw === "string" ? (JSON.parse(raw) as T) : (raw as T);
 }
 
-async function setJson(key: string, value: unknown) {
+export async function setJson(key: string, value: unknown) {
   await redis(["SET", key, JSON.stringify(value)]);
 }
 
