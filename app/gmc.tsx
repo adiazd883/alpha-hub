@@ -50,6 +50,9 @@ function fmt(s: string | null) {
 // READY cuenta como entregada aunque no tenga fecha de entrega.
 const delivered = (i: GmcItem) => !!i.done || i.status === "READY";
 
+// Día en el calendario: la fecha esperada; si no tiene, el día que se entregó.
+const calendarDate = (i: GmcItem) => i.expected || i.done;
+
 const tabTag = (tab: GmcTab) => (tab === "NON VAWA" ? "NV" : tab === "GMC" ? "GMC" : "OTH");
 
 export default function Gmc() {
@@ -167,8 +170,9 @@ export default function Gmc() {
   const byDay = useMemo(() => {
     const map = new Map<string, GmcItem[]>();
     visible.forEach((i) => {
-      if (!i.expected) return;
-      map.set(i.expected, [...(map.get(i.expected) || []), i]);
+      const day = calendarDate(i);
+      if (!day) return;
+      map.set(day, [...(map.get(day) || []), i]);
     });
     return map;
   }, [visible]);
@@ -183,7 +187,10 @@ export default function Gmc() {
   function weekSummary(week: Date[]) {
     const start = iso(week[0]);
     const end = iso(week[6]);
-    const events = visible.filter((i) => i.expected && i.expected >= start && i.expected <= end);
+    const events = visible.filter((i) => {
+      const day = calendarDate(i);
+      return !!day && day >= start && day <= end;
+    });
     const done = events.filter(delivered).length;
     const counts = new Map<string, number>();
     events.forEach((i) => counts.set(i.member || "Sin asignar", (counts.get(i.member || "Sin asignar") || 0) + 1));
@@ -230,8 +237,8 @@ export default function Gmc() {
     <>
       <header className="pageHeader">
         <div>
-          <p className="eyebrow">GOV BRANCH</p>
-          <h1>GMC</h1>
+          <p className="eyebrow">CÉLULA GMC · GOV BRANCH</p>
+          <h1>Entregas GMC</h1>
           <p>Entregas del equipo GMC: pestañas GMC, NON VAWA y OTHER de la Sheet de Gov Branch.</p>
         </div>
 
@@ -338,7 +345,7 @@ export default function Gmc() {
                       {MONTHS[month.getMonth()]} {month.getFullYear()}
                     </h2>
                     <span>
-                      Por fecha esperada de entrega
+                      Por fecha esperada; si no tiene, por fecha de entrega
                       {canEdit ? " · edita fechas y estatus en Tabla" : ""}
                     </span>
                   </div>
