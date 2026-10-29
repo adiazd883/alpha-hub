@@ -6144,7 +6144,7 @@ button {
 
 .gmKpis {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -6190,6 +6190,32 @@ button {
 
 .gmKpis .gmKpiHero strong {
   color: #2b4fb5;
+}
+
+.gmKpis .gmKpiHero {
+  grid-column: span 2;
+}
+
+.gmBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gmBreakdown li {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #dbe4f7;
+  color: #556070;
+  font-size: 11px;
+}
+
+.gmBreakdown b {
+  color: #1f2b42;
 }
 
 .gmFilters {
@@ -6333,7 +6359,7 @@ button {
 
 @media (max-width: 1100px) {
   .gmKpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

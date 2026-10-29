@@ -53,6 +53,15 @@ const delivered = (i: GmcItem) => !!i.done || i.status === "READY";
 // Día en el calendario: la fecha esperada; si no tiene, el día que se entregó.
 const calendarDate = (i: GmcItem) => i.expected || i.done;
 
+// Tipo de caso: GMC = VAWA DD, OTHER = VAWA NDD (o Gov Request), NON VAWA.
+const CATEGORIES = ["VAWA DD", "VAWA NDD", "Gov Request", "Non VAWA"] as const;
+
+function category(i: GmcItem): (typeof CATEGORIES)[number] {
+  if (i.tab === "GMC") return "VAWA DD";
+  if (i.tab === "NON VAWA") return "Non VAWA";
+  return /GOV/i.test(i.tipo) ? "Gov Request" : "VAWA NDD";
+}
+
 const tabTag = (tab: GmcTab) => (tab === "NON VAWA" ? "NV" : tab === "GMC" ? "GMC" : "OTH");
 
 export default function Gmc() {
@@ -159,6 +168,10 @@ export default function Gmc() {
   // Inventario: lo que sigue sin entregar; un cliente cuenta una vez.
   const pendientes = visible.filter((i) => !delivered(i));
   const inventario = new Set(pendientes.map((i) => i.cliente.toUpperCase())).size;
+  const desglose = CATEGORIES.map((c) => ({
+    label: c,
+    count: pendientes.filter((i) => category(i) === c).length,
+  }));
 
   // Semanas del mes, de lunes a domingo.
   const weeks = useMemo(() => {
@@ -264,6 +277,13 @@ export default function Gmc() {
                 <span>Clientes en inventario</span>
                 <strong>{inventario}</strong>
                 <small>{pendientes.length} entregas pendientes</small>
+                <ul className="gmBreakdown">
+                  {desglose.map((d) => (
+                    <li key={d.label}>
+                      {d.label} <b>{d.count}</b>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <div>
                 <span>Entregas esta semana</span>
