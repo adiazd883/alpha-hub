@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import RfeDashboard from "./rfe-dashboard";
 import Regresos from "./regresos";
+import Gmc from "./gmc";
 
 type Role =
   | "ADMIN"
@@ -48,7 +49,7 @@ type User = {
   celulas: Celula[];
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -5401,6 +5402,23 @@ export default function Home() {
             </button>
           )}
 
+          {isGeneral && (
+            <button
+              className={`navItem ${
+                mainView === "gmc" ? "active" : ""
+              }`}
+              onClick={() => setMainView("gmc")}
+            >
+              <span className="navIcon">
+                ◷
+              </span>
+
+              <span>
+                GMC
+              </span>
+            </button>
+          )}
+
           <button
             className={`navItem ${
               mainView ===
@@ -5617,6 +5635,8 @@ export default function Home() {
         {mainView === "rfe" && isGeneral && (
           <RfeDashboard />
         )}
+
+        {mainView === "gmc" && isGeneral && <Gmc />}
 
         {mainView === "regresos" && user.role && celula && (
           <Regresos
