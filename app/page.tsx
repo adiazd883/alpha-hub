@@ -916,6 +916,17 @@ const calendarActive = (
   del total que originalmente debía hacerse.
 */
 
+/*
+ * El backlog es lo vencido que sigue pendiente: lo ya
+ * entregado o enviado a USCIS no cuenta.
+ */
+const leavesBacklog = (
+  row: CaseRow,
+  stage: TeamCalendar
+) =>
+  isStageDelivered(row, stage) ||
+  norm(row["STATUS"] || "") === "SENT TO USCIS";
+
 const scheduledEligible = (
   row: CaseRow,
   stage: TeamCalendar
@@ -2116,7 +2127,8 @@ export default function Home() {
               : null;
 
           if (
-            result === "backlog"
+            result === "backlog" &&
+            !leavesBacklog(row, section)
           ) {
             backlog++;
           }
@@ -2294,7 +2306,11 @@ export default function Home() {
             classifyDate(
               expectedDate
             ) ===
-              selectedKpi.type
+              selectedKpi.type &&
+            !(
+              selectedKpi.type === "backlog" &&
+              leavesBacklog(row, selectedKpi.section)
+            )
           );
         }
       );
