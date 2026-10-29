@@ -515,7 +515,8 @@ export default function Regresos({
                   {editable && (
                     <div className="rgCardMinor">
                       <button onClick={() => openEdit(r)}>Editar</button>
-                      <button onClick={() => remove(r)}>Borrar</button>
+                      {/* Borrar: solo el Admin. */}
+                      {role === "ADMIN" && <button onClick={() => remove(r)}>Borrar</button>}
                     </div>
                   )}
                 </div>

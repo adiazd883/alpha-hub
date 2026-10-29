@@ -207,12 +207,13 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = getSession(req);
   if (!session) return fail("No autenticado", 401);
+  // Nadie más borra registros: el histórico del 80/20 depende de ellos.
+  if (session.role !== "ADMIN") return fail("Solo Admin puede borrar registros", 403);
 
   try {
     const id = req.nextUrl.searchParams.get("id") || "";
-    const roster = await getRoster();
     const current = await getRegreso(id);
-    if (!current || !canEdit(viewerFor(session, roster), current)) {
+    if (!current) {
       return fail("No se encontró el registro", 404);
     }
     await deleteRegreso(id);
