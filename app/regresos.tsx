@@ -4,17 +4,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import {
   ETAPAS,
-  MOTIVO_GRUPOS,
+  AREA_LABELS,
   ORIGEN_LABELS,
   TIPO_LABELS,
   canEdit,
   daysBetween,
   isLead,
+  areaDeMotivo,
+  gruposDe,
   isOverdue,
   motivosOf,
   pareto,
   type ParetoRow,
   type ActualizacionOrigen,
+  type Area,
   type Person,
   type Regreso,
   type RegresoTipo,
@@ -47,9 +50,13 @@ type Draft = {
   receipt: string;
   etapa: string;
   origen: ActualizacionOrigen | "";
+  // "ambos" registra uno para paralegal y otro para psych.
+  area: Area | "ambos" | "";
   motivo: string;
+  motivoPsych: string;
   detalle: string;
   para: string;
+  paraPsych: string;
   de: string;
   enviado: string;
   limite: string;
@@ -213,9 +220,12 @@ export default function Regresos({
       receipt: "",
       etapa: "",
       origen: "",
+      area: "",
       motivo: "",
+      motivoPsych: "",
       detalle: "",
       para: "",
+      paraPsych: "",
       de: me || "",
       enviado: today,
       limite: today ? addDays(today, 1) : "",
@@ -232,9 +242,12 @@ export default function Regresos({
       receipt: r.receipt || "",
       etapa: r.etapa,
       origen: r.origen || "",
+      area: r.area || areaDeMotivo(r.tipo, r.motivo) || "",
       motivo: r.motivo,
+      motivoPsych: "",
       detalle: r.detalle,
       para: r.para,
+      paraPsych: "",
       de: r.de,
       enviado: r.enviado,
       limite: r.limite || "",
@@ -253,14 +266,32 @@ export default function Regresos({
   }
 
   async function saveDraft(d: Draft, another: boolean) {
-    const json = d.id
-      ? await send("PATCH", { ...d, action: "editar" })
-      : await send("POST", d);
-    const saved: Regreso = json.item;
-    setItems((prev) => [saved, ...prev.filter((r) => r.id !== saved.id)]);
-    setNotice(d.id ? "Registro actualizado" : `${TIPO_LABELS[d.tipo]} registrado`);
+    // Ambos: un registro para paralegal y otro para psych, cada quien concreta el suyo.
+    const bodies =
+      d.area === "ambos"
+        ? [
+            { ...d, area: "paralegal" },
+            { ...d, area: "psych", motivo: d.motivoPsych, para: d.paraPsych },
+          ]
+        : [d];
+    const saved: Regreso[] = [];
+    for (const body of bodies) {
+      const json = d.id
+        ? await send("PATCH", { ...body, action: "editar" })
+        : await send("POST", body);
+      saved.push(json.item);
+    }
+    const ids = new Set(saved.map((r) => r.id));
+    setItems((prev) => [...saved, ...prev.filter((r) => !ids.has(r.id))]);
+    setNotice(
+      d.id
+        ? "Registro actualizado"
+        : saved.length > 1
+          ? `${TIPO_LABELS[d.tipo]} registrado para paralegal y psych`
+          : `${TIPO_LABELS[d.tipo]} registrado`
+    );
     if (another) {
-      setDraft({ ...d, id: undefined, cliente: "", clienteId: "", receipt: "", detalle: "", motivo: "" });
+      setDraft({ ...d, id: undefined, cliente: "", clienteId: "", receipt: "", detalle: "", motivo: "", motivoPsych: "" });
     } else {
       setDraft(null);
     }
@@ -317,8 +348,8 @@ export default function Regresos({
           <p className="eyebrow">CALIDAD RFE</p>
           <h1>Regresos y actualizaciones</h1>
           <p>
-            Regreso = hubo un error que corregir. Actualización = el cliente mandó
-            información o documentos nuevos.
+            Regreso = hubo un error que corregir. Actualización = el cliente recordó
+            información o consiguió un documento que antes no se tenía.
           </p>
         </div>
 
@@ -460,6 +491,7 @@ export default function Regresos({
                   <div className="rgCardTop">
                     <span className={`rgBadge rgBadge-${r.tipo}`}>{TIPO_LABELS[r.tipo]}</span>
                     <span className="rgMeta">{r.etapa}</span>
+                    {r.area && <span className="rgMeta">{AREA_LABELS[r.area]}</span>}
                     {r.origen && <span className="rgMeta">{ORIGEN_LABELS[r.origen]}</span>}
                     {celulas.length > 1 && <span className="rgMeta">{CELULAS[r.celula]?.label}</span>}
                     <span className={`rgDue rgDue-${chip.tone}`}>{chip.text}</span>
@@ -528,6 +560,81 @@ export default function Regresos({
 
 /* ---------------- Formulario de registro ---------------- */
 
+// Qué se pide a un área y a quién: lista del área + persona.
+function MotivoPicker({
+  label,
+  tipo,
+  area,
+  motivo,
+  para,
+  people,
+  showCelula,
+  onMotivo,
+  onPara,
+}: {
+  label?: string;
+  tipo: RegresoTipo;
+  area: Area;
+  motivo: string;
+  para: string;
+  people: Person[];
+  showCelula: boolean;
+  onMotivo: (v: string) => void;
+  onPara: (v: string) => void;
+}) {
+  const grupos = gruposDe(tipo, area);
+  const opciones = grupos.flatMap((g) => g.motivos);
+  const hint = opciones.find((m) => m.label === motivo)?.hint;
+  const options = (g: (typeof grupos)[number]) =>
+    g.motivos.map((m) => (
+      <option key={m.label} value={m.label}>
+        {m.label}
+      </option>
+    ));
+
+  return (
+    <div className="rgPicker">
+      {label && <strong className="rgPickerLabel">{label}</strong>}
+      <div className="rgRow">
+        <select
+          className="rgPickerMotivo"
+          value={motivo}
+          onChange={(e) => onMotivo(e.target.value)}
+          aria-label={`Qué se pide${label ? ` a ${label}` : ""}`}
+        >
+          <option value="">Elige qué se pide…</option>
+          {/* Motivo de un registro anterior que ya no está en la lista. */}
+          {motivo && !opciones.some((m) => m.label === motivo) && (
+            <option value={motivo}>{motivo}</option>
+          )}
+          {grupos.length > 2
+            ? grupos.map((g) => (
+                <optgroup key={g.grupo} label={g.grupo}>
+                  {options(g)}
+                </optgroup>
+              ))
+            : grupos.map(options)}
+        </select>
+        <select
+          className="rgPickerPara"
+          value={para}
+          onChange={(e) => onPara(e.target.value)}
+          aria-label={`Para quién va${label ? ` (${label})` : ""}`}
+        >
+          <option value="">Para quién va…</option>
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+              {showCelula ? ` (${CELULAS[p.celula]?.label})` : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      {hint && <p className="rgMotivoHint">{hint}</p>}
+    </div>
+  );
+}
+
 function RegistroForm({
   draft,
   roster,
@@ -566,8 +673,6 @@ function RegistroForm({
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setD((prev) => ({ ...prev, [key]: value }));
 
-  const motivoHint = motivosOf(d.tipo).find((m) => m.label === d.motivo)?.hint;
-
   const q = d.cliente.trim().toLowerCase();
   const matches = q.length < 2
     ? []
@@ -579,7 +684,7 @@ function RegistroForm({
 
   // Activos primero; los de la célula elegida arriba.
   const people = roster
-    .filter((p) => p.active || p.id === d.para || p.id === d.de)
+    .filter((p) => p.active || p.id === d.para || p.id === d.paraPsych || p.id === d.de)
     .sort((a, b) =>
       Number(b.celula === d.celula) - Number(a.celula === d.celula) ||
       a.name.localeCompare(b.name)
@@ -588,9 +693,12 @@ function RegistroForm({
   async function submit(another: boolean) {
     setErr("");
     if (!d.cliente.trim()) return setErr("Escribe el cliente");
-    if (!d.para) return setErr("Elige para quién va");
     if (d.tipo === "actualizacion" && !d.origen) return setErr("Elige qué trajo el cliente");
-    if (!d.motivo) return setErr("Elige qué se pide");
+    if (!d.area) return setErr("Elige si va para paralegal, psych o ambos");
+    if (!d.motivo) return setErr(d.area === "ambos" ? "Elige qué se pide a paralegal" : "Elige qué se pide");
+    if (!d.para) return setErr(d.area === "ambos" ? "Elige el paralegal" : "Elige para quién va");
+    if (d.area === "ambos" && !d.motivoPsych) return setErr("Elige qué se pide a psych");
+    if (d.area === "ambos" && !d.paraPsych) return setErr("Elige el psych");
     setSaving(true);
     try {
       await onSave({ ...d, etapa: d.etapa || "Otra" }, another);
@@ -639,7 +747,8 @@ function RegistroForm({
                 setD((prev) => ({
                   ...prev,
                   tipo: t,
-                  motivo: motivosOf(t).some((m) => m.label === prev.motivo) ? prev.motivo : "",
+                  motivo: "",
+                  motivoPsych: "",
                 }))
               }
             >
@@ -699,19 +808,6 @@ function RegistroForm({
         </label>
 
         <div className="rgRow">
-          <label className="rgField">
-            <span>Para quién va</span>
-            <select value={d.para} onChange={(e) => set("para", e.target.value)}>
-              <option value="">Elegir…</option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                  {celulas.length > 1 ? ` (${CELULAS[p.celula]?.label})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <label className="rgField">
             <span>Quién lo manda</span>
             <select value={d.de} onChange={(e) => set("de", e.target.value)}>
@@ -775,24 +871,81 @@ function RegistroForm({
         )}
 
         <div className="rgField">
-          <span>Qué se pide</span>
-          <select value={d.motivo} onChange={(e) => set("motivo", e.target.value)}>
-            <option value="">Elige qué se pide…</option>
-            {/* Motivo de un registro anterior que ya no está en la lista. */}
-            {d.motivo && !motivosOf(d.tipo).some((m) => m.label === d.motivo) && (
-              <option value={d.motivo}>{d.motivo}</option>
+          <span>Para qué área</span>
+          <div className="rgChips">
+            {(["paralegal", "psych", "ambos"] as const)
+              // Un registro ya guardado es de una sola área.
+              .filter((a) => !(d.id && a === "ambos"))
+              .map((a) => (
+                <button
+                  type="button"
+                  key={a}
+                  className={d.area === a ? "active" : ""}
+                  aria-pressed={d.area === a}
+                  onClick={() =>
+                    setD((prev) => ({
+                      ...prev,
+                      area: a,
+                      // Si el motivo no es de la nueva área, se vuelve a elegir.
+                      motivo:
+                        a !== "psych" && motivosOf(prev.tipo, "paralegal").some((m) => m.label === prev.motivo)
+                          ? prev.motivo
+                          : a === "psych" && motivosOf(prev.tipo, "psych").some((m) => m.label === prev.motivo)
+                            ? prev.motivo
+                            : "",
+                    }))
+                  }
+                >
+                  {a === "ambos" ? "Ambos" : AREA_LABELS[a]}
+                </button>
+              ))}
+          </div>
+        </div>
+
+        {d.area && (
+          <div className="rgField">
+            <span>Qué se pide</span>
+            {d.area === "ambos" ? (
+              <>
+                <MotivoPicker
+                  label="Paralegal"
+                  tipo={d.tipo}
+                  area="paralegal"
+                  motivo={d.motivo}
+                  para={d.para}
+                  people={people}
+                  showCelula={celulas.length > 1}
+                  onMotivo={(v) => set("motivo", v)}
+                  onPara={(v) => set("para", v)}
+                />
+                <MotivoPicker
+                  label="Psych"
+                  tipo={d.tipo}
+                  area="psych"
+                  motivo={d.motivoPsych}
+                  para={d.paraPsych}
+                  people={people}
+                  showCelula={celulas.length > 1}
+                  onMotivo={(v) => set("motivoPsych", v)}
+                  onPara={(v) => set("paraPsych", v)}
+                />
+              </>
+            ) : (
+              <MotivoPicker
+                tipo={d.tipo}
+                area={d.area}
+                motivo={d.motivo}
+                para={d.para}
+                people={people}
+                showCelula={celulas.length > 1}
+                onMotivo={(v) => set("motivo", v)}
+                onPara={(v) => set("para", v)}
+              />
             )}
-            {MOTIVO_GRUPOS[d.tipo].map((g) => (
-              <optgroup key={g.grupo} label={g.grupo}>
-                {g.motivos.map((m) => (
-                  <option key={m.label} value={m.label}>
-                    {m.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          {motivoHint && <p className="rgMotivoHint">{motivoHint}</p>}
+          </div>
+        )}
+
+        <div className="rgField">
           <textarea
             rows={2}
             value={d.detalle}

@@ -93,6 +93,9 @@ function readFields(
   if (tipo === "actualizacion" && !origen) {
     return { error: "Elige qué trajo el cliente" } as const;
   }
+  const area =
+    body.area === "paralegal" || body.area === "psych" ? body.area : undefined;
+  if (!area) return { error: "Elige si va para paralegal o psych" } as const;
   const motivo = str(body.motivo, 120);
   if (!motivo) return { error: "Elige qué se pide" } as const;
   const enviado = isDateOnly(body.enviado) ? body.enviado : todayMx();
@@ -110,6 +113,7 @@ function readFields(
       receipt: str(body.receipt, 60) || undefined,
       etapa: str(body.etapa, 80) || "Otra",
       origen: tipo === "actualizacion" ? origen : undefined,
+      area,
       motivo,
       detalle: str(body.detalle, 2000),
       para,
