@@ -40,16 +40,19 @@ const rowKey = (row: CaseRow) =>
 
 // Con más de una célula, General va primero. GMC (Gov Branch)
 // tiene su propia Sheet; por ahora la ve quien ve todas.
-const vistasFor = (user: User): Vista[] =>
-  user.celulas.length > 1
-    ? ["general", ...user.celulas, "gmc"]
-    : user.celulas;
+const vistasFor = (user: User): Vista[] => [
+  ...(user.celulas.length > 1
+    ? (["general", ...user.celulas] as Vista[])
+    : user.celulas),
+  ...(user.gmc ? (["gmc"] as Vista[]) : []),
+];
 
 type User = {
   authenticated: boolean;
   email: string | null;
   role: Role | null;
   celulas: Celula[];
+  gmc?: boolean;
 };
 
 type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc";

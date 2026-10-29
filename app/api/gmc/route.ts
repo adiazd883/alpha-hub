@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { gmcEditFields } from "@/lib/auth";
 import {
   GMC_STATUS_OPTIONS,
   GMC_TABS,
@@ -21,7 +22,7 @@ function fail(error: string, status = 400) {
 function access(req: NextRequest) {
   const session = getSession(req);
   if (!session) return { error: fail("No autenticado", 401) };
-  if (session.celulas.length < 2) {
+  if (!session.gmc) {
     return { error: fail("No tienes acceso a GMC", 403) };
   }
   return { session };
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
   try {
     return NextResponse.json({
       ...(await loadGmc()),
-      canEdit: session.role === "ADMIN",
+      editFields: gmcEditFields(session.email, session.role),
     });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "Unknown error", 500);
@@ -44,11 +45,15 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { session, error } = access(req);
   if (error) return error;
-  if (session.role !== "ADMIN") return fail("Solo Admin puede editar GMC", 403);
-
   const body = await req.json().catch(() => ({}));
   const tab = GMC_TABS.find((t) => t === body.tab) as GmcTab | undefined;
   const field = FIELDS.find((f) => f === body.field);
+  if (field && !gmcEditFields(session.email, session.role).includes(field)) {
+    return fail(
+      field === "expected" ? "Solo Admin pone la fecha esperada" : "No puedes editar GMC",
+      403
+    );
+  }
   const row = Number(body.row);
   const cliente = typeof body.cliente === "string" ? body.cliente : "";
   const value = typeof body.value === "string" ? body.value.trim() : "";
