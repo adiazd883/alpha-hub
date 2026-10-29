@@ -86,6 +86,13 @@ function readFields(
   if (!ids.has(de)) return { error: "Elige quién lo manda" } as const;
   const cliente = str(body.cliente, 200);
   if (!cliente) return { error: "Escribe el cliente" } as const;
+  const origen =
+    body.origen === "informacion" || body.origen === "documento"
+      ? body.origen
+      : undefined;
+  if (tipo === "actualizacion" && !origen) {
+    return { error: "Elige qué trajo el cliente" } as const;
+  }
   const motivo = str(body.motivo, 120);
   if (!motivo) return { error: "Elige qué se pide" } as const;
   const enviado = isDateOnly(body.enviado) ? body.enviado : todayMx();
@@ -102,6 +109,7 @@ function readFields(
       clienteId: str(body.clienteId, 60) || undefined,
       receipt: str(body.receipt, 60) || undefined,
       etapa: str(body.etapa, 80) || "Otra",
+      origen: tipo === "actualizacion" ? origen : undefined,
       motivo,
       detalle: str(body.detalle, 2000),
       para,

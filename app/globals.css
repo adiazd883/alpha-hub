@@ -6086,3 +6086,9 @@ button {
     margin-left: 0;
   }
 }
+
+.rgMotivoHint {
+  margin: 6px 0 8px;
+  color: var(--rg-muted, #778397);
+  font-size: 12px;
+}

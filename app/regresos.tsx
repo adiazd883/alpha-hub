@@ -4,14 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import {
   ETAPAS,
-  MOTIVOS,
+  MOTIVO_GRUPOS,
+  ORIGEN_LABELS,
   TIPO_LABELS,
   canEdit,
   daysBetween,
   isLead,
   isOverdue,
+  motivosOf,
   pareto,
   type ParetoRow,
+  type ActualizacionOrigen,
   type Person,
   type Regreso,
   type RegresoTipo,
@@ -43,6 +46,7 @@ type Draft = {
   clienteId: string;
   receipt: string;
   etapa: string;
+  origen: ActualizacionOrigen | "";
   motivo: string;
   detalle: string;
   para: string;
@@ -208,6 +212,7 @@ export default function Regresos({
       clienteId: "",
       receipt: "",
       etapa: "",
+      origen: "",
       motivo: "",
       detalle: "",
       para: "",
@@ -226,6 +231,7 @@ export default function Regresos({
       clienteId: r.clienteId || "",
       receipt: r.receipt || "",
       etapa: r.etapa,
+      origen: r.origen || "",
       motivo: r.motivo,
       detalle: r.detalle,
       para: r.para,
@@ -454,6 +460,7 @@ export default function Regresos({
                   <div className="rgCardTop">
                     <span className={`rgBadge rgBadge-${r.tipo}`}>{TIPO_LABELS[r.tipo]}</span>
                     <span className="rgMeta">{r.etapa}</span>
+                    {r.origen && <span className="rgMeta">{ORIGEN_LABELS[r.origen]}</span>}
                     {celulas.length > 1 && <span className="rgMeta">{CELULAS[r.celula]?.label}</span>}
                     <span className={`rgDue rgDue-${chip.tone}`}>{chip.text}</span>
                   </div>
@@ -559,6 +566,8 @@ function RegistroForm({
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setD((prev) => ({ ...prev, [key]: value }));
 
+  const motivoHint = motivosOf(d.tipo).find((m) => m.label === d.motivo)?.hint;
+
   const q = d.cliente.trim().toLowerCase();
   const matches = q.length < 2
     ? []
@@ -580,6 +589,7 @@ function RegistroForm({
     setErr("");
     if (!d.cliente.trim()) return setErr("Escribe el cliente");
     if (!d.para) return setErr("Elige para quién va");
+    if (d.tipo === "actualizacion" && !d.origen) return setErr("Elige qué trajo el cliente");
     if (!d.motivo) return setErr("Elige qué se pide");
     setSaving(true);
     try {
@@ -629,12 +639,12 @@ function RegistroForm({
                 setD((prev) => ({
                   ...prev,
                   tipo: t,
-                  motivo: MOTIVOS[t].includes(prev.motivo) ? prev.motivo : "",
+                  motivo: motivosOf(t).some((m) => m.label === prev.motivo) ? prev.motivo : "",
                 }))
               }
             >
               <strong>{TIPO_LABELS[t]}</strong>
-              <span>{t === "regreso" ? "Hubo un error y hay que corregirlo" : "El cliente mandó info o documentos nuevos"}</span>
+              <span>{t === "regreso" ? "Hubo un error y hay que corregirlo" : "El cliente recordó información o consiguió un documento que antes no se tenía"}</span>
             </button>
           ))}
         </div>
@@ -745,21 +755,44 @@ function RegistroForm({
           </div>
         </div>
 
+        {d.tipo === "actualizacion" && (
+          <div className="rgField">
+            <span>Qué trajo el cliente</span>
+            <div className="rgChips">
+              {(Object.keys(ORIGEN_LABELS) as ActualizacionOrigen[]).map((o) => (
+                <button
+                  type="button"
+                  key={o}
+                  className={d.origen === o ? "active" : ""}
+                  aria-pressed={d.origen === o}
+                  onClick={() => set("origen", o)}
+                >
+                  {ORIGEN_LABELS[o]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="rgField">
           <span>Qué se pide</span>
-          <div className="rgChips">
-            {MOTIVOS[d.tipo].map((m) => (
-              <button
-                type="button"
-                key={m}
-                className={d.motivo === m ? "active" : ""}
-                aria-pressed={d.motivo === m}
-                onClick={() => set("motivo", m)}
-              >
-                {m}
-              </button>
+          <select value={d.motivo} onChange={(e) => set("motivo", e.target.value)}>
+            <option value="">Elige qué se pide…</option>
+            {/* Motivo de un registro anterior que ya no está en la lista. */}
+            {d.motivo && !motivosOf(d.tipo).some((m) => m.label === d.motivo) && (
+              <option value={d.motivo}>{d.motivo}</option>
+            )}
+            {MOTIVO_GRUPOS[d.tipo].map((g) => (
+              <optgroup key={g.grupo} label={g.grupo}>
+                {g.motivos.map((m) => (
+                  <option key={m.label} value={m.label}>
+                    {m.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
-          </div>
+          </select>
+          {motivoHint && <p className="rgMotivoHint">{motivoHint}</p>}
           <textarea
             rows={2}
             value={d.detalle}
