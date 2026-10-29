@@ -153,8 +153,12 @@ export default function Gmc() {
     semana: visible.filter((i) => inWeek(i.expected)).length,
     entregadasSemana: visible.filter((i) => inWeek(i.done)).length,
     vencidas: visible.filter((i) => !delivered(i) && i.expected && i.expected < today).length,
-    sinFecha: visible.filter((i) => !delivered(i) && !i.expected).length,
+    proximas: visible.filter((i) => !delivered(i) && !!i.expected && i.expected > weekEnd).length,
   };
+
+  // Inventario: lo que sigue sin entregar; un cliente cuenta una vez.
+  const pendientes = visible.filter((i) => !delivered(i));
+  const inventario = new Set(pendientes.map((i) => i.cliente.toUpperCase())).size;
 
   // Semanas del mes, de lunes a domingo.
   const weeks = useMemo(() => {
@@ -256,6 +260,11 @@ export default function Gmc() {
         data && (
           <>
             <div className="gmKpis">
+              <div className="gmKpiHero">
+                <span>Clientes en inventario</span>
+                <strong>{inventario}</strong>
+                <small>{pendientes.length} entregas pendientes</small>
+              </div>
               <div>
                 <span>Entregas esta semana</span>
                 <strong>{kpis.semana}</strong>
@@ -269,8 +278,9 @@ export default function Gmc() {
                 <strong>{kpis.vencidas}</strong>
               </div>
               <div>
-                <span>Sin fecha esperada</span>
-                <strong>{kpis.sinFecha}</strong>
+                <span>Próximas entregas</span>
+                <strong>{kpis.proximas}</strong>
+                <small>después de esta semana</small>
               </div>
             </div>
 

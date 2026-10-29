@@ -6144,7 +6144,7 @@ button {
 
 .gmKpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -6174,6 +6174,22 @@ button {
 
 .gmKpis .gmKpiAlert strong {
   color: #c2410c;
+}
+
+.gmKpis small {
+  display: block;
+  margin-top: 2px;
+  color: #8a94a6;
+  font-size: 11px;
+}
+
+.gmKpis .gmKpiHero {
+  border-color: #c9d6f5;
+  background: #f5f8ff;
+}
+
+.gmKpis .gmKpiHero strong {
+  color: #2b4fb5;
 }
 
 .gmFilters {
@@ -6315,8 +6331,18 @@ button {
   text-align: center;
 }
 
+@media (max-width: 1100px) {
+  .gmKpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 820px) {
   .gmKpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gmKpis .gmKpiHero {
+    grid-column: 1 / -1;
   }
 }
