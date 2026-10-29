@@ -18,6 +18,14 @@ export type RegresoTipo = "regreso" | "actualizacion";
 
 export type RegresoEstado = "pendiente" | "concretado";
 
+// Actualización: qué trajo el cliente que antes no se tenía.
+export type ActualizacionOrigen = "informacion" | "documento";
+
+export const ORIGEN_LABELS: Record<ActualizacionOrigen, string> = {
+  informacion: "Recordó información",
+  documento: "Consiguió un documento",
+};
+
 export type Person = {
   id: string;
   name: string;
@@ -34,6 +42,7 @@ export type Regreso = {
   clienteId?: string;
   receipt?: string;
   etapa: string;
+  origen?: ActualizacionOrigen; // solo actualizaciones
   motivo: string;
   detalle: string;
   para: string; // Person.id
