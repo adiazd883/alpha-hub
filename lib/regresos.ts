@@ -43,6 +43,7 @@ export type Regreso = {
   receipt?: string;
   etapa: string;
   origen?: ActualizacionOrigen; // solo actualizaciones
+  area?: Area;
   motivo: string;
   detalle: string;
   para: string; // Person.id
@@ -84,7 +85,20 @@ export type MotivoGrupo = {
   motivos: { label: string; hint: string }[];
 };
 
-export const MOTIVO_GRUPOS: Record<RegresoTipo, MotivoGrupo[]> = {
+// A quién le toca: un regreso puede ir a paralegal, a psych o a ambos.
+export type Area = "paralegal" | "psych";
+
+export const AREA_LABELS: Record<Area, string> = {
+  paralegal: "Paralegal",
+  psych: "Psych",
+};
+
+const OTRO: MotivoGrupo = {
+  grupo: "Otro",
+  motivos: [{ label: "Otro", hint: "Explícalo en el detalle." }],
+};
+
+const GRUPOS_POR_TIPO: Record<RegresoTipo, MotivoGrupo[]> = {
   regreso: [
     {
       grupo: "Paralegal",
@@ -131,7 +145,6 @@ export const MOTIVO_GRUPOS: Record<RegresoTipo, MotivoGrupo[]> = {
         { label: "Falta de investigación", hint: "Lo que USCIS acepta (reciprocity, divorcios, no matrimonio) para CVLs." },
       ],
     },
-    { grupo: "Otro", motivos: [{ label: "Otro", hint: "Explícalo en el detalle." }] },
   ],
   actualizacion: [
     {
@@ -164,12 +177,32 @@ export const MOTIVO_GRUPOS: Record<RegresoTipo, MotivoGrupo[]> = {
         { label: "Explicación de omisiones o cambios de versión", hint: "Validación clínica de omisiones o revelación tardía." },
       ],
     },
-    { grupo: "Otro", motivos: [{ label: "Otro", hint: "Explícalo en el detalle." }] },
   ],
 };
 
-export function motivosOf(tipo: RegresoTipo) {
-  return MOTIVO_GRUPOS[tipo].flatMap((g) => g.motivos);
+// Opciones de cada área; "Otro" va al final de las dos.
+export function gruposDe(tipo: RegresoTipo, area: Area): MotivoGrupo[] {
+  const prefix = area === "psych" ? "Psych" : "Paralegal";
+  return [
+    ...GRUPOS_POR_TIPO[tipo].filter((g) => g.grupo.startsWith(prefix)),
+    OTRO,
+  ];
+}
+
+export function motivosOf(tipo: RegresoTipo, area: Area) {
+  return gruposDe(tipo, area).flatMap((g) => g.motivos);
+}
+
+// Área de un registro anterior a este campo, según su motivo.
+export function areaDeMotivo(tipo: RegresoTipo, motivo: string): Area | null {
+  for (const area of ["paralegal", "psych"] as Area[]) {
+    const g = GRUPOS_POR_TIPO[tipo].find(
+      (x) => x.grupo.startsWith(area === "psych" ? "Psych" : "Paralegal") &&
+        x.motivos.some((m) => m.label === motivo)
+    );
+    if (g) return area;
+  }
+  return null;
 }
 
 // Roles que ven todo (y el 80/20) de sus células.

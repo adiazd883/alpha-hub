@@ -6092,3 +6092,34 @@ button {
   color: var(--rg-muted, #778397);
   font-size: 12px;
 }
+
+.rgPicker + .rgPicker {
+  margin-top: 10px;
+}
+
+.rgPickerLabel {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--rg-ink);
+  font-size: 12px;
+}
+
+.rgPicker .rgPickerMotivo {
+  flex: 2 1 0;
+  min-width: 0;
+}
+
+.rgPicker .rgPickerPara {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.rgPicker select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--rg-line);
+  border-radius: 9px;
+  background: var(--rg-surface);
+  color: var(--rg-ink);
+  font-size: 13px;
+}
