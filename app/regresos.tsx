@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import {
   ETAPAS,
-  MOTIVOS,
+  MOTIVO_GRUPOS,
   TIPO_LABELS,
   canEdit,
   daysBetween,
   isLead,
   isOverdue,
+  motivosOf,
   pareto,
   type ParetoRow,
   type Person,
@@ -559,6 +560,8 @@ function RegistroForm({
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setD((prev) => ({ ...prev, [key]: value }));
 
+  const motivoHint = motivosOf(d.tipo).find((m) => m.label === d.motivo)?.hint;
+
   const q = d.cliente.trim().toLowerCase();
   const matches = q.length < 2
     ? []
@@ -629,7 +632,7 @@ function RegistroForm({
                 setD((prev) => ({
                   ...prev,
                   tipo: t,
-                  motivo: MOTIVOS[t].includes(prev.motivo) ? prev.motivo : "",
+                  motivo: motivosOf(t).some((m) => m.label === prev.motivo) ? prev.motivo : "",
                 }))
               }
             >
@@ -747,19 +750,23 @@ function RegistroForm({
 
         <div className="rgField">
           <span>Qué se pide</span>
-          <div className="rgChips">
-            {MOTIVOS[d.tipo].map((m) => (
-              <button
-                type="button"
-                key={m}
-                className={d.motivo === m ? "active" : ""}
-                aria-pressed={d.motivo === m}
-                onClick={() => set("motivo", m)}
-              >
-                {m}
-              </button>
+          <select value={d.motivo} onChange={(e) => set("motivo", e.target.value)}>
+            <option value="">Elige qué se pide…</option>
+            {/* Motivo de un registro anterior que ya no está en la lista. */}
+            {d.motivo && !motivosOf(d.tipo).some((m) => m.label === d.motivo) && (
+              <option value={d.motivo}>{d.motivo}</option>
+            )}
+            {MOTIVO_GRUPOS[d.tipo].map((g) => (
+              <optgroup key={g.grupo} label={g.grupo}>
+                {g.motivos.map((m) => (
+                  <option key={m.label} value={m.label}>
+                    {m.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
-          </div>
+          </select>
+          {motivoHint && <p className="rgMotivoHint">{motivoHint}</p>}
           <textarea
             rows={2}
             value={d.detalle}
