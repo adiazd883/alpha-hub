@@ -87,7 +87,7 @@ export type MotivoGrupo = {
 };
 
 // A quién le toca; un regreso puede ir a varias áreas a la vez.
-export type Area = "paralegal" | "psych" | "analista";
+export type Area = "paralegal" | "psych" | "analista" | "cs";
 
 export const AREAS: Area[] = ["paralegal", "psych", "analista"];
 
@@ -95,7 +95,21 @@ export const AREA_LABELS: Record<Area, string> = {
   paralegal: "Paralegal",
   psych: "Psych",
   analista: "Analista",
+  cs: "CS",
 };
+
+// Manager y Coordinadora también regresan a Case Strategy.
+const CS_SENDERS = new Set<Role>(["ADMIN", "MANAGER", "COORDINATOR"]);
+
+export function areasFor(role: Role): Area[] {
+  return CS_SENDERS.has(role) ? [...AREAS, "cs"] : AREAS;
+}
+
+// Quién recibe los regresos de CS.
+export const CS_REVIEWERS = [
+  "cgarciag@supportmendoza.com", // Consuelo
+  "anavag@supportmendoza.com", // Agustin
+];
 
 // Puesto de cada persona del equipo, para filtrar "Para quién va".
 export type Puesto = Area | "tl" | "otro";
@@ -104,6 +118,7 @@ export const PUESTO_LABELS: Record<Puesto, string> = {
   paralegal: "Paralegal",
   psych: "Psych",
   analista: "Analista",
+  cs: "Case Strategy",
   tl: "Team Leader",
   otro: "Otro",
 };
@@ -114,6 +129,13 @@ const ANALISTA: MotivoGrupo = {
   motivos: [
     { label: "DCL", hint: "Regreso en la DCL." },
     { label: "CVL", hint: "Regreso en la CVL." },
+  ],
+};
+
+const CS: MotivoGrupo = {
+  grupo: "CS",
+  motivos: [
+    { label: "Revisión de CS", hint: "Regreso en la estrategia o revisión de Case Strategy." },
   ],
 };
 
@@ -207,6 +229,7 @@ const GRUPOS_POR_TIPO: Record<RegresoTipo, MotivoGrupo[]> = {
 // Opciones de cada área; "Otro" va al final de todas.
 export function gruposDe(tipo: RegresoTipo, area: Area): MotivoGrupo[] {
   if (area === "analista") return [ANALISTA, OTRO];
+  if (area === "cs") return [CS, OTRO];
   const prefix = area === "psych" ? "Psych" : "Paralegal";
   return [
     ...GRUPOS_POR_TIPO[tipo].filter((g) => g.grupo.startsWith(prefix)),
@@ -221,6 +244,7 @@ export function motivosOf(tipo: RegresoTipo, area: Area) {
 // Área de un registro anterior a este campo, según su motivo.
 export function areaDeMotivo(tipo: RegresoTipo, motivo: string): Area | null {
   if (ANALISTA.motivos.some((m) => m.label === motivo)) return "analista";
+  if (CS.motivos.some((m) => m.label === motivo)) return "cs";
   for (const area of ["paralegal", "psych"] as Area[]) {
     const g = GRUPOS_POR_TIPO[tipo].find(
       (x) => x.grupo.startsWith(area === "psych" ? "Psych" : "Paralegal") &&

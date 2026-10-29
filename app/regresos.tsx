@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import {
   ETAPAS,
-  AREAS,
   AREA_LABELS,
+  CS_REVIEWERS,
+  areasFor,
   ORIGEN_LABELS,
   PUESTO_LABELS,
   TIPO_LABELS,
@@ -529,6 +530,7 @@ export default function Regresos({
 
       {draft && (
         <RegistroForm
+          role={role}
           draft={draft}
           roster={roster}
           celulas={celulas}
@@ -576,9 +578,11 @@ function MotivoPicker({
   onPara: (v: string) => void;
 }) {
   const grupos = gruposDe(tipo, area);
-  // Solo gente de esa área (y quien aún no tenga puesto).
-  const candidates = people.filter(
-    (p) => !p.puesto || p.puesto === area || p.id === para
+  // Solo gente de esa área (y quien aún no tenga puesto). CS: Consuelo y Agustin.
+  const candidates = people.filter((p) =>
+    area === "cs"
+      ? p.puesto === "cs" || CS_REVIEWERS.includes(p.email || "") || p.id === para
+      : !p.puesto || p.puesto === area || p.id === para
   );
   const opciones = grupos.flatMap((g) => g.motivos);
   const hint = opciones.find((m) => m.label === motivo)?.hint;
@@ -633,6 +637,7 @@ function MotivoPicker({
 }
 
 function RegistroForm({
+  role,
   draft,
   roster,
   celulas,
@@ -641,6 +646,7 @@ function RegistroForm({
   onCancel,
   onSave,
 }: {
+  role: Role;
   draft: Draft;
   roster: Person[];
   celulas: Celula[];
@@ -878,7 +884,7 @@ function RegistroForm({
         <div className="rgField">
           <span>Para qué área{d.id ? "" : " (puedes elegir varias)"}</span>
           <div className="rgChips">
-            {AREAS.map((a) => {
+            {areasFor(role).map((a) => {
               const on = d.areas.includes(a);
               return (
                 <button
@@ -894,7 +900,7 @@ function RegistroForm({
                         ? [a]
                         : on
                           ? prev.areas.filter((x) => x !== a)
-                          : AREAS.filter((x) => x === a || prev.areas.includes(x)),
+                          : areasFor(role).filter((x) => x === a || prev.areas.includes(x)),
                       picks: prev.id
                         ? { [a]: { motivo: "", para: prev.picks[prev.areas[0]]?.para || "" } }
                         : prev.picks,

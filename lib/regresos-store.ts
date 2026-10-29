@@ -47,6 +47,7 @@ const PUESTO_POR_ROL: Partial<Record<Role, Puesto>> = {
   PSYCH: "psych",
   ANALYST: "analista",
   TL: "tl",
+  CS: "cs",
 };
 
 const defaultName = (email: string) => email.split("@")[0].toUpperCase();

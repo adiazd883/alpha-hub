@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, type Session } from "@/lib/session";
 import { isCelula } from "@/lib/celulas";
 import {
-  AREAS,
+  areasFor,
   canClose,
   canEdit,
   canSee,
@@ -94,7 +94,7 @@ function readFields(
   if (tipo === "actualizacion" && !origen) {
     return { error: "Elige qué trajo el cliente" } as const;
   }
-  const area = AREAS.find((a) => a === body.area);
+  const area = areasFor(session.role).find((a) => a === body.area);
   if (!area) return { error: "Elige para qué área va" } as const;
   const motivo = str(body.motivo, 120);
   if (!motivo) return { error: "Elige qué se pide" } as const;
