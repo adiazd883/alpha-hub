@@ -31,6 +31,7 @@ export type Person = {
   name: string;
   email?: string;
   celula: Celula;
+  puesto?: Puesto;
   active: boolean;
 };
 
@@ -85,12 +86,35 @@ export type MotivoGrupo = {
   motivos: { label: string; hint: string }[];
 };
 
-// A quién le toca: un regreso puede ir a paralegal, a psych o a ambos.
-export type Area = "paralegal" | "psych";
+// A quién le toca; un regreso puede ir a varias áreas a la vez.
+export type Area = "paralegal" | "psych" | "analista";
+
+export const AREAS: Area[] = ["paralegal", "psych", "analista"];
 
 export const AREA_LABELS: Record<Area, string> = {
   paralegal: "Paralegal",
   psych: "Psych",
+  analista: "Analista",
+};
+
+// Puesto de cada persona del equipo, para filtrar "Para quién va".
+export type Puesto = Area | "tl" | "otro";
+
+export const PUESTO_LABELS: Record<Puesto, string> = {
+  paralegal: "Paralegal",
+  psych: "Psych",
+  analista: "Analista",
+  tl: "Team Leader",
+  otro: "Otro",
+};
+
+// Al analista se le regresa la DCL o la CVL.
+const ANALISTA: MotivoGrupo = {
+  grupo: "Analista",
+  motivos: [
+    { label: "DCL", hint: "Regreso en la DCL." },
+    { label: "CVL", hint: "Regreso en la CVL." },
+  ],
 };
 
 const OTRO: MotivoGrupo = {
@@ -180,8 +204,9 @@ const GRUPOS_POR_TIPO: Record<RegresoTipo, MotivoGrupo[]> = {
   ],
 };
 
-// Opciones de cada área; "Otro" va al final de las dos.
+// Opciones de cada área; "Otro" va al final de todas.
 export function gruposDe(tipo: RegresoTipo, area: Area): MotivoGrupo[] {
+  if (area === "analista") return [ANALISTA, OTRO];
   const prefix = area === "psych" ? "Psych" : "Paralegal";
   return [
     ...GRUPOS_POR_TIPO[tipo].filter((g) => g.grupo.startsWith(prefix)),
@@ -195,6 +220,7 @@ export function motivosOf(tipo: RegresoTipo, area: Area) {
 
 // Área de un registro anterior a este campo, según su motivo.
 export function areaDeMotivo(tipo: RegresoTipo, motivo: string): Area | null {
+  if (ANALISTA.motivos.some((m) => m.label === motivo)) return "analista";
   for (const area of ["paralegal", "psych"] as Area[]) {
     const g = GRUPOS_POR_TIPO[tipo].find(
       (x) => x.grupo.startsWith(area === "psych" ? "Psych" : "Paralegal") &&
