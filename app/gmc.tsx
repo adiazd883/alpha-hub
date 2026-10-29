@@ -9,7 +9,6 @@ import type { GmcData, GmcField, GmcItem, GmcTab } from "@/lib/gmc";
  * escribe la Sheet "RFE - CELULA GB" (GMC, NON VAWA, OTHER).
  */
 
-const TABS: GmcTab[] = ["GMC", "NON VAWA", "OTHER"];
 const WEEK_DAYS = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 const MONTHS = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -53,15 +52,44 @@ const delivered = (i: GmcItem) => !!i.done || i.status === "READY";
 // Día en el calendario: la fecha esperada; si no tiene, el día que se entregó.
 const calendarDate = (i: GmcItem) => i.expected || i.done;
 
-// Tipo de caso: GMC = VAWA DD, OTHER = VAWA NDD (o Gov Request), NON VAWA.
-const CATEGORIES = ["VAWA DD", "VAWA NDD", "Gov Request", "Non VAWA"] as const;
+// OTHER se divide por su TYPE: Full GMC, Compartido o Gov. Req.
+type OtherKind = "Full GMC" | "Compartido" | "Gov Req";
+
+function otherKind(i: GmcItem): OtherKind {
+  if (/GOV/i.test(i.tipo)) return "Gov Req";
+  return /COMPART/i.test(i.tipo) ? "Compartido" : "Full GMC";
+}
+
+// Filtro de pestañas: OTHER va separado en sus tres tipos.
+const SEGMENTS = [
+  "GMC",
+  "NON VAWA",
+  "OTHER · Full GMC",
+  "OTHER · Compartido",
+  "OTHER · Gov Req",
+] as const;
+
+type Segment = (typeof SEGMENTS)[number];
+
+const segment = (i: GmcItem): Segment =>
+  i.tab === "OTHER" ? (`OTHER · ${otherKind(i)}` as Segment) : i.tab;
+
+// Tipo de caso: GMC = VAWA DD, OTHER = VAWA NDD (Full / Compartido) o Gov Request, NON VAWA.
+const CATEGORIES = [
+  "VAWA DD",
+  "VAWA NDD · Full GMC",
+  "VAWA NDD · Compartido",
+  "Gov Request",
+  "Non VAWA",
+] as const;
 
 type Category = (typeof CATEGORIES)[number];
 
 function category(i: GmcItem): Category {
   if (i.tab === "GMC") return "VAWA DD";
   if (i.tab === "NON VAWA") return "Non VAWA";
-  return /GOV/i.test(i.tipo) ? "Gov Request" : "VAWA NDD";
+  const kind = otherKind(i);
+  return kind === "Gov Req" ? "Gov Request" : `VAWA NDD · ${kind}`;
 }
 
 const tabTag = (tab: GmcTab) => (tab === "NON VAWA" ? "NV" : tab === "GMC" ? "GMC" : "OTH");
@@ -74,7 +102,7 @@ export default function Gmc() {
   const [saving, setSaving] = useState<string | null>(null);
 
   const [view, setView] = useState<"calendar" | "table" | "monthly">("calendar");
-  const [tabs, setTabs] = useState<GmcTab[]>(TABS);
+  const [segments, setSegments] = useState<Segment[]>([...SEGMENTS]);
   const [member, setMember] = useState("todos");
   const [tipo, setTipo] = useState<"todos" | Category>("todos");
   const [estado, setEstado] = useState<Estado>("todas");
@@ -150,13 +178,13 @@ export default function Gmc() {
     const q = query.trim().toLowerCase();
     return items.filter(
       (i) =>
-        tabs.includes(i.tab) &&
+        segments.includes(segment(i)) &&
         (member === "todos" || (i.member || "Sin asignar") === member) &&
         (tipo === "todos" || category(i) === tipo) &&
         (!q ||
           `${i.cliente} ${i.clienteId} ${i.receipt} ${i.member}`.toLowerCase().includes(q))
     );
-  }, [items, tabs, member, tipo, query]);
+  }, [items, segments, member, tipo, query]);
 
   const visible = useMemo(
     () =>
@@ -343,20 +371,22 @@ export default function Gmc() {
 
               <div className="gmFilters">
                 <div className="gmChips" role="group" aria-label="Pestañas">
-                  {TABS.map((t) => {
-                    const on = tabs.includes(t);
+                  {SEGMENTS.map((t) => {
+                    const on = segments.includes(t);
+                    const count = items.filter((i) => segment(i) === t).length;
                     return (
                       <button
                         key={t}
                         className={on ? "active" : ""}
                         aria-pressed={on}
+                        title={on ? "Quitar del filtro" : "Agregar al filtro"}
                         onClick={() =>
-                          setTabs((prev) =>
-                            on ? prev.filter((x) => x !== t) : TABS.filter((x) => x === t || prev.includes(x))
+                          setSegments((prev) =>
+                            on ? prev.filter((x) => x !== t) : SEGMENTS.filter((x) => x === t || prev.includes(x))
                           )
                         }
                       >
-                        {t}
+                        {t} <span className="gmChipCount">{count}</span>
                       </button>
                     );
                   })}
@@ -661,18 +691,22 @@ function MonthlyView({ items }: { items: GmcItem[] }) {
   }
   const weekOf = (date: string) => weeks.findIndex((w) => date >= w.start && date <= w.end);
 
+  // Clientes detrás de un número de la tabla.
+  const [detail, setDetail] = useState<{ title: string; items: GmcItem[] } | null>(null);
+
   function pivot(keyOf: (i: GmcItem) => string, order?: readonly string[]) {
-    const rows = new Map<string, number[]>();
+    const rows = new Map<string, GmcItem[][]>();
     done.forEach((i) => {
       const key = keyOf(i);
-      const counts = rows.get(key) || weeks.map(() => 0);
-      counts[weekOf(i.done!)] += 1;
-      rows.set(key, counts);
+      const cells = rows.get(key) || weeks.map(() => [] as GmcItem[]);
+      cells[weekOf(i.done!)].push(i);
+      rows.set(key, cells);
     });
-    const list = [...rows.entries()].map(([key, counts]) => ({
+    const list = [...rows.entries()].map(([key, cells]) => ({
       key,
-      counts,
-      total: counts.reduce((a, b) => a + b, 0),
+      cells,
+      counts: cells.map((c) => c.length),
+      total: cells.reduce((a, c) => a + c.length, 0),
     }));
     return order
       ? list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
@@ -707,13 +741,29 @@ function MonthlyView({ items }: { items: GmcItem[] }) {
             {rows.map((r) => (
               <tr key={r.key}>
                 <td>{r.key}</td>
-                {r.counts.map((c, w) => (
-                  <td key={w} className={c ? "" : "gmMuted"}>
-                    {c || "·"}
+                {r.cells.map((cell, w) => (
+                  <td key={w} className={cell.length ? "" : "gmMuted"}>
+                    {cell.length ? (
+                      <button
+                        className="gmCount"
+                        title="Ver clientes"
+                        onClick={() => setDetail({ title: `${r.key} · ${weeks[w].label} (${weeks[w].range})`, items: cell })}
+                      >
+                        {cell.length}
+                      </button>
+                    ) : (
+                      "·"
+                    )}
                   </td>
                 ))}
                 <td>
-                  <b>{r.total}</b>
+                  <button
+                    className="gmCount gmCountTotal"
+                    title="Ver clientes"
+                    onClick={() => setDetail({ title: `${r.key} · todo el mes`, items: r.cells.flat() })}
+                  >
+                    {r.total}
+                  </button>
                 </td>
               </tr>
             ))}
@@ -795,6 +845,65 @@ function MonthlyView({ items }: { items: GmcItem[] }) {
 
       {table("Por colaborador", "Colaborador", byMember)}
       {table("Por tipo", "Tipo", byType)}
+
+      {detail && (
+        <div className="modalOverlay" onMouseDown={(e) => e.target === e.currentTarget && setDetail(null)}>
+          <div className="gmDetail" role="dialog" aria-label={detail.title}>
+            <header>
+              <div>
+                <h3>{detail.title}</h3>
+                <p>
+                  {detail.items.length} {detail.items.length === 1 ? "entrega" : "entregas"}
+                </p>
+              </div>
+              <button className="gmDetailClose" onClick={() => setDetail(null)} aria-label="Cerrar">
+                ×
+              </button>
+            </header>
+            <div className="gmTableWrap">
+              <table className="gmTable">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Colaborador</th>
+                    <th>Esperada</th>
+                    <th>Entregada</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...detail.items]
+                    .sort((a, b) => a.done!.localeCompare(b.done!) || a.cliente.localeCompare(b.cliente))
+                    .map((i) => (
+                      <tr key={i.key}>
+                        <td>
+                          <strong>{i.cliente}</strong>
+                          <div className="gmSub">
+                            {[i.clienteId && `ID ${i.clienteId}`, i.receipt].filter(Boolean).join(" · ")}
+                          </div>
+                        </td>
+                        <td>{category(i)}</td>
+                        <td>{i.member || "Sin asignar"}</td>
+                        <td>{fmt(i.expected)}</td>
+                        <td className={i.expected && i.done! > i.expected ? "gmLateText" : ""}>{fmt(i.done)}</td>
+                        <td>
+                          {i.link.startsWith("http") ? (
+                            <a href={i.link} target="_blank" rel="noreferrer">
+                              Abrir
+                            </a>
+                          ) : (
+                            <span className="gmMuted">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
