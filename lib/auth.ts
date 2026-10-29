@@ -8,7 +8,8 @@ export type Role =
   | "PSYCH"
   | "ANALYST"
   | "MANAGER"
-  | "COORDINATOR";
+  | "COORDINATOR"
+  | "CS"; // Case Strategy: ve todo su equipo, solo lectura
 
 export const USERS: Record<string, Role> = {
   "adiazd@supportmendoza.com": "ADMIN",
@@ -27,6 +28,54 @@ export const USERS: Record<string, Role> = {
   "bcastellanos@supportmendoza.com": "MANAGER",
   "vperez@supportmendoza.com": "COORDINATOR",
   "aperezn@supportmendoza.com": "TL",
+
+  // Gamma
+  "binfante@supportmendoza.com": "PSYCH",
+  "cgarciag@supportmendoza.com": "CS",
+  "dbonifacio@supportmendoza.com": "PARALEGAL",
+  "jbocanegra@supportmendoza.com": "ANALYST",
+  "lgutierrezu@supportmendoza.com": "PARALEGAL",
+  "lmurillo@supportmendoza.com": "PSYCH",
+  "ocervantes@supportmendoza.com": "PARALEGAL",
+  "pbautista@supportmendoza.com": "ANALYST",
+  "pponce@supportmendoza.com": "PARALEGAL",
+  "sesquivel@supportmendoza.com": "PSYCH",
+};
+
+/*
+ * Nombre con el que sale cada quien en el hub (Regresos).
+ * Quien no esté aquí sale con su usuario de correo.
+ */
+export const USER_NAMES: Record<string, string> = {
+  // Alpha
+  "adiazd@supportmendoza.com": "Alexandro",
+  "nrioja@supportmendoza.com": "Nayeli",
+  "anavag@supportmendoza.com": "Agustin",
+  "mponce@supportmendoza.com": "Mayla",
+  "camontoya@supportmendoza.com": "Carlos Arturo",
+  "pperezy@supportmendoza.com": "Paola",
+  "aramirezd@supportmendoza.com": "Alberto",
+  "fvals@supportmendoza.com": "Fernanda",
+  "nmolina@supportmendoza.com": "Natalia",
+  "agonzalezgo@supportmendoza.com": "Alejandro",
+  "aramirezc@supportmendoza.com": "Alonso",
+  "hjesus@supportmendoza.com": "Hector",
+  "lcamaro@supportmendoza.com": "Les",
+  "bcastellanos@supportmendoza.com": "Brenda",
+  "vperez@supportmendoza.com": "Valeria",
+
+  // Gamma
+  "aperezn@supportmendoza.com": "Fernando P",
+  "binfante@supportmendoza.com": "Barbara",
+  "cgarciag@supportmendoza.com": "Consuelo",
+  "dbonifacio@supportmendoza.com": "Diana",
+  "jbocanegra@supportmendoza.com": "Jesus Alonso",
+  "lgutierrezu@supportmendoza.com": "Lucio",
+  "lmurillo@supportmendoza.com": "Fernando",
+  "ocervantes@supportmendoza.com": "Oswa",
+  "pbautista@supportmendoza.com": "Sofia",
+  "pponce@supportmendoza.com": "Paulina",
+  "sesquivel@supportmendoza.com": "Susana",
 };
 
 /*
@@ -44,6 +93,16 @@ const ALL_CELULAS_ROLES = new Set<Role>([
  */
 export const USER_CELULAS: Record<string, Celula[]> = {
   "aperezn@supportmendoza.com": ["gamma"],
+  "binfante@supportmendoza.com": ["gamma"],
+  "cgarciag@supportmendoza.com": ["gamma"],
+  "dbonifacio@supportmendoza.com": ["gamma"],
+  "jbocanegra@supportmendoza.com": ["gamma"],
+  "lgutierrezu@supportmendoza.com": ["gamma"],
+  "lmurillo@supportmendoza.com": ["gamma"],
+  "ocervantes@supportmendoza.com": ["gamma"],
+  "pbautista@supportmendoza.com": ["gamma"],
+  "pponce@supportmendoza.com": ["gamma"],
+  "sesquivel@supportmendoza.com": ["gamma"],
 };
 
 export function celulasFor(

@@ -56,7 +56,8 @@ export async function POST(
      */
     if (
       role === "MANAGER" ||
-      role === "COORDINATOR"
+      role === "COORDINATOR" ||
+      role === "CS"
     ) {
       return NextResponse.json(
         {

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
-import { USERS, celulasFor } from "@/lib/auth";
+import { USERS, USER_NAMES, celulasFor, type Role } from "@/lib/auth";
 import { getJson, redis, setJson } from "@/lib/rfe/store";
-import type { Person, Regreso } from "@/lib/regresos";
+import type { Person, Puesto, Regreso } from "@/lib/regresos";
 
 /*
  * Misma base Upstash del hub. Cada registro va en un campo del
@@ -42,13 +42,28 @@ export function newId() {
   return randomUUID();
 }
 
+const PUESTO_POR_ROL: Partial<Record<Role, Puesto>> = {
+  PARALEGAL: "paralegal",
+  PSYCH: "psych",
+  ANALYST: "analista",
+  TL: "tl",
+};
+
+const defaultName = (email: string) => email.split("@")[0].toUpperCase();
+
+function puestoDe(email?: string): Puesto | undefined {
+  const role = email ? USERS[email.toLowerCase()] : undefined;
+  return role ? PUESTO_POR_ROL[role] || "otro" : undefined;
+}
+
 // Primer arranque: el equipo sale de los usuarios con acceso.
 function seedRoster(): Person[] {
   return Object.entries(USERS).map(([email, role]) => ({
     id: email,
-    name: email.split("@")[0].toUpperCase(),
+    name: USER_NAMES[email] || defaultName(email),
     email,
     celula: celulasFor(email, role)[0],
+    puesto: puestoDe(email),
     active: true,
   }));
 }
@@ -62,7 +77,19 @@ export async function getRoster(): Promise<Person[]> {
   if (!stored) return seedRoster();
   const known = new Set(stored.map((p) => p.email).filter(Boolean));
   const missing = seedRoster().filter((p) => !known.has(p.email));
-  return [...stored, ...missing];
+  return [
+    ...stored.map((p) => ({
+      ...p,
+      // Quien no tenga puesto toma el de su rol en el hub.
+      puesto: p.puesto || puestoDe(p.email),
+      // Si aún tiene el nombre automático (usuario del correo), toma el real.
+      name:
+        p.email && p.name === defaultName(p.email) && USER_NAMES[p.email]
+          ? USER_NAMES[p.email]
+          : p.name,
+    })),
+    ...missing,
+  ];
 }
 
 export async function saveRoster(roster: Person[]) {

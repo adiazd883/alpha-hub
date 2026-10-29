@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     const role = session.role;
 
-    if (role === "MANAGER" || role === "COORDINATOR") {
+    if (role === "MANAGER" || role === "COORDINATOR" || role === "CS") {
       return NextResponse.json({ error: "Tu rol es de solo lectura" }, { status: 403 });
     }
 

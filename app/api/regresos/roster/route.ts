@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { isCelula } from "@/lib/celulas";
-import type { Person } from "@/lib/regresos";
+import { PUESTO_LABELS, type Person, type Puesto } from "@/lib/regresos";
+
+const PUESTOS = Object.keys(PUESTO_LABELS) as Puesto[];
 import { getRoster, newId, saveRoster } from "@/lib/regresos-store";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +53,7 @@ export async function PUT(req: NextRequest) {
         // El correo de alguien que ya inicia sesión no cambia.
         email: existing?.email || email,
         celula: raw.celula,
+        puesto: PUESTOS.includes(raw.puesto as Puesto) ? (raw.puesto as Puesto) : undefined,
         active: raw.active !== false,
       });
       if (existing) byId.delete(existing.id);

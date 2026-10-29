@@ -12,7 +12,8 @@ type Role =
   | "PSYCH"
   | "ANALYST"
   | "MANAGER"
-  | "COORDINATOR";
+  | "COORDINATOR"
+  | "CS";
 
 type CaseRow = Record<string, string> & {
   __row: string;
@@ -135,6 +136,7 @@ const roleLabels: Record<Role, string> = {
   ANALYST: "Analyst",
   MANAGER: "Manager",
   COORDINATOR: "Coordinator",
+  CS: "Case Strategy",
 };
 
 const monthNames = [
@@ -1591,7 +1593,8 @@ export default function Home() {
     role === "ADMIN" ||
     role === "TL" ||
     role === "MANAGER" ||
-    role === "COORDINATOR";
+    role === "COORDINATOR" ||
+    role === "CS";
 
   const canReassign =
     role === "ADMIN" ||
@@ -4206,7 +4209,7 @@ export default function Home() {
      ========================= */
 
   const caseDatesLocked =
-    role === "MANAGER" || role === "COORDINATOR";
+    role === "MANAGER" || role === "COORDINATOR" || role === "CS";
 
   const caseCalendarEvents = useMemo(() => {
     if (!selectedCase) {
@@ -4606,7 +4609,8 @@ export default function Home() {
       ) ||
       role === "MANAGER" ||
       role ===
-        "COORDINATOR";
+        "COORDINATOR" ||
+      role === "CS";
 
     return (
       <div className="detailField">
@@ -8235,6 +8239,7 @@ export default function Home() {
                   const editable =
                     role !== "MANAGER" &&
                     role !== "COORDINATOR" &&
+                    role !== "CS" &&
                     editableFieldsForKind.some(
                       (h) => norm(h) === normHeader
                     ) &&
