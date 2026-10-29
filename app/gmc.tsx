@@ -56,7 +56,9 @@ const calendarDate = (i: GmcItem) => i.expected || i.done;
 // Tipo de caso: GMC = VAWA DD, OTHER = VAWA NDD (o Gov Request), NON VAWA.
 const CATEGORIES = ["VAWA DD", "VAWA NDD", "Gov Request", "Non VAWA"] as const;
 
-function category(i: GmcItem): (typeof CATEGORIES)[number] {
+type Category = (typeof CATEGORIES)[number];
+
+function category(i: GmcItem): Category {
   if (i.tab === "GMC") return "VAWA DD";
   if (i.tab === "NON VAWA") return "Non VAWA";
   return /GOV/i.test(i.tipo) ? "Gov Request" : "VAWA NDD";
@@ -65,15 +67,16 @@ function category(i: GmcItem): (typeof CATEGORIES)[number] {
 const tabTag = (tab: GmcTab) => (tab === "NON VAWA" ? "NV" : tab === "GMC" ? "GMC" : "OTH");
 
 export default function Gmc() {
-  const [data, setData] = useState<(GmcData & { canEdit: boolean }) | null>(null);
+  const [data, setData] = useState<(GmcData & { editFields: GmcField[] }) | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
 
-  const [view, setView] = useState<"calendar" | "table">("calendar");
+  const [view, setView] = useState<"calendar" | "table" | "monthly">("calendar");
   const [tabs, setTabs] = useState<GmcTab[]>(TABS);
   const [member, setMember] = useState("todos");
+  const [tipo, setTipo] = useState<"todos" | Category>("todos");
   const [estado, setEstado] = useState<Estado>("todas");
   const [query, setQuery] = useState("");
   const [month, setMonth] = useState(() => {
@@ -142,17 +145,26 @@ export default function Gmc() {
     [items]
   );
 
-  const visible = useMemo(() => {
+  // Filtros comunes; la vista mensual ignora el de pendientes/entregadas.
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter(
       (i) =>
         tabs.includes(i.tab) &&
         (member === "todos" || (i.member || "Sin asignar") === member) &&
-        (estado === "todas" || (estado === "entregadas") === delivered(i)) &&
+        (tipo === "todos" || category(i) === tipo) &&
         (!q ||
           `${i.cliente} ${i.clienteId} ${i.receipt} ${i.member}`.toLowerCase().includes(q))
     );
-  }, [items, tabs, member, estado, query]);
+  }, [items, tabs, member, tipo, query]);
+
+  const visible = useMemo(
+    () =>
+      filtered.filter(
+        (i) => estado === "todas" || (estado === "entregadas") === delivered(i)
+      ),
+    [filtered, estado]
+  );
 
   // Indicadores de la semana en curso (lunes a domingo).
   const weekStart = iso(mondayOf(new Date()));
@@ -247,7 +259,7 @@ export default function Gmc() {
     );
   }
 
-  const canEdit = !!data?.canEdit;
+  const editFields = data?.editFields || [];
   const busy = (item: GmcItem, field: GmcField) => saving === `${item.key}:${field}`;
 
   return (
@@ -320,6 +332,13 @@ export default function Gmc() {
                   <span>≡</span>
                   Tabla
                 </button>
+                <button
+                  className={view === "monthly" ? "teamViewButton active" : "teamViewButton"}
+                  onClick={() => setView("monthly")}
+                >
+                  <span>▥</span>
+                  Mensual
+                </button>
               </div>
 
               <div className="gmFilters">
@@ -352,11 +371,22 @@ export default function Gmc() {
                   ))}
                 </select>
 
-                <select value={estado} onChange={(e) => setEstado(e.target.value as Estado)} aria-label="Estado">
-                  <option value="todas">Todas</option>
-                  <option value="pendientes">Pendientes</option>
-                  <option value="entregadas">Entregadas</option>
+                <select value={tipo} onChange={(e) => setTipo(e.target.value as "todos" | Category)} aria-label="Tipo">
+                  <option value="todos">Todos los tipos</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
+
+                {view !== "monthly" && (
+                  <select value={estado} onChange={(e) => setEstado(e.target.value as Estado)} aria-label="Estado">
+                    <option value="todas">Todas</option>
+                    <option value="pendientes">Pendientes</option>
+                    <option value="entregadas">Entregadas</option>
+                  </select>
+                )}
 
                 <input
                   className="gmSearch"
@@ -367,7 +397,9 @@ export default function Gmc() {
               </div>
             </div>
 
-            {view === "calendar" ? (
+            {view === "monthly" ? (
+              <MonthlyView items={filtered} />
+            ) : view === "calendar" ? (
               <section className="calendarCard">
                 <div className="calendarToolbar">
                   <div className="calendarTitle">
@@ -376,7 +408,7 @@ export default function Gmc() {
                     </h2>
                     <span>
                       Por fecha esperada; si no tiene, por fecha de entrega
-                      {canEdit ? " · edita fechas y estatus en Tabla" : ""}
+                      {editFields.length ? " · edita fechas y estatus en Tabla" : ""}
                     </span>
                   </div>
 
@@ -479,7 +511,7 @@ export default function Gmc() {
                     <tbody>
                       {tableRows.map((i) => {
                         const late = !delivered(i) && !!i.expected && i.expected < today;
-                        const can = (f: GmcField) => canEdit && i.editable.includes(f);
+                        const can = (f: GmcField) => editFields.includes(f) && i.editable.includes(f);
                         return (
                           <tr key={i.key} className={delivered(i) ? "gmDone" : late ? "gmLate" : ""}>
                             <td>
@@ -596,6 +628,173 @@ function LinkCell({
           ↗
         </a>
       )}
+    </div>
+  );
+}
+
+/*
+ * Entregas del mes: lo entregado (fecha de entrega) por
+ * colaborador, por tipo y por semana. READY sin fecha de
+ * entrega no se puede ubicar en el mes y no cuenta aquí.
+ */
+function MonthlyView({ items }: { items: GmcItem[] }) {
+  const [month, setMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  const first = iso(month);
+  const last = iso(new Date(month.getFullYear(), month.getMonth() + 1, 0));
+  const done = items.filter((i) => i.done && i.done >= first && i.done <= last);
+
+  // Semanas (lunes a domingo) que tocan el mes, recortadas al mes.
+  const weeks: { label: string; range: string; start: string; end: string }[] = [];
+  for (let d = mondayOf(month); iso(d) <= last; d = addDays(d, 7)) {
+    const start = iso(d) < first ? first : iso(d);
+    const endDate = iso(addDays(d, 6)) > last ? last : iso(addDays(d, 6));
+    weeks.push({
+      label: `Sem ${isoWeek(d)}`,
+      range: `${Number(start.slice(8))}–${Number(endDate.slice(8))}`,
+      start,
+      end: endDate,
+    });
+  }
+  const weekOf = (date: string) => weeks.findIndex((w) => date >= w.start && date <= w.end);
+
+  function pivot(keyOf: (i: GmcItem) => string, order?: readonly string[]) {
+    const rows = new Map<string, number[]>();
+    done.forEach((i) => {
+      const key = keyOf(i);
+      const counts = rows.get(key) || weeks.map(() => 0);
+      counts[weekOf(i.done!)] += 1;
+      rows.set(key, counts);
+    });
+    const list = [...rows.entries()].map(([key, counts]) => ({
+      key,
+      counts,
+      total: counts.reduce((a, b) => a + b, 0),
+    }));
+    return order
+      ? list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
+      : list.sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
+  }
+
+  const byMember = pivot((i) => i.member || "Sin asignar");
+  const byType = pivot(category, CATEGORIES);
+  const weekTotals = weeks.map((_, w) => done.filter((i) => weekOf(i.done!) === w).length);
+  const onTime = done.filter((i) => i.expected && i.done! <= i.expected).length;
+  const late = done.filter((i) => i.expected && i.done! > i.expected).length;
+  const maxWeek = Math.max(1, ...weekTotals);
+
+  const table = (title: string, first: string, rows: ReturnType<typeof pivot>) => (
+    <section className="gmTableCard gmMonthCard">
+      <h3>{title}</h3>
+      <div className="gmTableWrap">
+        <table className="gmTable gmPivot">
+          <thead>
+            <tr>
+              <th>{first}</th>
+              {weeks.map((w) => (
+                <th key={w.start}>
+                  {w.label}
+                  <div className="gmSub">{w.range}</div>
+                </th>
+              ))}
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key}>
+                <td>{r.key}</td>
+                {r.counts.map((c, w) => (
+                  <td key={w} className={c ? "" : "gmMuted"}>
+                    {c || "·"}
+                  </td>
+                ))}
+                <td>
+                  <b>{r.total}</b>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              {weekTotals.map((t, w) => (
+                <td key={w}>{t}</td>
+              ))}
+              <td>{done.length}</td>
+            </tr>
+          </tfoot>
+        </table>
+        {!rows.length && <div className="gmEmpty">No hay entregas en este mes con estos filtros.</div>}
+      </div>
+    </section>
+  );
+
+  return (
+    <div className="gmMonthly">
+      <div className="calendarToolbar gmMonthToolbar">
+        <div className="calendarTitle">
+          <h2>
+            Entregas de {MONTHS[month.getMonth()].toLowerCase()} {month.getFullYear()}
+          </h2>
+          <span>Por fecha de entrega · respeta los filtros de arriba</span>
+        </div>
+        <div className="calendarControls">
+          <button onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>‹</button>
+          <button
+            className="todayButton"
+            onClick={() => {
+              const now = new Date();
+              setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+            }}
+          >
+            Este mes
+          </button>
+          <button onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>›</button>
+        </div>
+      </div>
+
+      <div className="gmKpis gmMonthKpis">
+        <div className="gmKpiHero">
+          <span>Entregas del mes</span>
+          <strong>{done.length}</strong>
+          <ul className="gmBreakdown">
+            {byType.map((t) => (
+              <li key={t.key}>
+                {t.key} <b>{t.total}</b>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <span>A tiempo</span>
+          <strong>{onTime}</strong>
+          <small>entregada en o antes de la fecha esperada</small>
+        </div>
+        <div className={late ? "gmKpiAlert" : ""}>
+          <span>Con retraso</span>
+          <strong>{late}</strong>
+          <small>después de la fecha esperada</small>
+        </div>
+        <div className="gmWeekBars">
+          <span>Por semana</span>
+          {weeks.map((w, k) => (
+            <div key={w.start} title={`${w.label} (${w.range}): ${weekTotals[k]}`}>
+              <em>{w.label}</em>
+              <i>
+                <b style={{ width: `${(weekTotals[k] / maxWeek) * 100}%` }} />
+              </i>
+              <strong>{weekTotals[k]}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {table("Por colaborador", "Colaborador", byMember)}
+      {table("Por tipo", "Tipo", byType)}
     </div>
   );
 }

@@ -59,14 +59,17 @@ function puestoDe(email?: string): Puesto | undefined {
 
 // Primer arranque: el equipo sale de los usuarios con acceso.
 function seedRoster(): Person[] {
-  return Object.entries(USERS).map(([email, role]) => ({
-    id: email,
-    name: USER_NAMES[email] || defaultName(email),
-    email,
-    celula: celulasFor(email, role)[0],
-    puesto: puestoDe(email),
-    active: true,
-  }));
+  return Object.entries(USERS)
+    // El equipo GMC no tiene célula de casos.
+    .filter(([email, role]) => celulasFor(email, role).length > 0)
+    .map(([email, role]) => ({
+      id: email,
+      name: USER_NAMES[email] || defaultName(email),
+      email,
+      celula: celulasFor(email, role)[0],
+      puesto: puestoDe(email),
+      active: true,
+    }));
 }
 
 /*

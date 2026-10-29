@@ -6372,3 +6372,89 @@ button {
     grid-column: 1 / -1;
   }
 }
+
+/* GMC · vista mensual */
+
+.gmMonthly {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gmMonthToolbar {
+  padding: 0;
+  border: 0;
+}
+
+.gmKpis.gmMonthKpis {
+  grid-template-columns: 2fr 1fr 1fr 2fr;
+  margin-bottom: 0;
+}
+
+.gmKpis.gmMonthKpis .gmKpiHero {
+  grid-column: auto;
+}
+
+.gmWeekBars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gmWeekBars > div {
+  display: grid;
+  grid-template-columns: 52px 1fr 28px;
+  align-items: center;
+  gap: 8px;
+}
+
+.gmWeekBars em {
+  color: #778397;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.gmWeekBars i {
+  height: 8px;
+  border-radius: 4px;
+  background: #eef1f6;
+  overflow: hidden;
+}
+
+.gmWeekBars b {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #2a78d6;
+}
+
+.gmKpis .gmWeekBars strong {
+  margin: 0;
+  font-size: 13px;
+  text-align: right;
+}
+
+.gmMonthCard h3 {
+  margin: 0;
+  padding: 14px 16px 10px;
+  color: #1f2b42;
+  font-size: 14px;
+}
+
+.gmPivot th:not(:first-child),
+.gmPivot td:not(:first-child) {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.gmPivot tfoot td {
+  border-top: 1px solid #e2e7ee;
+  background: #f8fafc;
+  font-weight: 750;
+}
+
+@media (max-width: 1100px) {
+  .gmKpis.gmMonthKpis {
+    grid-template-columns: 1fr 1fr;
+  }
+}

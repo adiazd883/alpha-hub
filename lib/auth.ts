@@ -40,6 +40,9 @@ export const USERS: Record<string, Role> = {
   "pbautista@supportmendoza.com": "ANALYST",
   "pponce@supportmendoza.com": "PARALEGAL",
   "sesquivel@supportmendoza.com": "PSYCH",
+
+  // GMC (Gov Branch)
+  "gsanchez@supportmendoza.com": "TL",
 };
 
 /*
@@ -76,6 +79,9 @@ export const USER_NAMES: Record<string, string> = {
   "pbautista@supportmendoza.com": "Sofia",
   "pponce@supportmendoza.com": "Paulina",
   "sesquivel@supportmendoza.com": "Susana",
+
+  // GMC
+  "gsanchez@supportmendoza.com": "Gerson",
 };
 
 /*
@@ -103,7 +109,32 @@ export const USER_CELULAS: Record<string, Celula[]> = {
   "pbautista@supportmendoza.com": ["gamma"],
   "pponce@supportmendoza.com": ["gamma"],
   "sesquivel@supportmendoza.com": ["gamma"],
+
+  // Equipo GMC: no tiene célula de casos, solo GMC.
+  "gsanchez@supportmendoza.com": [],
 };
+
+/*
+ * Equipo GMC (Gov Branch). Ven la célula GMC y actualizan
+ * estatus, fecha de entrega y link; la fecha esperada solo la
+ * pone el Admin. Quien ve todas las células también ve GMC.
+ */
+const GMC_MEMBERS = new Set<string>([
+  "gsanchez@supportmendoza.com",
+]);
+
+export function gmcAccess(email: string, role: Role) {
+  return ALL_CELULAS_ROLES.has(role) || GMC_MEMBERS.has(email);
+}
+
+export function gmcEditFields(
+  email: string,
+  role: Role
+): ("expected" | "status" | "done" | "link")[] {
+  if (role === "ADMIN") return ["expected", "status", "done", "link"];
+  if (GMC_MEMBERS.has(email)) return ["status", "done", "link"];
+  return [];
+}
 
 export function celulasFor(
   email: string,
