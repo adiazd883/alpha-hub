@@ -47,6 +47,25 @@ export const USERS: Record<string, Role> = {
  * Quien no esté aquí sale con su usuario de correo.
  */
 export const USER_NAMES: Record<string, string> = {
+  // Alpha
+  "adiazd@supportmendoza.com": "Alexandro",
+  "nrioja@supportmendoza.com": "Nayeli",
+  "anavag@supportmendoza.com": "Agustin",
+  "mponce@supportmendoza.com": "Mayla",
+  "camontoya@supportmendoza.com": "Carlos Arturo",
+  "pperezy@supportmendoza.com": "Paola",
+  "aramirezd@supportmendoza.com": "Alberto",
+  "fvals@supportmendoza.com": "Fernanda",
+  "nmolina@supportmendoza.com": "Natalia",
+  "agonzalezgo@supportmendoza.com": "Alejandro",
+  "aramirezc@supportmendoza.com": "Alonso",
+  "hjesus@supportmendoza.com": "Hector",
+  "lcamaro@supportmendoza.com": "Les",
+  "bcastellanos@supportmendoza.com": "Brenda",
+  "vperez@supportmendoza.com": "Valeria",
+
+  // Gamma
+  "aperezn@supportmendoza.com": "Fernando P",
   "binfante@supportmendoza.com": "Barbara",
   "cgarciag@supportmendoza.com": "Consuelo",
   "dbonifacio@supportmendoza.com": "Diana",
