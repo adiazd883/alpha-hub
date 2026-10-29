@@ -35,7 +35,7 @@ type Columns = {
 const TAB_CONFIG: Record<GmcTab, { headerRow: number; lastCol: string }> = {
   GMC: { headerRow: 2, lastCol: "W" },
   "NON VAWA": { headerRow: 2, lastCol: "AR" },
-  OTHER: { headerRow: 1, lastCol: "I" },
+  OTHER: { headerRow: 1, lastCol: "J" },
 };
 
 const GMC_COLUMNS: Columns = {
@@ -89,6 +89,8 @@ const GMC_CELULA = "I";
 const GMC_NOID = "W";
 const OTHER_TYPE = "E";
 const OTHER_REHAB = "G";
+// Columna sin título: "email" en un caso sin COLAB = ya está done.
+const OTHER_DONE_MARK = "J";
 
 export type GmcItem = {
   key: string; // "<tab>:<fila>"
@@ -158,6 +160,11 @@ function toItem(tab: GmcTab, row: unknown[], rowNumber: number): GmcItem | null 
   const member = text(get(cols.member));
   // GMC con N/A no necesita GMC: no se trabaja.
   if (tab === "GMC" && /^n\/?a$/i.test(member)) return null;
+
+  // OTHER ya resuelto por email, sin colaborador: no se considera.
+  if (tab === "OTHER" && !member && /email/i.test(text(get(OTHER_DONE_MARK)))) {
+    return null;
+  }
 
   const done = isoDate(get(cols.done));
   const rawStatus = text(get(cols.status)).toUpperCase();
