@@ -25,21 +25,24 @@ type CaseRow = Record<string, string> & {
  * Coordinator y Admin). Cada fila guarda su célula en
  * __celula para saber a qué Sheet escribir.
  */
-type Vista = Celula | "general";
+type Vista = Celula | "general" | "gmc";
 
 const vistaLabel = (vista: Vista) =>
   vista === "general"
     ? "General"
-    : CELULAS[vista].label;
+    : vista === "gmc"
+      ? "GMC"
+      : CELULAS[vista].label;
 
 // El número de fila se repite entre células.
 const rowKey = (row: CaseRow) =>
   `${row.__celula || ""}-${row.__row}`;
 
-// Con más de una célula, General va primero.
+// Con más de una célula, General va primero. GMC (Gov Branch)
+// tiene su propia Sheet; por ahora la ve quien ve todas.
 const vistasFor = (user: User): Vista[] =>
   user.celulas.length > 1
-    ? ["general", ...user.celulas]
+    ? ["general", ...user.celulas, "gmc"]
     : user.celulas;
 
 type User = {
@@ -1673,7 +1676,7 @@ export default function Home() {
     setError("");
 
     try {
-      if (!celula || !user) {
+      if (!celula || !user || celula === "gmc") {
         return;
       }
 
@@ -1836,9 +1839,16 @@ export default function Home() {
           (c) => CELULAS[c].hasNwGeneral
         )
       : celula !== null &&
+        celula !== "gmc" &&
         CELULAS[celula].hasNwGeneral;
 
   const isGeneral = celula === "general";
+  const isGmc = celula === "gmc";
+
+  // GMC solo tiene su calendario de entregas.
+  useEffect(() => {
+    if (isGmc) setMainView("gmc");
+  }, [isGmc]);
 
   // Clientes de la Sheet para ligar cada regreso a su caso.
   const regresoCases = useMemo(
@@ -1850,7 +1860,7 @@ export default function Home() {
           id: (row["ID"] || "").trim(),
           receipt: (row["RECEIPT NUMBER"] || "").trim(),
           celula: ((row.__celula ||
-            (celula === "general" ? "" : celula) ||
+            (celula === "general" || celula === "gmc" ? "" : celula) ||
             "alpha") as Celula),
         })),
     [data.rows, celula]
@@ -5341,6 +5351,8 @@ export default function Home() {
           <div className="logoMark small">
             {celula === "general"
               ? "R"
+              : celula === "gmc"
+              ? "GB"
               : celula
               ? CELULAS[celula].label.charAt(0)
               : "A"}
@@ -5385,6 +5397,18 @@ export default function Home() {
         </div>
 
         <nav className="sidebarNav">
+          {isGmc ? (
+            <button className="navItem active">
+              <span className="navIcon">
+                ◷
+              </span>
+
+              <span>
+                Entregas GMC
+              </span>
+            </button>
+          ) : (
+            <>
           {isGeneral && (
             <button
               className={`navItem ${
@@ -5402,22 +5426,6 @@ export default function Home() {
             </button>
           )}
 
-          {isGeneral && (
-            <button
-              className={`navItem ${
-                mainView === "gmc" ? "active" : ""
-              }`}
-              onClick={() => setMainView("gmc")}
-            >
-              <span className="navIcon">
-                ◷
-              </span>
-
-              <span>
-                GMC
-              </span>
-            </button>
-          )}
 
           <button
             className={`navItem ${
@@ -5582,6 +5590,8 @@ export default function Home() {
 
             <span>MGM Review</span>
           </button>
+            </>
+          )}
         </nav>
 
         <div className="sidebarBottom">
@@ -5636,7 +5646,7 @@ export default function Home() {
           <RfeDashboard />
         )}
 
-        {mainView === "gmc" && isGeneral && <Gmc />}
+        {mainView === "gmc" && isGmc && <Gmc />}
 
         {mainView === "regresos" && user.role && celula && (
           <Regresos
@@ -5644,7 +5654,7 @@ export default function Home() {
             email={user.email || ""}
             celulas={user.celulas}
             defaultCelula={
-              celula === "general"
+              celula === "general" || celula === "gmc"
                 ? user.celulas[0]
                 : celula
             }
