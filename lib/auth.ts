@@ -39,7 +39,7 @@ export const USERS: Record<string, Role> = {
   "ocervantes@supportmendoza.com": "PARALEGAL",
   "pbautista@supportmendoza.com": "ANALYST",
   "pponce@supportmendoza.com": "PARALEGAL",
-  "sesquivel@supportmendoza.com": "PARALEGAL",
+  "sesquivel@supportmendoza.com": "PSYCH",
 };
 
 /*
@@ -69,7 +69,7 @@ export const USER_NAMES: Record<string, string> = {
   "binfante@supportmendoza.com": "Barbara",
   "cgarciag@supportmendoza.com": "Consuelo",
   "dbonifacio@supportmendoza.com": "Diana",
-  "jbocanegra@supportmendoza.com": "Alonso",
+  "jbocanegra@supportmendoza.com": "Jesus Alonso",
   "lgutierrezu@supportmendoza.com": "Lucio",
   "lmurillo@supportmendoza.com": "Fernando",
   "ocervantes@supportmendoza.com": "Oswa",
