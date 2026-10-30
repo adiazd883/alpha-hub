@@ -482,6 +482,7 @@ const CALENDAR_CASE_TYPES = [
   "DUE DATE",
   "NO DUE DATE",
   "NOID",
+  "DD NOID",
   "RESUBMISSION",
 ];
 
