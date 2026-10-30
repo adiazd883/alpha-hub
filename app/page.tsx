@@ -1079,7 +1079,23 @@ const SPECIAL_STATUSES = ["SPECIAL CASE", "UNRESPONSIVE"];
 function isSpecialStage(row: CaseRow, stage: TeamCalendar) {
   return (
     !isStageDelivered(row, stage) &&
-    SPECIAL_STATUSES.includes(norm(row[calendarStatusHeader(stage)] || ""))
+    SPECIAL_STATUSES.includes(specialStatusOf(row, stage))
+  );
+}
+
+/*
+ * Estatus de la etapa para special case. EA y CVL: si su estatus
+ * está vacío pero el DOE o el Draft del caso están en SPECIAL
+ * CASE / UNRESPONSIVE, el analista no tiene con qué trabajar, así
+ * que también cuenta como special case.
+ */
+function specialStatusOf(row: CaseRow, stage: TeamCalendar) {
+  const own = norm(row[calendarStatusHeader(stage)] || "");
+  if (own || (stage !== "ea" && stage !== "cvl")) return own;
+  return (
+    [norm(row["DOE STATUS"] || ""), norm(row["STATUS 1ST DRAFT"] || "")].find((status) =>
+      SPECIAL_STATUSES.includes(status)
+    ) || ""
   );
 }
 
@@ -3605,9 +3621,7 @@ export default function Home() {
              * meta de su propia semana, pero no se arrastran como
              * backlog a las siguientes (afectarían la proporción).
              */
-            const stageStatus = norm(
-              row[calendarStatusHeader(stage)] || ""
-            );
+            const stageStatus = specialStatusOf(row, stage);
 
             if (
               !done &&
@@ -4330,8 +4344,8 @@ export default function Home() {
               <span>Fecha en que se hizo</span>
               <input type="date" value={irDate} onChange={(e) => setIrDate(e.target.value)} />
             </label>
-            <button className="rgBtn rgBtnPrimary" disabled={irSaving} onClick={saveInitialReview}>
-              {irSaving ? "Guardando…" : "Registrar"}
+            <button className="csIrSave" disabled={irSaving} onClick={saveInitialReview}>
+              {irSaving ? "Guardando…" : "Guardar"}
             </button>
           </div>
         )}
