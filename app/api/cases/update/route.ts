@@ -20,6 +20,9 @@ import {
  * duplicadas de PARALEGAL que
  * permitimos modificar directamente.
  */
+const INITIAL_REVIEW_HEADER =
+  "INITIAL REVIEW (FIRST APPROACH)";
+
 const PARALEGAL_COLUMNS =
   new Set([
     "J",
@@ -54,10 +57,21 @@ export async function POST(
      * siguen completamente
      * read-only.
      */
+    const body =
+      await req.json();
+
+    // Case Strategy solo registra su Initial Review.
+    const onlyInitialReview =
+      role === "CS" &&
+      Object.keys(body.changes || {}).every(
+        (header) => header === INITIAL_REVIEW_HEADER
+      ) &&
+      Object.keys(body.columnChanges || {}).length === 0;
+
     if (
       role === "MANAGER" ||
       role === "COORDINATOR" ||
-      role === "CS"
+      (role === "CS" && !onlyInitialReview)
     ) {
       return NextResponse.json(
         {
@@ -69,9 +83,6 @@ export async function POST(
         }
       );
     }
-
-    const body =
-      await req.json();
 
     const celula =
       body.celula || "alpha";

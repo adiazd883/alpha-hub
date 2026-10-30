@@ -175,6 +175,10 @@ export async function POST(req: NextRequest) {
       fin,
       creado: existing?.creado || nowIso,
       prueba: existing ? existing.prueba : me.isAdmin,
+      modo: existing?.modo || (action === "start" ? "cronometro" : "manual"),
+      editado:
+        !!existing &&
+        (existing.editado || existing.inicio !== inicio || existing.fin !== fin),
     };
     await saveRegistro(item);
     return NextResponse.json({ item });
