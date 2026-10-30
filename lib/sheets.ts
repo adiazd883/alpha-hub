@@ -666,3 +666,30 @@ export async function updateSheetCase(
     }
   );
 }
+
+/*
+ * Pestaña "NW ADMINs" de Alpha (casos NON VAWA): títulos en la
+ * fila 2. Cada fila sale como objeto por título, con __row = la
+ * fila real de la Sheet.
+ */
+export async function readNwAdmins() {
+  const sheets = await getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: spreadsheetIdFor("alpha"),
+    range: "'NW ADMINs'!A2:AW",
+  });
+
+  const values = (res.data.values || []) as string[][];
+  const headers = (values[0] || []).map((h) => String(h ?? "").trim());
+
+  return values
+    .slice(1)
+    .map((r, i) => {
+      const obj: Record<string, string> = { __row: String(i + 3) };
+      headers.forEach((h, j) => {
+        if (h && !(h in obj)) obj[h] = String(r[j] ?? "").trim();
+      });
+      return obj;
+    })
+    .filter((r) => r["CL"]);
+}

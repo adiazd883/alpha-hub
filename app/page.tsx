@@ -67,7 +67,10 @@ type TeamCalendar =
   | "plcvl"
   | "psych"
   | "ea"
-  | "cvl";
+  | "cvl"
+  // Solo en NW ADMINs (NON VAWA de Alpha).
+  | "dclplg"
+  | "dclpsych";
 
 type TeamViewMode = "calendar" | "table";
 
@@ -705,9 +708,40 @@ const getCvlKpi = (
    TEAM
    ========================= */
 
+// DCL de NW ADMINs: pendiente si no tiene DONE y su estatus no lo descarta.
+const NW_DCL = {
+  dclplg: { status: "STATUS DCL PLG", done: "DCL PLG DONE", expected: "DCL PLG EXP DONE" },
+  dclpsych: { status: "STATUS DCL PSYCH", done: "DCL PSYCH DONE", expected: "DCL PSYCH EXP DONE" },
+} as const;
+
+const NW_DCL_SKIP = ["NA", "N/A", "SPECIAL CASE", "CANCELLED", "CANCELED", "UNRESPONSIVE"];
+
+const isDclStage = (stage: TeamCalendar): stage is "dclplg" | "dclpsych" =>
+  stage === "dclplg" || stage === "dclpsych";
+
+const getDclKpi = (row: CaseRow, stage: "dclplg" | "dclpsych"): KpiType => {
+  const keys = NW_DCL[stage];
+  if (NW_DCL_SKIP.includes(norm(row[keys.status] || ""))) {
+    return "none";
+  }
+  if ((row[keys.done] || "").trim()) {
+    return "none";
+  }
+  const date = parseDateOnly(row[keys.expected] || "");
+  return date ? classifyDate(date) : "none";
+};
+
 const collaboratorHeader = (
   stage: TeamCalendar
 ) => {
+  if (stage === "dclplg") {
+    return "PLG ASIGNADO";
+  }
+
+  if (stage === "dclpsych") {
+    return "PSYCH ASIGNADO";
+  }
+
   if (stage === "mgm") {
     return "__PARALEGAL_DRAFT";
   }
@@ -738,6 +772,10 @@ const collaboratorHeader = (
 const calendarDateHeader = (
   stage: TeamCalendar
 ) => {
+  if (isDclStage(stage)) {
+    return NW_DCL[stage].expected;
+  }
+
   if (stage === "mgm") {
     return "COMMITMENT";
   }
@@ -768,6 +806,10 @@ const calendarDateHeader = (
 const doneDateHeader = (
   stage: TeamCalendar
 ) => {
+  if (isDclStage(stage)) {
+    return NW_DCL[stage].done;
+  }
+
   if (stage === "mgm") {
     return "SENT TO MGM";
   }
@@ -798,6 +840,10 @@ const doneDateHeader = (
 const calendarStatusHeader = (
   stage: TeamCalendar
 ) => {
+  if (isDclStage(stage)) {
+    return NW_DCL[stage].status;
+  }
+
   if (stage === "mgm") {
     return "STATUS";
   }
@@ -867,6 +913,13 @@ const calendarActive = (
   row: CaseRow,
   stage: TeamCalendar
 ) => {
+  if (isDclStage(stage)) {
+    return (
+      getDclKpi(row, stage) !== "none" ||
+      isStageDelivered(row, stage)
+    );
+  }
+
   if (stage === "mgm") {
     return (
       getMgmKpi(row) !== "none" ||
@@ -943,6 +996,13 @@ const scheduledEligible = (
 
   if (!expectedDate) {
     return false;
+  }
+
+  if (isDclStage(stage)) {
+    return (
+      !NW_DCL_SKIP.includes(norm(row[NW_DCL[stage].status] || "")) &&
+      !["", "N/A", "NA"].includes(norm(row[collaboratorHeader(stage)] || ""))
+    );
   }
 
   if (stage === "mgm") {
@@ -1029,6 +1089,14 @@ const scheduledEligible = (
 const stageLabel = (
   stage: TeamCalendar
 ) => {
+  if (stage === "dclplg") {
+    return "DCL Paralegal (NW)";
+  }
+
+  if (stage === "dclpsych") {
+    return "DCL Psych (NW)";
+  }
+
   if (stage === "mgm") {
     return "Escalación MGM";
   }
@@ -1085,6 +1153,14 @@ const historyStageOptions: {
     label: "EA · Analyst",
   },
   {
+    value: "dclplg",
+    label: "Paralegal · DCL (NW)",
+  },
+  {
+    value: "dclpsych",
+    label: "Psych · DCL (NW)",
+  },
+  {
     value: "cvl",
     label: "CVL",
   },
@@ -1105,6 +1181,8 @@ const TEAM_STAGES: TeamCalendar[] = [
   "plcvl",
   "cvl",
   "mgm",
+  "dclplg",
+  "dclpsych",
 ];
 
 const teamStageShortLabel: Record<TeamCalendar, string> = {
@@ -1115,6 +1193,8 @@ const teamStageShortLabel: Record<TeamCalendar, string> = {
   psych: "DOE",
   ea: "EA",
   cvl: "CVL",
+  dclplg: "DCL PLG",
+  dclpsych: "DCL Psych",
 };
 
 /*
@@ -1391,7 +1471,9 @@ const accountabilityStages: TeamCalendar[] = [
   "mgm",
   "draft",
   "plcvl",
+  "dclplg",
   "psych",
+  "dclpsych",
   "ea",
   "cvl",
 ];
@@ -1593,6 +1675,9 @@ export default function Home() {
   ] =
     useState<string | null>(null);
 
+  const [nwAdminRows, setNwAdminRows] =
+    useState<Record<string, string>[]>([]);
+
   const [message, setMessage] =
     useState("");
 
@@ -1723,6 +1808,16 @@ export default function Home() {
        * Los headers de cada célula ya vienen alineados a los
        * de Alpha, así que basta con los de la primera.
        */
+      // NW ADMINs (NON VAWA de Alpha) para calendarios y rendición.
+      if (targets.includes("alpha")) {
+        fetch("/api/nw-admins", { cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : { rows: [] }))
+          .then((json) => setNwAdminRows(json.rows || []))
+          .catch(() => setNwAdminRows([]));
+      } else {
+        setNwAdminRows([]);
+      }
+
       setData({
         title: results[0].json.title,
         headers: results[0].json.headers,
@@ -1855,6 +1950,48 @@ export default function Home() {
 
   const isGeneral = celula === "general";
   const isGmc = celula === "gmc";
+
+  /*
+   * Filas de NW ADMINs adaptadas a las etapas del equipo: 1st
+   * Draft, EA y CVL usan los mismos títulos que ADMINs; DCL PLG y
+   * DCL Psych son etapas propias. Casi nunca traen fecha
+   * esperada: si falta, se toma la fecha de entrega. Solo se usan
+   * en calendarios y rendición de cuentas (no se editan aquí).
+   */
+  const nwTeamRows = useMemo<CaseRow[]>(
+    () =>
+      nwAdminRows.map((raw) => {
+        const row: Record<string, string> = {
+          ...raw,
+          CLIENTE: `${raw["CL"]} · NW`,
+          "DUE DATE/NO DUE DATE": "NON VAWA",
+          __PARALEGAL_DRAFT: raw["PLG ASIGNADO"] || "",
+          "CVL EXPECTED DONE": raw["EXPECTED DONE"] || "",
+          __celula: "alpha",
+          __row: `nw-${raw.__row}`,
+          __source: "NW",
+        };
+        [
+          ["DCL PLG EXP DONE", "DCL PLG DONE"],
+          ["DCL PSYCH EXP DONE", "DCL PSYCH DONE"],
+          ["1ST DRAFT EXP DONE", "1ST DRAFT DONE"],
+          ["EA EXPECTED DONE", "EA DONE"],
+          ["CVL EXPECTED DONE", "DONE CVL"],
+        ].forEach(([expected, done]) => {
+          if (!(row[expected] || "").trim() && (row[done] || "").trim()) {
+            row[expected] = row[done];
+          }
+        });
+        return row as unknown as CaseRow;
+      }),
+    [nwAdminRows]
+  );
+
+  // ADMINs + NW ADMINs: lo que alimenta calendarios y rendición.
+  const teamRows = useMemo(
+    () => [...data.rows, ...nwTeamRows],
+    [data.rows, nwTeamRows]
+  );
 
   // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
   const rsCelula =
@@ -2088,6 +2225,12 @@ export default function Home() {
     row: CaseRow,
     stage: TeamCalendar
   ) {
+    // Casos de NW ADMINs: se actualizan en la Sheet, no aquí.
+    if ((row as Record<string, string>).__source === "NW") {
+      setMessage("Caso de NW ADMINs: se actualiza directo en la Sheet");
+      return;
+    }
+
     setOpenCaseSource("calendar");
     setSelectedStage(stage);
     setSelectedCase(row);
@@ -2466,7 +2609,7 @@ export default function Home() {
       const memberHeader = collaboratorHeader(stage);
       const statusHeader = calendarStatusHeader(stage);
 
-      data.rows.forEach((row) => {
+      teamRows.forEach((row) => {
         if (!calendarActive(row, stage)) {
           return;
         }
@@ -2491,7 +2634,7 @@ export default function Home() {
     return events.sort(
       (a, b) => a.date.getTime() - b.date.getTime()
     );
-  }, [data.rows]);
+  }, [teamRows]);
 
   const teamMonthRange = useMemo(
     () => ({
@@ -2777,7 +2920,7 @@ export default function Home() {
       const dateHeader = calendarDateHeader(stage);
       const memberHeader = collaboratorHeader(stage);
 
-      data.rows.forEach((row) => {
+      teamRows.forEach((row) => {
         if (!scheduledEligible(row, stage)) {
           return;
         }
@@ -2826,7 +2969,7 @@ export default function Home() {
 
         return a.name.localeCompare(b.name);
       });
-  }, [data.rows, hiddenTeamStages, teamMonthRange]);
+  }, [teamRows, hiddenTeamStages, teamMonthRange]);
 
   const scheduledMonthTotal =
     useMemo(
@@ -2890,7 +3033,7 @@ export default function Home() {
         );
 
       const completedRows =
-        data.rows
+        teamRows
           .map(
             (row) => ({
               row,
@@ -3075,7 +3218,7 @@ export default function Home() {
           completedRows.length,
       };
     }, [
-      data.rows,
+      teamRows,
       historyStage,
       historyMonthDate,
       historyWeeks,
@@ -3224,11 +3367,12 @@ export default function Home() {
           "mgm",
           "draft",
           "plcvl",
+          "dclplg",
         ] as TeamCalendar[];
       }
 
       if (role === "PSYCH") {
-        return ["psych"] as TeamCalendar[];
+        return ["psych", "dclpsych"] as TeamCalendar[];
       }
 
       if (role === "ANALYST") {
@@ -3257,7 +3401,7 @@ export default function Home() {
 
       accountabilityVisibleStages.forEach(
         (stage) => {
-          const collaboratorKey =
+          const memberHeader =
             collaboratorHeader(stage);
           const expectedKey =
             calendarDateHeader(stage);
@@ -3281,7 +3425,7 @@ export default function Home() {
               }
             >();
 
-          data.rows.forEach((row) => {
+          teamRows.forEach((row) => {
             if (
               !scheduledEligible(
                 row,
@@ -3300,18 +3444,23 @@ export default function Home() {
               return;
             }
 
+            /*
+             * Entregado sin fecha (p. ej. MGM REVIEW o SENT TO
+             * USCIS sin "SENT TO MGM"): se toma la fecha esperada.
+             */
             const done =
               parseDateOnly(
                 row[doneKey] || ""
-              );
+              ) ||
+              (isStageDelivered(row, stage)
+                ? expected
+                : null);
 
+            // Igual que el calendario: junta HÉCTOR/HECTOR, LESLY/LESSLY…
             const collaborator =
-              (
-                row[
-                  collaboratorKey
-                ] || ""
-              ).trim() ||
-              "Sin asignar";
+              collaboratorKey(
+                row[memberHeader] || ""
+              ) || "Sin asignar";
 
             if (
               !byCollaborator.has(
@@ -3446,11 +3595,9 @@ export default function Home() {
                         ),
                       done:
                         item.done
-                          ? formatDate(
-                              item.row[
-                                doneKey
-                              ] || ""
-                            )
+                          ? parseDateOnly(item.row[doneKey] || "")
+                            ? formatDate(item.row[doneKey] || "")
+                            : "Entregado (sin fecha)"
                           : "—",
                       delivered:
                         !!item.done &&
@@ -3482,11 +3629,9 @@ export default function Home() {
                           ] || ""
                         ),
                       done:
-                        formatDate(
-                          item.row[
-                            doneKey
-                          ] || ""
-                        ),
+                        parseDateOnly(item.row[doneKey] || "")
+                          ? formatDate(item.row[doneKey] || "")
+                          : "Entregado (sin fecha)",
                     })),
               };
 
@@ -3602,7 +3747,7 @@ export default function Home() {
             : null,
       };
     }, [
-      data.rows,
+      teamRows,
       accountabilityVisibleStages,
       accountabilityWeekStart,
       accountabilityWeekEnd,
