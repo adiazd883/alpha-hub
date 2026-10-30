@@ -4836,7 +4836,18 @@ export default function Home() {
 
         {locked ? (
           <div className="readValue">
-            {value || "—"}
+            {value.startsWith("http") ? (
+              <a
+                className="fieldLink"
+                href={value}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir documento ↗
+              </a>
+            ) : (
+              value || "—"
+            )}
           </div>
         ) : type ===
           "textarea" ? (
@@ -4919,6 +4930,18 @@ export default function Home() {
             }
           />
         )}
+
+        {!locked &&
+          value.startsWith("http") && (
+            <a
+              className="fieldLink"
+              href={value}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir ↗
+            </a>
+          )}
 
         {savingField ===
           header && (
@@ -5346,6 +5369,13 @@ export default function Home() {
             <Field
               label="Link DOE"
               header="LINK DOE"
+            />
+
+            {/* Psych abre la carátula para editarla; el link no se cambia aquí. */}
+            <Field
+              label="Carátula"
+              header="LINK CARÁTULA"
+              readOnly
             />
 
             <Field
