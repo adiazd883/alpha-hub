@@ -5,6 +5,7 @@ import { CELULAS, type Celula } from "@/lib/celulas";
 import RfeDashboard from "./rfe-dashboard";
 import Regresos from "./regresos";
 import Gmc from "./gmc";
+import RapSheet from "./rs";
 
 type Role =
   | "ADMIN"
@@ -55,7 +56,7 @@ type User = {
   gmc?: boolean;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -472,18 +473,20 @@ const classifyDate = (date: Date): KpiType => {
    KPI
    ========================= */
 
+// Tipos de caso que entran al calendario y a los KPIs de MGM.
+const CALENDAR_CASE_TYPES = [
+  "DUE DATE",
+  "NO DUE DATE",
+  "NOID",
+  "RESUBMISSION",
+];
+
 const getMgmKpi = (row: CaseRow): KpiType => {
   const type = norm(
     row["DUE DATE/NO DUE DATE"] || ""
   );
 
-  if (
-    ![
-      "DUE DATE",
-      "NO DUE DATE",
-      "NOID",
-    ].includes(type)
-  ) {
+  if (!CALENDAR_CASE_TYPES.includes(type)) {
     return "none";
   }
 
@@ -947,13 +950,7 @@ const scheduledEligible = (
       row["DUE DATE/NO DUE DATE"] || ""
     );
 
-    if (
-      ![
-        "DUE DATE",
-        "NO DUE DATE",
-        "NOID",
-      ].includes(type)
-    ) {
+    if (!CALENDAR_CASE_TYPES.includes(type)) {
       return false;
     }
 
@@ -1859,6 +1856,12 @@ export default function Home() {
   const isGeneral = celula === "general";
   const isGmc = celula === "gmc";
 
+  // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
+  const rsCelula =
+    celula && celula !== "general" && celula !== "gmc" && CELULAS[celula].hasRs
+      ? celula
+      : null;
+
   // GMC solo tiene su calendario de entregas.
   useEffect(() => {
     if (isGmc) setMainView("gmc");
@@ -2598,6 +2601,44 @@ export default function Home() {
   const visibleMonthTeamEvents = visibleTeamEvents.filter(
     (event) => isInTeamMonth(event.date)
   );
+
+  /*
+   * Filtro por semana de la tabla de entregas (Team → Tabla).
+   * La llave es el lunes de la semana, así no se mezclan años.
+   */
+  const [teamTableWeek, setTeamTableWeek] = useState("todas");
+
+  const weekKeyOf = (date: Date) => {
+    const monday = startOfWeek(date);
+    return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+  };
+
+  const teamTableWeeks = useMemo(() => {
+    const weeks = new Map<string, Date>();
+    visibleTeamEvents.forEach((event) => {
+      weeks.set(weekKeyOf(event.date), startOfWeek(event.date));
+    });
+    const current = weekKeyOf(new Date());
+    return Array.from(weeks.entries())
+      // Las más recientes primero.
+      .sort((a, b) => b[1].getTime() - a[1].getTime())
+      .map(([key, monday]) => {
+        const sunday = addDays(monday, 6);
+        const short = (d: Date) =>
+          `${d.getDate()} ${monthNames[d.getMonth()].slice(0, 3).toLowerCase()}`;
+        return {
+          key,
+          label: `${getDeliveryWeekLabel(monday)} · ${short(monday)} – ${short(sunday)} ${String(sunday.getFullYear()).slice(2)}${key === current ? " (esta semana)" : ""}`,
+        };
+      });
+  }, [visibleTeamEvents]);
+
+  const teamTableEvents =
+    teamTableWeek === "todas"
+      ? visibleTeamEvents
+      : visibleTeamEvents.filter(
+          (event) => weekKeyOf(event.date) === teamTableWeek
+        );
 
   /*
     Resumen al lado de cada semana: total de entregas y desglose
@@ -5561,6 +5602,23 @@ export default function Home() {
             </span>
           </button>
 
+          {rsCelula && (
+            <button
+              className={`navItem ${
+                mainView === "rs" ? "active" : ""
+              }`}
+              onClick={() => setMainView("rs")}
+            >
+              <span className="navIcon">
+                ✎
+              </span>
+
+              <span>
+                Rap Sheet (RS)
+              </span>
+            </button>
+          )}
+
           {hasNwGeneral && (
             <button
               className={`navItem ${
@@ -5666,6 +5724,8 @@ export default function Home() {
         )}
 
         {mainView === "gmc" && isGmc && <Gmc />}
+
+        {mainView === "rs" && rsCelula && <RapSheet celula={rsCelula} />}
 
         {mainView === "regresos" && user.role && celula && (
           <Regresos
@@ -6587,8 +6647,22 @@ export default function Home() {
 
                       <h2>Entregas</h2>
 
-                      <span>{visibleTeamEvents.length} resultados</span>
+                      <span>{teamTableEvents.length} resultados</span>
                     </div>
+
+                    <select
+                      className="teamWeekFilter"
+                      value={teamTableWeek}
+                      onChange={(e) => setTeamTableWeek(e.target.value)}
+                      aria-label="Semana de entrega"
+                    >
+                      <option value="todas">Todas las semanas</option>
+                      {teamTableWeeks.map((week) => (
+                        <option key={week.key} value={week.key}>
+                          {week.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="teamTableHeader">
@@ -6602,7 +6676,7 @@ export default function Home() {
                   </div>
 
                   <div className="teamTableBody">
-                    {visibleTeamEvents.map((event) => {
+                    {teamTableEvents.map((event) => {
                       const deliveryState = classifyDate(event.date);
 
                       return (
@@ -6692,7 +6766,7 @@ export default function Home() {
                       );
                     })}
 
-                    {!visibleTeamEvents.length && (
+                    {!teamTableEvents.length && (
                       <div className="emptyState">
                         No hay entregas con este filtro.
                       </div>
