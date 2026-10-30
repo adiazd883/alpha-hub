@@ -6,6 +6,7 @@ import RfeDashboard from "./rfe-dashboard";
 import Regresos from "./regresos";
 import Gmc from "./gmc";
 import RapSheet from "./rs";
+import Comunicaciones from "./comms";
 
 type Role =
   | "ADMIN"
@@ -56,7 +57,7 @@ type User = {
   gmc?: boolean;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -1991,6 +1992,26 @@ export default function Home() {
   const teamRows = useMemo(
     () => [...data.rows, ...nwTeamRows],
     [data.rows, nwTeamRows]
+  );
+
+  // Comunicaciones: cada célula (y GMC) tiene su propia pestaña.
+  const commsVista =
+    celula === "gmc"
+      ? "gmc"
+      : celula === "alpha" || celula === "gamma"
+        ? celula
+        : null;
+
+  const commsClientes = useMemo(
+    () =>
+      [
+        ...new Set(
+          data.rows
+            .map((row) => (row["CLIENTE"] || "").trim().toUpperCase())
+            .filter(Boolean)
+        ),
+      ],
+    [data.rows]
   );
 
   // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
@@ -5633,15 +5654,37 @@ export default function Home() {
 
         <nav className="sidebarNav">
           {isGmc ? (
-            <button className="navItem active">
-              <span className="navIcon">
-                ◷
-              </span>
+            <>
+              <button
+                className={`navItem ${
+                  mainView === "gmc" ? "active" : ""
+                }`}
+                onClick={() => setMainView("gmc")}
+              >
+                <span className="navIcon">
+                  ◷
+                </span>
 
-              <span>
-                Entregas GMC
-              </span>
-            </button>
+                <span>
+                  Entregas GMC
+                </span>
+              </button>
+
+              <button
+                className={`navItem ${
+                  mainView === "comms" ? "active" : ""
+                }`}
+                onClick={() => setMainView("comms")}
+              >
+                <span className="navIcon">
+                  ☎
+                </span>
+
+                <span>
+                  Comunicaciones
+                </span>
+              </button>
+            </>
           ) : (
             <>
           {isGeneral && (
@@ -5777,6 +5820,23 @@ export default function Home() {
             </span>
           </button>
 
+          {commsVista && (
+            <button
+              className={`navItem ${
+                mainView === "comms" ? "active" : ""
+              }`}
+              onClick={() => setMainView("comms")}
+            >
+              <span className="navIcon">
+                ☎
+              </span>
+
+              <span>
+                Comunicaciones
+              </span>
+            </button>
+          )}
+
           {rsCelula && (
             <button
               className={`navItem ${
@@ -5901,6 +5961,14 @@ export default function Home() {
         {mainView === "gmc" && isGmc && <Gmc />}
 
         {mainView === "rs" && rsCelula && <RapSheet celula={rsCelula} />}
+
+        {mainView === "comms" && commsVista && (
+          <Comunicaciones
+            key={commsVista}
+            vista={commsVista}
+            clientes={commsVista === "gmc" ? [] : commsClientes}
+          />
+        )}
 
         {mainView === "regresos" && user.role && celula && (
           <Regresos
