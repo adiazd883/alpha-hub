@@ -7042,3 +7042,19 @@ button {
 .tmModeManual {
   color: #b45309;
 }
+
+.csIrSave {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: #365ed3;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.csIrSave:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
