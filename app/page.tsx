@@ -296,6 +296,12 @@ type MergedReviewEvent = {
 const norm = (value: string) =>
   value.trim().toUpperCase().replace(/\s+/g, " ");
 
+// Mes por sus tres primeras letras, en inglés o español.
+const MONTH_INDEX: Record<string, number> = {
+  jan: 0, ene: 0, feb: 1, mar: 2, apr: 3, abr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, ago: 7, sep: 8, oct: 9, nov: 10, dec: 11, dic: 11,
+};
+
 const parseDateOnly = (value: string): Date | null => {
   const raw = value?.trim();
 
@@ -349,6 +355,33 @@ const parseDateOnly = (value: string): Date | null => {
     }
 
     return null;
+  }
+
+  /*
+   * Fechas escritas a mano sin año ("Thursday, 6 August",
+   * "Monday, 1 de June", "6 agosto"): se toma el año que deja la
+   * fecha más cerca de hoy. Antes el navegador las leía como 2001.
+   */
+  if (!/\d{4}/.test(raw)) {
+    const noYear = raw
+      .toLowerCase()
+      .replace(/^[a-záéíóúñ]+,\s*/, "")
+      .match(/^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñ]+)$/);
+    const month = noYear ? MONTH_INDEX[noYear[2].slice(0, 3)] : undefined;
+
+    if (!noYear || month === undefined) {
+      return null;
+    }
+
+    const today = new Date();
+    let year = today.getFullYear();
+    const guess = (y: number) => new Date(y, month, Number(noYear[1]));
+    const sixMonths = 183 * 86400000;
+
+    if (guess(year).getTime() - today.getTime() > sixMonths) year -= 1;
+    else if (today.getTime() - guess(year).getTime() > sixMonths) year += 1;
+
+    return guess(year);
   }
 
   const parsed = new Date(raw);
@@ -648,7 +681,6 @@ const getEaKpi = (
       "NA",
       "N/A",
       "SPECIAL CASE",
-      "WAITING GMC",
     ].includes(status)
   ) {
     return "none";
@@ -1068,7 +1100,6 @@ const scheduledEligible = (
       "NA",
       "N/A",
       "SPECIAL CASE",
-      "WAITING GMC",
     ].includes(status);
   }
 
