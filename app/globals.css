@@ -6647,3 +6647,59 @@ button {
 .accountabilityTableRow.gmAccountRow {
   grid-template-columns: minmax(240px, 1.5fr) minmax(170px, 1fr) minmax(130px, .8fr) minmax(140px, .8fr);
 }
+
+/* Comunicaciones */
+
+.cmHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gmKpis.cmKpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cmFilters {
+  margin-bottom: 14px;
+}
+
+.cmMedio {
+  max-width: 180px;
+  font-size: 11px;
+}
+
+.cmFlags span {
+  display: inline-block;
+  margin: 0 4px 2px 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #eef3fd;
+  color: #2b4fb5;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cmWho {
+  margin: -4px 0 12px;
+  color: var(--rg-muted);
+  font-size: 12px;
+}
+
+.cmChecks {
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.cmChecks label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 820px) {
+  .gmKpis.cmKpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
