@@ -274,6 +274,7 @@ function EntryForm({
   const [fin, setFin] = useState(editing?.fin ? mxTime(editing.fin) : clock.now);
 
   const grupos = data.catalogo[puesto];
+  const numero = (a: string) => grupos.flatMap((g) => g.actividades).indexOf(a) + 1;
   const manual = mode === "manual";
   const minutes = (() => {
     if (!inicio || !fin) return null;
@@ -387,7 +388,7 @@ function EntryForm({
               <optgroup key={g.categoria} label={g.categoria}>
                 {g.actividades.map((a) => (
                   <option key={a} value={a}>
-                    {a}
+                    {numero(a)}. {a}
                   </option>
                 ))}
               </optgroup>
@@ -500,7 +501,10 @@ function MyWeek({
                   {r.cliente} · {r.categoria}
                 </small>
               </div>
-              <span className="tmDur">{hhmm(mins(r))}</span>
+              <span className="tmDur">
+                {hhmm(mins(r))}
+                <ModeTag r={r} />
+              </span>
               {canTouch(r) && (
                 <span className="rgCardMinor">
                   <button onClick={() => onEdit(r)}>Editar</button>
@@ -557,6 +561,9 @@ function TeamView({
   };
   const porPersona = sumBy((r) => `${r.nombre}|${r.puesto}`);
   const porCategoria = sumBy((r) => r.categoria);
+  const porModo = sumBy((r) =>
+    r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "Sin dato"
+  );
   const porActividad = sumBy((r) => `${r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`).slice(0, 12);
   const max = (list: [string, { min: number }][]) => Math.max(1, ...list.map(([, v]) => v.min));
 
@@ -631,6 +638,7 @@ function TeamView({
           return `${n} · ${PUESTOS.find((x) => x.key === p)?.label || p}`;
         })}
         {bars("Por tipo de actividad", porCategoria, (k) => k)}
+        {bars("Cronómetro vs manual", porModo, (k) => k)}
       </div>
       {bars("Actividades con más tiempo", porActividad, (k) => k)}
 
@@ -641,5 +649,16 @@ function TeamView({
         )} en total). El CSV trae todo el histórico.
       </p>
     </section>
+  );
+}
+
+// Cómo se registró: con cronómetro o a mano (y si se editó después).
+function ModeTag({ r }: { r: Registro }) {
+  if (!r.modo) return null;
+  return (
+    <em className={`tmMode ${r.modo === "cronometro" ? "tmModeTimer" : "tmModeManual"}`}>
+      {r.modo === "cronometro" ? "⏱ Cronómetro" : "✎ Manual"}
+      {r.editado && " · editado"}
+    </em>
   );
 }

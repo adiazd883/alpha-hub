@@ -152,9 +152,17 @@ async function alignedHeaders(
   checkAnchors(alphaHeaders, "alpha");
   checkAnchors(localHeaders, celula);
 
+  // Columnas nuevas que no están en la misma posición en ambas
+  // Sheets (p. ej. INITIAL REVIEW) conservan su propio nombre.
+  const keepOwn = new Set(
+    ["INITIAL REVIEW (FIRST APPROACH)"].map(normal)
+  );
+
   return localHeaders.map(
     (header, index) =>
-      alphaHeaders[index] || header
+      keepOwn.has(normal(header))
+        ? header
+        : alphaHeaders[index] || header
   );
 }
 

@@ -964,8 +964,9 @@ function MonthlyView({ items }: { items: GmcItem[] }) {
 type AccountRow = { item: GmcItem; expected: string; done: string | null };
 
 function GmcAccountability({ items }: { items: GmcItem[] }) {
-  const lastWeek = iso(addDays(mondayOf(new Date()), -7));
-  const [weekStart, setWeekStart] = useState(lastWeek);
+  // Se puede llegar hasta la semana en curso para ver cómo van.
+  const lastWeek = iso(mondayOf(new Date()));
+  const [weekStart, setWeekStart] = useState(iso(addDays(mondayOf(new Date()), -7)));
   const weekEnd = iso(addDays(parse(weekStart), 6));
 
   const byPerson = new Map<string, Map<Category, { meta: AccountRow[]; advanced: AccountRow[] }>>();
@@ -1022,7 +1023,10 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
       <section className="accountabilityWeekCard">
         <div className="accountabilityWeekInfo">
           <p className="eyebrow">SEMANA AUDITADA</p>
-          <h2>Semana {isoWeek(parse(weekStart))}</h2>
+          <h2>
+            Semana {isoWeek(parse(weekStart))}
+            {weekStart === lastWeek && <span className="accountabilityRunningTag"> · en curso</span>}
+          </h2>
           <span>
             {fmt(weekStart)} – {fmt(weekEnd)}
           </span>

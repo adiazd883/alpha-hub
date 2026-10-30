@@ -89,7 +89,7 @@ type KpiSection =
 
 type KpiSelection = {
   section: KpiSection;
-  type: Exclude<KpiType, "none"> | "delivered";
+  type: Exclude<KpiType, "none"> | "delivered" | "special";
 } | null;
 
 type OpenCaseSource = "cases" | "calendar";
@@ -99,6 +99,7 @@ type Stats = {
   pending: number;
   future: number;
   delivered: number;
+  special: number;
 };
 
 type DeliveryDetailItem = {
@@ -269,8 +270,24 @@ const NW_REQUIREMENT_OPTIONS = [
  * de VAWA (ADMINs) con la de NON-VAWA (NW GENERAL) en un solo
  * calendario.
  */
-const VAWA_CS_DATE_HEADER = "CS EXP DONE ESTRATEGIA";
-const VAWA_CS_DONE_HEADER = "CS DONE ESTRATEGIA";
+// Las tres revisiones de CS en ADMINs (Alpha y Gamma).
+type CsKind = "caratula" | "dcl" | "final" | "nonvawa";
+
+const CS_REVIEWS: { kind: CsKind; expected: string; done: string; label: string }[] = [
+  { kind: "caratula", expected: "CS EXP DONE ESTRATEGIA", done: "CS DONE ESTRATEGIA", label: "Llenado de carátula" },
+  { kind: "dcl", expected: "CS EXP DONE REV", done: "CS REV DONE", label: "Revisión post DCL" },
+  { kind: "final", expected: "CS FINAL REVIEW EXPECTED DONE", done: "CS FINAL REVIEW DONE", label: "Final review" },
+];
+
+const CS_KIND_LABEL: Record<CsKind, string> = {
+  caratula: "Carátula",
+  dcl: "Post DCL",
+  final: "Final review",
+  nonvawa: "NON-VAWA",
+};
+
+// Columna nueva en ADMINs: CS la registra cuando la hace (sin fecha compromiso).
+const INITIAL_REVIEW_HEADER = "INITIAL REVIEW (FIRST APPROACH)";
 const NONVAWA_CS_DATE_HEADER = "REVISIÓN CS";
 const NONVAWA_CS_DONE_HEADER = "REVISIÓN CS COMPLETADA";
 
@@ -292,6 +309,9 @@ type MergedReviewEvent = {
   date: Date;
   completed: boolean;
   client: string;
+  // Solo en el calendario de CS.
+  kind?: CsKind;
+  member?: string;
 };
 
 const norm = (value: string) =>
@@ -554,7 +574,32 @@ const getMgmKpi = (row: CaseRow): KpiType => {
   return classifyDate(date);
 };
 
+/*
+ * Casos que ya no se trabajan y no deben contar en ningún lado:
+ * - Analistas (EA y CVL): outcome o estatus CANCELLED/CLOSED.
+ * - Psych: lo tiene un apoyo EXTERNO con fecha ya pasada.
+ */
+const CANCELLED_VALUES = ["CANCELLED/CLOSED", "CLOSED", "CANCELLED", "CANCELED"];
+
+const isCancelledCase = (row: CaseRow) =>
+  CANCELLED_VALUES.includes(norm(row["CR OUTCOME"] || "")) ||
+  CANCELLED_VALUES.includes(norm(row["STATUS"] || ""));
+
+const isExternalPastPsych = (row: CaseRow) => {
+  if (!norm(row["PSYCH"] || "").includes("EXTERNO")) return false;
+  const expected = parseDateOnly(row["EXPECTED DONE (doe)"] || "");
+  return !!expected && expected.getTime() < startOfWeek(new Date()).getTime();
+};
+
+const outOfScope = (row: CaseRow, stage: string) =>
+  ((stage === "ea" || stage === "cvl") && isCancelledCase(row)) ||
+  (stage === "psych" && isExternalPastPsych(row));
+
 const getPsychKpi = (row: CaseRow): KpiType => {
+  if (outOfScope(row, "psych")) {
+    return "none";
+  }
+
   const status = norm(
     row["DOE STATUS"] || ""
   );
@@ -668,6 +713,10 @@ const getPlCvlKpi = (
 const getEaKpi = (
   row: CaseRow
 ): KpiType => {
+  if (outOfScope(row, "ea")) {
+    return "none";
+  }
+
   const status = norm(
     row["EA STATUS"] || ""
   );
@@ -701,6 +750,10 @@ const getEaKpi = (
 const getCvlKpi = (
   row: CaseRow
 ): KpiType => {
+  if (outOfScope(row, "cvl")) {
+    return "none";
+  }
+
   const status = norm(
     row["CVL STATUS"] || ""
   );
@@ -942,6 +995,10 @@ const calendarActive = (
   row: CaseRow,
   stage: TeamCalendar
 ) => {
+  if (outOfScope(row, stage)) {
+    return false;
+  }
+
   if (isDclStage(stage)) {
     return (
       getDclKpi(row, stage) !== "none" ||
@@ -1013,7 +1070,18 @@ const leavesBacklog = (
   stage: TeamCalendar
 ) =>
   isStageDelivered(row, stage) ||
-  norm(row["STATUS"] || "") === "SENT TO USCIS";
+  norm(row["STATUS"] || "") === "SENT TO USCIS" ||
+  isSpecialStage(row, stage);
+
+// SPECIAL CASE / UNRESPONSIVE en la etapa: van en su propio apartado, no en backlog.
+const SPECIAL_STATUSES = ["SPECIAL CASE", "UNRESPONSIVE"];
+
+function isSpecialStage(row: CaseRow, stage: TeamCalendar) {
+  return (
+    !isStageDelivered(row, stage) &&
+    SPECIAL_STATUSES.includes(norm(row[calendarStatusHeader(stage)] || ""))
+  );
+}
 
 const scheduledEligible = (
   row: CaseRow,
@@ -1023,7 +1091,7 @@ const scheduledEligible = (
     row[calendarDateHeader(stage)] || ""
   );
 
-  if (!expectedDate) {
+  if (!expectedDate || outOfScope(row, stage)) {
     return false;
   }
 
@@ -1697,6 +1765,15 @@ export default function Home() {
   ] =
     useState<string | null>(null);
 
+  // Initial review (vista CS).
+  const [irOpen, setIrOpen] = useState(false);
+  const [irClient, setIrClient] = useState("");
+  const [irDate, setIrDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
+  const [irSaving, setIrSaving] = useState(false);
+
   const [nwAdminRows, setNwAdminRows] =
     useState<Record<string, string>[]>([]);
 
@@ -2295,6 +2372,7 @@ export default function Home() {
     let pending = 0;
     let future = 0;
     let delivered = 0;
+    let special = 0;
 
     data.rows.forEach(
       (row) => {
@@ -2334,6 +2412,10 @@ export default function Home() {
             backlog++;
           }
 
+          if (isSpecialStage(row, section)) {
+            special++;
+          }
+
           if (
             result === "pending"
           ) {
@@ -2363,6 +2445,7 @@ export default function Home() {
       pending,
       future,
       delivered,
+      special,
     };
   };
 
@@ -2479,6 +2562,14 @@ export default function Home() {
               row,
               selectedKpi.section
             )
+        );
+      }
+
+      if (selectedKpi.type === "special") {
+        return data.rows.filter(
+          (row) =>
+            scheduledEligible(row, selectedKpi.section) &&
+            isSpecialStage(row, selectedKpi.section)
         );
       }
 
@@ -3398,15 +3489,16 @@ export default function Home() {
       [accountabilityWeekStart]
     );
 
+  // Hasta la semana en curso, para ver cómo van los avances.
   const latestCompletedWeekStart =
     useMemo(
-      () =>
-        addDays(
-          startOfWeek(new Date()),
-          -7
-        ),
+      () => startOfWeek(new Date()),
       []
     );
+
+  const isCurrentAccountabilityWeek =
+    accountabilityWeekStart.getTime() >=
+    startOfWeek(new Date()).getTime();
 
   const accountabilityVisibleStages =
     useMemo(() => {
@@ -3507,6 +3599,23 @@ export default function Home() {
               (isStageDelivered(row, stage)
                 ? expected
                 : null);
+
+            /*
+             * SPECIAL CASE / UNRESPONSIVE sin entregar: cuentan en la
+             * meta de su propia semana, pero no se arrastran como
+             * backlog a las siguientes (afectarían la proporción).
+             */
+            const stageStatus = norm(
+              row[calendarStatusHeader(stage)] || ""
+            );
+
+            if (
+              !done &&
+              ["SPECIAL CASE", "UNRESPONSIVE"].includes(stageStatus) &&
+              expected.getTime() < accountabilityWeekStart.getTime()
+            ) {
+              return;
+            }
 
             // Igual que el calendario: junta HÉCTOR/HECTOR, LESLY/LESSLY…
             const collaborator =
@@ -4011,27 +4120,28 @@ export default function Home() {
   }, [csCalendarMonth]);
 
   const csCalendarEvents = useMemo(() => {
-    const vawaEvents: MergedReviewEvent[] = data.rows
-      .map((row): MergedReviewEvent | null => {
-        const date = parseDateOnly(
-          row[VAWA_CS_DATE_HEADER] || ""
-        );
+    // Una entrada por cada revisión (carátula, post DCL, final) con fecha.
+    const vawaEvents: MergedReviewEvent[] = CS_REVIEWS.flatMap((review) =>
+      data.rows
+        .map((row): MergedReviewEvent | null => {
+          const date = parseDateOnly(row[review.expected] || "");
 
-        return date
-          ? {
-              origin: "vawa" as const,
-              row,
-              date,
-              completed: !!(
-                row[VAWA_CS_DONE_HEADER] || ""
-              ).trim(),
-              client: row["CLIENTE"] || "Sin cliente",
-            }
-          : null;
-      })
-      .filter(
-        (item): item is MergedReviewEvent => item !== null
-      );
+          return date
+            ? {
+                origin: "vawa" as const,
+                row,
+                date,
+                completed: !!(row[review.done] || "").trim(),
+                client: row["CLIENTE"] || "Sin cliente",
+                kind: review.kind,
+                member: collaboratorKey(row["CASE STRATEGIST"] || "") || "Sin asignar",
+              }
+            : null;
+        })
+        .filter(
+          (item): item is MergedReviewEvent => item !== null
+        )
+    );
 
     const nonVawaEvents: MergedReviewEvent[] = nwData.rows
       .map((row): MergedReviewEvent | null => {
@@ -4048,6 +4158,8 @@ export default function Home() {
                 row[NONVAWA_CS_DONE_HEADER] || ""
               ).trim(),
               client: row["CL"] || "Sin cliente",
+              kind: "nonvawa" as const,
+              member: "NON-VAWA",
             }
           : null;
       })
@@ -4057,6 +4169,190 @@ export default function Home() {
 
     return [...vawaEvents, ...nonVawaEvents];
   }, [data.rows, nwData.rows]);
+
+  // Resumen de cada semana del calendario de CS: total, por tipo y por persona.
+  function renderCsWeekSummary(week: Date[]) {
+    const start = week[0].getTime();
+    const end = addDays(week[week.length - 1], 1).getTime();
+    const events = csCalendarEvents.filter(
+      (event) => event.date.getTime() >= start && event.date.getTime() < end
+    );
+    const completed = events.filter((event) => event.completed).length;
+    const count = (key: (e: MergedReviewEvent) => string) => {
+      const map = new Map<string, number>();
+      events.forEach((e) => map.set(key(e), (map.get(key(e)) || 0) + 1));
+      return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+    };
+    const byKind = count((e) => CS_KIND_LABEL[e.kind || "nonvawa"]);
+    const byMember = count((e) => e.member || "Sin asignar");
+    const max = Math.max(1, ...byKind.map(([, n]) => n), ...byMember.map(([, n]) => n));
+    const list = (rows: [string, number][]) =>
+      rows.map(([name, n]) => (
+        <li key={name} title={`${name}: ${n}`}>
+          <span className="weekSummaryName">{name}</span>
+          <span className="weekSummaryBar">
+            <i style={{ width: `${(n / max) * 100}%` }} />
+          </span>
+          <b>{n}</b>
+        </li>
+      ));
+
+    return (
+      <div className="calendarWeekSummary">
+        <span className="weekSummaryLabel">Sem {getIsoWeekNumber(week[0])}</span>
+        <strong className="weekSummaryTotal">{events.length}</strong>
+        <span className="weekSummarySub">
+          {events.length === 1 ? "revisión" : "revisiones"}
+          {completed > 0 && ` · ${completed} ✓`}
+        </span>
+        {byKind.length > 0 && <ul className="weekSummaryBreakdown">{list(byKind)}</ul>}
+        {byMember.length > 0 && (
+          <ul className="weekSummaryBreakdown csWeekPeople">{list(byMember)}</ul>
+        )}
+      </div>
+    );
+  }
+
+  /*
+   * Initial review (first approach): no tiene fecha compromiso;
+   * CS registra el cliente y la fecha en que lo hizo.
+   */
+  const initialReviews = useMemo(
+    () =>
+      data.rows
+        .map((row) => ({ row, date: parseDateOnly(row[INITIAL_REVIEW_HEADER] || "") }))
+        .filter((item): item is { row: CaseRow; date: Date } => !!item.date)
+        .sort((a, b) => b.date.getTime() - a.date.getTime()),
+    [data.rows]
+  );
+
+  const canAddInitialReview =
+    role === "ADMIN" || role === "CS" || role === "TL";
+
+  const clientOptions = useMemo(
+    () =>
+      data.rows
+        .filter((row) => (row["CLIENTE"] || "").trim())
+        .map((row) => ({
+          row,
+          label:
+            isGeneral && row.__celula
+              ? `${row["CLIENTE"].trim()} · ${vistaLabel(row.__celula as Celula)}`
+              : row["CLIENTE"].trim(),
+        })),
+    [data.rows, isGeneral]
+  );
+
+  async function saveInitialReview() {
+    const match = clientOptions.find(
+      (option) => option.label.toUpperCase() === irClient.trim().toUpperCase()
+    );
+    if (!match) {
+      setError("Elige un cliente de la lista");
+      return;
+    }
+    if (!irDate) {
+      setError("Elige la fecha");
+      return;
+    }
+    setIrSaving(true);
+    setError("");
+    try {
+      const target = match.row.__celula || celula;
+      const response = await fetch("/api/cases/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          celula: target,
+          row: Number(match.row.__row),
+          changes: { [INITIAL_REVIEW_HEADER]: irDate },
+        }),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || "No se pudo guardar");
+      setData((prev) => ({
+        ...prev,
+        rows: prev.rows.map((row) =>
+          row.__row === match.row.__row && row.__celula === match.row.__celula
+            ? { ...row, [INITIAL_REVIEW_HEADER]: irDate }
+            : row
+        ),
+      }));
+      setMessage("Initial review registrado");
+      setIrClient("");
+      setIrOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo guardar");
+    } finally {
+      setIrSaving(false);
+    }
+  }
+
+  function renderInitialReview() {
+    const weekStart = startOfWeek(new Date()).getTime();
+    const thisWeek = initialReviews.filter((item) => item.date.getTime() >= weekStart).length;
+
+    return (
+      <section className="workloadCard csInitialReview">
+        <div className="workloadHeader">
+          <div>
+            <p className="eyebrow">INITIAL REVIEW (FIRST APPROACH)</p>
+            <h2>Initial reviews registrados</h2>
+            <p>
+              No tiene fecha compromiso: se registra el cliente y el día en que se hizo.
+              Esta semana: <strong>{thisWeek}</strong> · total: <strong>{initialReviews.length}</strong>
+            </p>
+          </div>
+          {canAddInitialReview && (
+            <button className="refreshButton" onClick={() => setIrOpen(!irOpen)}>
+              {irOpen ? "Cancelar" : "+ Agregar"}
+            </button>
+          )}
+        </div>
+
+        {irOpen && (
+          <div className="csIrForm">
+            <label>
+              <span>Cliente</span>
+              <input
+                list="cs-ir-clients"
+                value={irClient}
+                placeholder="Nombre del cliente"
+                onChange={(e) => setIrClient(e.target.value)}
+              />
+              <datalist id="cs-ir-clients">
+                {clientOptions.map((option) => (
+                  <option key={`${option.row.__celula}-${option.row.__row}`} value={option.label} />
+                ))}
+              </datalist>
+            </label>
+            <label>
+              <span>Fecha en que se hizo</span>
+              <input type="date" value={irDate} onChange={(e) => setIrDate(e.target.value)} />
+            </label>
+            <button className="rgBtn rgBtnPrimary" disabled={irSaving} onClick={saveInitialReview}>
+              {irSaving ? "Guardando…" : "Registrar"}
+            </button>
+          </div>
+        )}
+
+        <div className="csIrList">
+          {initialReviews.slice(0, 40).map((item) => (
+            <div key={`${item.row.__celula}-${item.row.__row}`} className="csIrRow">
+              <strong>{item.row["CLIENTE"]}</strong>
+              {isGeneral && item.row.__celula && (
+                <span className="celulaTag">{vistaLabel(item.row.__celula as Celula)}</span>
+              )}
+              <span>{formatDate(item.row[INITIAL_REVIEW_HEADER] || "")}</span>
+            </div>
+          ))}
+          {!initialReviews.length && (
+            <div className="emptyState">Todavía no hay initial reviews registrados.</div>
+          )}
+        </div>
+      </section>
+    );
+  }
 
   const mgmReviewCalendarDays = useMemo(() => {
     const year = mgmReviewCalendarMonth.getFullYear();
@@ -6182,6 +6478,47 @@ export default function Home() {
                     />
                   </div>
                 </section>
+
+                {/* SPECIAL CASE / UNRESPONSIVE: aparte del backlog real. */}
+                <section className="workflowGroup specialCasesGroup">
+                  <div className="workflowGroupHeader">
+                    <p className="dashboardSectionEyebrow">
+                      FUERA DEL BACKLOG
+                    </p>
+
+                    <h2>Special cases</h2>
+
+                    <p>
+                      Etapas en SPECIAL CASE o UNRESPONSIVE sin entregar. No cuentan
+                      en el backlog. Doble clic para ver los casos.
+                    </p>
+                  </div>
+
+                  <div className="specialCasesGrid">
+                    {(
+                      [
+                        ["Escalación MGM", "mgm", mgmStats],
+                        ["Carátula", "caratula", caratulaStats],
+                        ["1st Draft", "draft", draftStats],
+                        ["Escalación CVL", "plcvl", plcvlStats],
+                        ["Psych · DOE", "psych", psychStats],
+                        ["EA / Analyst", "ea", eaStats],
+                        ["CVL", "cvl", cvlStats],
+                      ] as [string, KpiSection, Stats][]
+                    ).map(([title, section, stats]) => (
+                      <button
+                        key={section}
+                        className={`workflowMetric ${stats.special ? "hasSpecial" : ""}`}
+                        onDoubleClick={() =>
+                          setSelectedKpi({ section, type: "special" })
+                        }
+                      >
+                        <span>{title}</span>
+                        <strong>{stats.special}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </section>
               </div>
             )}
           </>
@@ -7112,6 +7449,9 @@ export default function Home() {
 
                 <h2>
                   Semana {getIsoWeekNumber(accountabilityWeekStart)}
+                  {isCurrentAccountabilityWeek && (
+                    <span className="accountabilityRunningTag"> · en curso</span>
+                  )}
                 </h2>
 
                 <span>
@@ -8132,8 +8472,10 @@ export default function Home() {
                 <p className="eyebrow">CASE STRATEGY</p>
                 <h1>CS</h1>
                 <p>
-                  Calendario unificado de revisiones de Case
-                  Strategy, VAWA y NON-VAWA.
+                  Las tres revisiones de Case Strategy (llenado de
+                  carátula, post DCL y final review) de VAWA, más las
+                  de NON-VAWA. A la derecha, cuántas hay por semana y de
+                  quién.
                 </p>
               </div>
 
@@ -8192,79 +8534,94 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="calendarWeekHeader">
+              <div className="calendarWeekHeader calendarGridWithSummary">
                 {weekDays.map((day) => (
                   <div key={day}>{day}</div>
                 ))}
+                <div>SEMANA</div>
               </div>
 
-              <div className="calendarGrid">
-                {csCalendarDays.map((day) => {
-                  const isCurrentMonth =
-                    day.getMonth() ===
-                    csCalendarMonth.getMonth();
-                  const isToday = sameDay(day, new Date());
-                  const dayEvents = csCalendarEvents.filter(
-                    (event) => sameDay(event.date, day)
-                  );
+              <div className="calendarGrid calendarGridWithSummary">
+                {Array.from(
+                  { length: Math.ceil(csCalendarDays.length / 7) },
+                  (_, w) => csCalendarDays.slice(w * 7, w * 7 + 7)
+                ).map((week) => (
+                  <Fragment key={week[0].toISOString()}>
+                    {week.map((day) => {
+                      const isCurrentMonth =
+                        day.getMonth() ===
+                        csCalendarMonth.getMonth();
+                      const isToday = sameDay(day, new Date());
+                      const dayEvents = csCalendarEvents.filter(
+                        (event) => sameDay(event.date, day)
+                      );
 
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`calendarDay ${
-                        !isCurrentMonth ? "outsideMonth" : ""
-                      }`}
-                    >
-                      <div className="calendarDayNumber">
-                        <span
-                          className={
-                            isToday ? "todayNumber" : ""
-                          }
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          className={`calendarDay ${
+                            !isCurrentMonth ? "outsideMonth" : ""
+                          }`}
                         >
-                          {day.getDate()}
-                        </span>
-                      </div>
-
-                      <div className="calendarEvents">
-                        {dayEvents.map((event) => {
-                          return (
-                            <button
-                              key={`${event.origin}-${rowKey(event.row)}`}
-                              className={`calendarEvent ${
-                                event.completed
-                                  ? "calendarEventDelivered"
-                                  : event.origin === "vawa"
-                                  ? "calendarEventVawa"
-                                  : "calendarEventNonVawa"
-                              }`}
-                              onClick={() =>
-                                openCsEvent(event)
+                          <div className="calendarDayNumber">
+                            <span
+                              className={
+                                isToday ? "todayNumber" : ""
                               }
                             >
-                              <strong>{event.client}</strong>
+                              {day.getDate()}
+                            </span>
+                          </div>
 
-                              {event.completed ? (
-                                <span className="deliveredEventLabel">
-                                  ✓ Completada
-                                </span>
-                              ) : (
-                                <span>
-                                  {event.origin === "vawa"
-                                    ? isGeneral && event.row.__celula
-                                      ? `VAWA · ${vistaLabel(event.row.__celula as Celula)}`
-                                      : "VAWA"
-                                    : "NON-VAWA"}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+                          <div className="calendarEvents">
+                            {dayEvents.map((event) => (
+                              <button
+                                key={`${event.origin}-${event.kind}-${rowKey(event.row)}`}
+                                className={`calendarEvent ${
+                                  event.completed
+                                    ? "calendarEventDelivered"
+                                    : event.origin === "vawa"
+                                    ? "calendarEventVawa"
+                                    : "calendarEventNonVawa"
+                                }`}
+                                title={`${CS_KIND_LABEL[event.kind || "nonvawa"]} · ${event.client}`}
+                                onClick={() =>
+                                  openCsEvent(event)
+                                }
+                              >
+                                <strong>
+                                  <b className="teamStageTag">
+                                    {CS_KIND_LABEL[event.kind || "nonvawa"]}
+                                  </b>
+                                  {event.client}
+                                </strong>
+
+                                {event.completed ? (
+                                  <span className="deliveredEventLabel">
+                                    ✓ Completada
+                                  </span>
+                                ) : (
+                                  <span>
+                                    {event.member}
+                                    {isGeneral && event.row.__celula
+                                      ? ` · ${vistaLabel(event.row.__celula as Celula)}`
+                                      : ""}
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {renderCsWeekSummary(week)}
+                  </Fragment>
+                ))}
               </div>
             </section>
+
+            {renderInitialReview()}
           </>
         )}
 
@@ -8515,6 +8872,8 @@ export default function Home() {
                     : selectedKpi.type ===
                       "delivered"
                     ? "Entregado"
+                    : selectedKpi.type === "special"
+                    ? "Special case / Unresponsive"
                     : "Próximas entregas"}
                 </h2>
 

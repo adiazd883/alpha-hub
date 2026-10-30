@@ -190,6 +190,12 @@ export function categoriaDe(puesto: Puesto, actividad: string) {
   return CATALOGO[puesto].find((g) => g.actividades.includes(actividad))?.categoria || null;
 }
 
+// Número de la actividad en la lista de su puesto (1, 2, 3… como en el PDF).
+export function numeroDe(puesto: Puesto, actividad: string) {
+  const i = CATALOGO[puesto].flatMap((g) => g.actividades).indexOf(actividad);
+  return i >= 0 ? i + 1 : null;
+}
+
 export type Registro = {
   id: string;
   email: string;
@@ -204,6 +210,9 @@ export type Registro = {
   fin: string | null; // null = cronómetro corriendo
   creado: string;
   prueba: boolean; // registrado por el Admin para probar
+  // Cómo se registró; "editado" si después se cambiaron las horas a mano.
+  modo?: "cronometro" | "manual";
+  editado?: boolean;
 };
 
 export const LONG_HOURS = 4;
@@ -261,8 +270,8 @@ export { minutes };
 // CSV con todo el histórico (para análisis aparte).
 export function toCsv(rows: Registro[]) {
   const header = [
-    "Cliente", "Colaborador", "Correo", "Célula", "Puesto", "KPI", "Categoría", "Actividad",
-    "Fecha", "Inicio", "Fin", "Duración (min)", "Semana (lunes)", "Prueba", "Registrado el", "ID",
+    "Cliente", "Colaborador", "Correo", "Célula", "Puesto", "KPI", "Categoría", "No. actividad", "Actividad",
+    "Fecha", "Inicio", "Fin", "Duración (min)", "Semana (lunes)", "Modo", "Editado", "Prueba", "Registrado el", "ID",
   ];
   const monday = (date: string) => {
     const d = new Date(`${date}T12:00:00Z`);
@@ -278,9 +287,11 @@ export function toCsv(rows: Registro[]) {
     .sort((a, b) => a.inicio.localeCompare(b.inicio))
     .map((r) =>
       [
-        r.cliente, r.nombre, r.email, r.celula, PUESTO_LABELS[r.puesto], r.kpi, r.categoria, r.actividad,
+        r.cliente, r.nombre, r.email, r.celula, PUESTO_LABELS[r.puesto], r.kpi, r.categoria,
+        numeroDe(r.puesto, r.actividad) ?? "", r.actividad,
         mxDate(r.inicio), mxTime(r.inicio), mxTime(r.fin!), minutes(r), monday(mxDate(r.inicio)),
-        r.prueba ? "SÍ" : "", mxDate(r.creado) + " " + mxTime(r.creado), r.id,
+        r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "",
+        r.editado ? "SÍ" : "", r.prueba ? "SÍ" : "", mxDate(r.creado) + " " + mxTime(r.creado), r.id,
       ].map(esc).join(",")
     );
   // BOM para que Excel abra bien los acentos.
