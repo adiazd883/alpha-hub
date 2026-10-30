@@ -14,12 +14,15 @@ export const CELULAS: Record<
     spreadsheetEnv: string;
     defaultSpreadsheetId?: string;
     hasNwGeneral: boolean;
+    // Pestaña "RS": clientes que deben entregar Rap Sheet.
+    hasRs: boolean;
   }
 > = {
   alpha: {
     label: "Alpha",
     spreadsheetEnv: "GOOGLE_SPREADSHEET_ID",
     hasNwGeneral: true,
+    hasRs: false,
   },
   gamma: {
     label: "Gamma",
@@ -27,6 +30,7 @@ export const CELULAS: Record<
     defaultSpreadsheetId:
       "1984oviecoQCNxP2PpR13F8osQFSbpNE8DvUieA92wIg",
     hasNwGeneral: false,
+    hasRs: true,
   },
 };
 
