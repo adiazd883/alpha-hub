@@ -6703,3 +6703,248 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Estudio de tiempos */
+
+.tmRunning {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border: 1px solid #c9d6f5;
+  border-radius: 13px;
+  background: #f5f8ff;
+  font-size: 12px;
+  color: #556070;
+}
+
+.tmRunning > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.tmRunning strong {
+  display: block;
+  margin-top: 3px;
+  color: #1f2b42;
+  font-size: 14px;
+}
+
+.tmRunning small {
+  color: #556070;
+}
+
+.tmDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #e34948;
+  animation: tmPulse 1.2s infinite;
+}
+
+@keyframes tmPulse {
+  50% { opacity: 0.3; }
+}
+
+.tmElapsed {
+  color: #2b4fb5;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tmForm,
+.tmList {
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e2e7ee;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.tmFormTop,
+.tmListHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tmFormTop h2,
+.tmListHead h2 {
+  margin: 0;
+  color: #1f2b42;
+  font-size: 16px;
+}
+
+.tmListHead span {
+  color: #778397;
+  font-size: 12px;
+}
+
+.tmGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.tmGrid .tmWide {
+  grid-column: span 2;
+}
+
+.tmFormActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tmMinutes {
+  margin-right: auto;
+  color: #2b4fb5;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.tmTabs {
+  margin-bottom: 12px;
+}
+
+.tmDay {
+  margin-top: 10px;
+}
+
+.tmDayHead {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eef1f5;
+  color: #1f2b42;
+  font-size: 12px;
+}
+
+.tmRow {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 100px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f5f8;
+  font-size: 12px;
+}
+
+.tmTime,
+.tmDur {
+  color: #556070;
+  font-variant-numeric: tabular-nums;
+}
+
+.tmDur {
+  font-weight: 700;
+  color: #1f2b42;
+}
+
+.tmWhat strong {
+  display: block;
+  color: #1f2b42;
+}
+
+.tmWhat em {
+  color: #2b4fb5;
+  font-style: normal;
+}
+
+.tmWhat small {
+  color: #8a94a6;
+}
+
+.tmCheck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #556070;
+  font-size: 12px;
+}
+
+.tmTeamGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.tmBars {
+  padding: 14px 16px;
+}
+
+.tmBars h3 {
+  margin: 0 0 10px;
+  color: #1f2b42;
+  font-size: 14px;
+}
+
+.tmBar {
+  display: grid;
+  grid-template-columns: minmax(120px, 42%) minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.tmBarLabel {
+  overflow: hidden;
+  color: #1f2b42;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tmBarTrack {
+  height: 12px;
+}
+
+.tmBarTrack i {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: #2a78d6;
+}
+
+.tmBarValue {
+  color: #1f2b42;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.tmBarValue em {
+  color: #8a94a6;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.tmNote {
+  margin-top: 10px;
+  color: #8a94a6;
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .tmGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tmTeamGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tmRow {
+    grid-template-columns: 1fr auto;
+  }
+}
