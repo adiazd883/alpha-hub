@@ -7,6 +7,7 @@ import Regresos from "./regresos";
 import Gmc from "./gmc";
 import RapSheet from "./rs";
 import Comunicaciones from "./comms";
+import EstudioTiempos from "./tiempos";
 
 type Role =
   | "ADMIN"
@@ -57,7 +58,7 @@ type User = {
   gmc?: boolean;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -2033,6 +2034,16 @@ export default function Home() {
       ],
     [data.rows]
   );
+
+  // Estudio de tiempos: analistas, paralegales y psychs de Alpha y Gamma (y el Admin).
+  const tiemposCelula =
+    (celula === "alpha" || celula === "gamma") &&
+    (role === "ADMIN" ||
+      role === "ANALYST" ||
+      role === "PARALEGAL" ||
+      role === "PSYCH")
+      ? celula
+      : null;
 
   // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
   const rsCelula =
@@ -5857,6 +5868,23 @@ export default function Home() {
             </button>
           )}
 
+          {tiemposCelula && (
+            <button
+              className={`navItem ${
+                mainView === "tiempos" ? "active" : ""
+              }`}
+              onClick={() => setMainView("tiempos")}
+            >
+              <span className="navIcon">
+                ⏱
+              </span>
+
+              <span>
+                Estudio de tiempos
+              </span>
+            </button>
+          )}
+
           {rsCelula && (
             <button
               className={`navItem ${
@@ -5981,6 +6009,13 @@ export default function Home() {
         {mainView === "gmc" && isGmc && <Gmc />}
 
         {mainView === "rs" && rsCelula && <RapSheet celula={rsCelula} />}
+
+        {mainView === "tiempos" && tiemposCelula && (
+          <EstudioTiempos
+            celula={tiemposCelula}
+            clientes={commsClientes}
+          />
+        )}
 
         {mainView === "comms" && commsVista && (
           <Comunicaciones
