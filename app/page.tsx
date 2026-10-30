@@ -536,7 +536,6 @@ const getMgmKpi = (row: CaseRow): KpiType => {
     [
       "MGM REVIEW",
       "SENT TO USCIS",
-      "SPECIAL CASE",
       "CANCELLED/CLOSED",
     ].includes(status)
   ) {
@@ -561,10 +560,8 @@ const getPsychKpi = (row: CaseRow): KpiType => {
 
   if (
     [
-      "SPECIAL CASE",
       "NA",
       "N/A",
-      "UNRESPONSIVE",
       "ON HOLD",
       "CANCELLED",
       "CANCELED",
@@ -622,11 +619,9 @@ const getDraftKpi = (
     [
       "NA",
       "N/A",
-      "UNRESPONSIVE",
       "CANCELLED/CLOSED",
       "CANCELLED",
       "CANCELED",
-      "SPECIAL CASE",
     ].includes(status)
   ) {
     return "none";
@@ -680,7 +675,6 @@ const getEaKpi = (
     [
       "NA",
       "N/A",
-      "SPECIAL CASE",
     ].includes(status)
   ) {
     return "none";
@@ -748,7 +742,7 @@ const NW_DCL = {
   dclpsych: { status: "STATUS DCL PSYCH", done: "DCL PSYCH DONE", expected: "DCL PSYCH EXP DONE" },
 } as const;
 
-const NW_DCL_SKIP = ["NA", "N/A", "SPECIAL CASE", "CANCELLED", "CANCELED", "UNRESPONSIVE"];
+const NW_DCL_SKIP = ["NA", "N/A", "CANCELLED", "CANCELED"];
 
 const isDclStage = (stage: TeamCalendar): stage is "dclplg" | "dclpsych" =>
   stage === "dclplg" || stage === "dclpsych";
@@ -1053,7 +1047,6 @@ const scheduledEligible = (
     );
 
     return ![
-      "SPECIAL CASE",
       "CANCELLED/CLOSED",
     ].includes(status);
   }
@@ -1066,11 +1059,9 @@ const scheduledEligible = (
     return ![
       "NA",
       "N/A",
-      "UNRESPONSIVE",
       "CANCELLED/CLOSED",
       "CANCELLED",
       "CANCELED",
-      "SPECIAL CASE",
     ].includes(status);
   }
 
@@ -1080,10 +1071,8 @@ const scheduledEligible = (
     );
 
     return ![
-      "SPECIAL CASE",
       "NA",
       "N/A",
-      "UNRESPONSIVE",
       "ON HOLD",
       "CANCELLED",
       "CANCELED",
@@ -1099,7 +1088,6 @@ const scheduledEligible = (
     return ![
       "NA",
       "N/A",
-      "SPECIAL CASE",
     ].includes(status);
   }
 
