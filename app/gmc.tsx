@@ -986,33 +986,35 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
   });
 
   const inWeek = (d: string | null) => !!d && d >= weekStart && d <= weekEnd;
+
+  // Un colaborador = una lista; el tipo va como columna.
   const people = [...byPerson.entries()]
     .sort((a, b) =>
       a[0] === "Sin asignar" ? 1 : b[0] === "Sin asignar" ? -1 : a[0].localeCompare(b[0])
     )
-    .map(([name, stages]) => ({
-      name,
-      stages: CATEGORIES.filter((c) => stages.has(c)).map((c) => {
-        const { meta, advanced } = stages.get(c)!;
-        const delivered = meta.filter((r) => inWeek(r.done)).length;
-        return {
-          label: c,
-          meta: meta.length,
-          delivered,
-          backlog: meta.filter((r) => r.expected < weekStart).length,
-          scheduled: meta.filter((r) => r.expected >= weekStart).length,
-          advanced,
-          productivity: meta.length ? (delivered / meta.length) * 100 : null,
-          rows: [...meta].sort((a, b) => a.expected.localeCompare(b.expected)),
-        };
-      }),
-    }));
+    .map(([name, stages]) => {
+      const meta = [...stages.values()].flatMap((s) => s.meta);
+      const advancedRows = [...stages.values()].flatMap((s) => s.advanced);
+      const delivered = meta.filter((r) => inWeek(r.done)).length;
+      return {
+        name,
+        meta: meta.length,
+        delivered,
+        backlog: meta.filter((r) => r.expected < weekStart).length,
+        scheduled: meta.filter((r) => r.expected >= weekStart).length,
+        advanced: advancedRows,
+        productivity: meta.length ? (delivered / meta.length) * 100 : null,
+        rows: [...meta].sort(
+          (a, b) =>
+            a.expected.localeCompare(b.expected) ||
+            CATEGORIES.indexOf(category(a.item)) - CATEGORIES.indexOf(category(b.item))
+        ),
+      };
+    });
 
-  const sum = (f: (s: (typeof people)[number]["stages"][number]) => number) =>
-    people.reduce((t, p) => t + p.stages.reduce((a, s) => a + f(s), 0), 0);
-  const meta = sum((s) => s.meta);
-  const delivered = sum((s) => s.delivered);
-  const advanced = sum((s) => s.advanced.length);
+  const meta = people.reduce((t, p) => t + p.meta, 0);
+  const delivered = people.reduce((t, p) => t + p.delivered, 0);
+  const advanced = people.reduce((t, p) => t + p.advanced.length, 0);
   const pct = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
 
   return (
@@ -1091,71 +1093,78 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
             </div>
 
             <div className="accountabilityStages">
-              {person.stages.map((stage) => (
-                <article className="accountabilityStageCard" key={stage.label}>
-                  <div className="accountabilityStageTop">
+              <article className="accountabilityStageCard">
+                <div className="accountabilityStageTop">
+                  <div>
+                    <p className="eyebrow">KPI</p>
+                    <h3>Entregas GMC</h3>
+                  </div>
+                  <div className="accountabilityMetrics">
                     <div>
-                      <p className="eyebrow">KPI</p>
-                      <h3>{stage.label}</h3>
+                      <span>META</span>
+                      <strong>{person.meta}</strong>
+                      <small>
+                        {person.backlog} backlog + {person.scheduled} semana
+                      </small>
                     </div>
-                    <div className="accountabilityMetrics">
-                      <div>
-                        <span>META</span>
-                        <strong>{stage.meta}</strong>
-                        <small>
-                          {stage.backlog} backlog + {stage.scheduled} semana
-                        </small>
-                      </div>
-                      <div>
-                        <span>ENTREGAS</span>
-                        <strong>{stage.delivered}</strong>
-                        <small>de la meta</small>
-                      </div>
-                      <div className="accountabilityProductivityMetric">
-                        <span>% PRODUCTIVIDAD</span>
-                        <strong>{pct(stage.productivity)}</strong>
-                        <small>entregas ÷ meta</small>
-                      </div>
-                      {stage.advanced.length > 0 && (
-                        <div
-                          className="accountabilityAdvancedMetric"
-                          title={stage.advanced.map((r) => `${r.item.cliente} · ${fmt(r.done)}`).join("\n")}
-                        >
-                          <span>ADELANTADAS</span>
-                          <strong>{stage.advanced.length}</strong>
-                          <small>fuera de la meta</small>
-                        </div>
-                      )}
+                    <div>
+                      <span>ENTREGAS</span>
+                      <strong>{person.delivered}</strong>
+                      <small>de la meta</small>
                     </div>
+                    <div className="accountabilityProductivityMetric">
+                      <span>% PRODUCTIVIDAD</span>
+                      <strong>{pct(person.productivity)}</strong>
+                      <small>entregas ÷ meta</small>
+                    </div>
+                    {person.advanced.length > 0 && (
+                      <div
+                        className="accountabilityAdvancedMetric"
+                        title={person.advanced
+                          .map((r) => `${r.item.cliente} · ${category(r.item)} · ${fmt(r.done)}`)
+                          .join("\n")}
+                      >
+                        <span>ADELANTADAS</span>
+                        <strong>{person.advanced.length}</strong>
+                        <small>fuera de la meta</small>
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  <div className="accountabilityTableWrap">
-                    <div className="accountabilityTableHeader">
-                      <div>CLIENTE</div>
-                      <div>FECHA ESPERADA</div>
-                      <div>FECHA DE ENTREGA</div>
-                    </div>
-                    {stage.rows.map((r) => {
-                      const ok = inWeek(r.done);
-                      return (
-                        <div
-                          className={`accountabilityTableRow ${ok ? "accountabilityDeliveredRow" : "accountabilityPendingRow"}`}
-                          key={r.item.key}
-                        >
-                          <div className="accountabilityClientCell">
-                            <strong>{r.item.cliente}</strong>
-                            {r.expected < weekStart && <span className="accountabilityBacklogTag">BACKLOG</span>}
-                          </div>
-                          <div>{fmt(r.expected)}</div>
-                          <div className={ok ? "accountabilityDoneDate" : "accountabilityMissingDate"}>
-                            {r.item.done ? fmt(r.item.done) : r.done ? "Ready" : "—"}
-                          </div>
-                        </div>
-                      );
-                    })}
+                <div className="accountabilityTableWrap">
+                  <div className="accountabilityTableHeader gmAccountRow">
+                    <div>CLIENTE</div>
+                    <div>TIPO</div>
+                    <div>FECHA ESPERADA</div>
+                    <div>FECHA DE ENTREGA</div>
                   </div>
-                </article>
-              ))}
+                  {person.rows.map((r) => {
+                    const ok = inWeek(r.done);
+                    return (
+                      <div
+                        className={`accountabilityTableRow gmAccountRow ${ok ? "accountabilityDeliveredRow" : "accountabilityPendingRow"}`}
+                        key={r.item.key}
+                      >
+                        <div className="accountabilityClientCell">
+                          <strong>{r.item.cliente}</strong>
+                          {r.expected < weekStart && <span className="accountabilityBacklogTag">BACKLOG</span>}
+                        </div>
+                        <div>{category(r.item)}</div>
+                        <div>{fmt(r.expected)}</div>
+                        <div className={ok ? "accountabilityDoneDate" : "accountabilityMissingDate"}>
+                          {r.item.done ? fmt(r.item.done) : r.done ? "Ready" : "—"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!person.rows.length && (
+                    <div className="accountabilityNoRows">
+                      Solo tiene entregas adelantadas esta semana.
+                    </div>
+                  )}
+                </div>
+              </article>
             </div>
           </section>
         ))}

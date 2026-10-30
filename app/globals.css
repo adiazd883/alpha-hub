@@ -6641,3 +6641,9 @@ button {
 .fieldLink:hover {
   text-decoration: underline;
 }
+
+/* GMC: una lista por colaborador con el tipo en columna. */
+.accountabilityTableHeader.gmAccountRow,
+.accountabilityTableRow.gmAccountRow {
+  grid-template-columns: minmax(240px, 1.5fr) minmax(170px, 1fr) minmax(130px, .8fr) minmax(140px, .8fr);
+}
