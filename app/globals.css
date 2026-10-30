@@ -6628,3 +6628,16 @@ button {
   margin-top: 3px;
   font-size: 11px;
 }
+
+.fieldLink {
+  display: inline-block;
+  margin-top: 4px;
+  color: #2b4fb5;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fieldLink:hover {
+  text-decoration: underline;
+}

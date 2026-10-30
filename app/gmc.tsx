@@ -101,7 +101,7 @@ export default function Gmc() {
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
 
-  const [view, setView] = useState<"calendar" | "table" | "monthly">("calendar");
+  const [view, setView] = useState<"calendar" | "table" | "monthly" | "accountability">("calendar");
   const [segments, setSegments] = useState<Segment[]>([...SEGMENTS]);
   const [member, setMember] = useState("todos");
   const [tipo, setTipo] = useState<"todos" | Category>("todos");
@@ -390,6 +390,13 @@ export default function Gmc() {
                   <span>▥</span>
                   Mensual
                 </button>
+                <button
+                  className={view === "accountability" ? "teamViewButton active" : "teamViewButton"}
+                  onClick={() => setView("accountability")}
+                >
+                  <span>✓</span>
+                  Rendición
+                </button>
               </div>
 
               <div className="gmFilters">
@@ -433,7 +440,7 @@ export default function Gmc() {
                   ))}
                 </select>
 
-                {view !== "monthly" && (
+                {(view === "calendar" || view === "table") && (
                   <select value={estado} onChange={(e) => setEstado(e.target.value as Estado)} aria-label="Estado">
                     <option value="todas">Todas</option>
                     <option value="pendientes">Pendientes</option>
@@ -461,7 +468,9 @@ export default function Gmc() {
               </div>
             </div>
 
-            {view === "monthly" ? (
+            {view === "accountability" ? (
+              <GmcAccountability items={filtered} />
+            ) : view === "monthly" ? (
               <MonthlyView items={filtered} />
             ) : view === "calendar" ? (
               <section className="calendarCard">
@@ -939,5 +948,224 @@ function MonthlyView({ items }: { items: GmcItem[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+/*
+ * Rendición de cuentas de GMC, con la misma lógica que la de
+ * Alpha y Gamma:
+ * - Meta: fecha esperada hasta el fin de la semana y que no se
+ *   había entregado antes de que empezara (backlog + semana).
+ * - Entregas: de la meta, lo entregado dentro de la semana.
+ * - Adelantadas: esperadas después, pero entregadas esta semana.
+ * Sin fecha esperada se usa la de entrega. READY sin fecha de
+ * entrega se toma como entregado en su fecha esperada.
+ */
+type AccountRow = { item: GmcItem; expected: string; done: string | null };
+
+function GmcAccountability({ items }: { items: GmcItem[] }) {
+  const lastWeek = iso(addDays(mondayOf(new Date()), -7));
+  const [weekStart, setWeekStart] = useState(lastWeek);
+  const weekEnd = iso(addDays(parse(weekStart), 6));
+
+  const byPerson = new Map<string, Map<Category, { meta: AccountRow[]; advanced: AccountRow[] }>>();
+  items.forEach((item) => {
+    const expected = item.expected || item.done;
+    if (!expected) return;
+    const done = item.done || (item.status === "READY" ? expected : null);
+    const inMeta = expected <= weekEnd && (!done || done >= weekStart);
+    const advanced = expected > weekEnd && !!done && done >= weekStart && done <= weekEnd;
+    if (!inMeta && !advanced) return;
+
+    const person = item.member || "Sin asignar";
+    const stages = byPerson.get(person) || new Map();
+    const bucket = stages.get(category(item)) || { meta: [], advanced: [] };
+    (inMeta ? bucket.meta : bucket.advanced).push({ item, expected, done });
+    stages.set(category(item), bucket);
+    byPerson.set(person, stages);
+  });
+
+  const inWeek = (d: string | null) => !!d && d >= weekStart && d <= weekEnd;
+  const people = [...byPerson.entries()]
+    .sort((a, b) =>
+      a[0] === "Sin asignar" ? 1 : b[0] === "Sin asignar" ? -1 : a[0].localeCompare(b[0])
+    )
+    .map(([name, stages]) => ({
+      name,
+      stages: CATEGORIES.filter((c) => stages.has(c)).map((c) => {
+        const { meta, advanced } = stages.get(c)!;
+        const delivered = meta.filter((r) => inWeek(r.done)).length;
+        return {
+          label: c,
+          meta: meta.length,
+          delivered,
+          backlog: meta.filter((r) => r.expected < weekStart).length,
+          scheduled: meta.filter((r) => r.expected >= weekStart).length,
+          advanced,
+          productivity: meta.length ? (delivered / meta.length) * 100 : null,
+          rows: [...meta].sort((a, b) => a.expected.localeCompare(b.expected)),
+        };
+      }),
+    }));
+
+  const sum = (f: (s: (typeof people)[number]["stages"][number]) => number) =>
+    people.reduce((t, p) => t + p.stages.reduce((a, s) => a + f(s), 0), 0);
+  const meta = sum((s) => s.meta);
+  const delivered = sum((s) => s.delivered);
+  const advanced = sum((s) => s.advanced.length);
+  const pct = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
+
+  return (
+    <>
+      <section className="accountabilityWeekCard">
+        <div className="accountabilityWeekInfo">
+          <p className="eyebrow">SEMANA AUDITADA</p>
+          <h2>Semana {isoWeek(parse(weekStart))}</h2>
+          <span>
+            {fmt(weekStart)} – {fmt(weekEnd)}
+          </span>
+        </div>
+
+        <div className="accountabilityWeekControls">
+          <button
+            type="button"
+            className="accountabilityArrowButton"
+            onClick={() => setWeekStart(iso(addDays(parse(weekStart), -7)))}
+            title="Semana anterior"
+          >
+            ‹
+          </button>
+          <label className="accountabilityDateFilter">
+            <span>IR A SEMANA</span>
+            <input
+              type="date"
+              value={weekStart}
+              max={iso(addDays(parse(lastWeek), 6))}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const monday = iso(mondayOf(parse(e.target.value)));
+                setWeekStart(monday > lastWeek ? lastWeek : monday);
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="accountabilityArrowButton"
+            onClick={() => setWeekStart(iso(addDays(parse(weekStart), 7)))}
+            disabled={weekStart >= lastWeek}
+            title="Semana siguiente"
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="accountabilityGlobalSummary">
+          <div>
+            <span>META</span>
+            <strong>{meta}</strong>
+          </div>
+          <div>
+            <span>ENTREGAS</span>
+            <strong>{delivered}</strong>
+          </div>
+          <div>
+            <span>ADELANTADAS</span>
+            <strong>{advanced}</strong>
+          </div>
+          <div className="accountabilityProductivitySummary">
+            <span>PRODUCTIVIDAD</span>
+            <strong>{pct(meta ? (delivered / meta) * 100 : null)}</strong>
+          </div>
+        </div>
+      </section>
+
+      <div className="accountabilityCollaborators">
+        {people.map((person) => (
+          <section className="accountabilityPersonCard" key={person.name}>
+            <div className="accountabilityPersonHeader">
+              <div className="accountabilityPersonAvatar">{person.name.charAt(0).toUpperCase()}</div>
+              <div>
+                <p className="eyebrow">COLABORADOR</p>
+                <h2>{person.name}</h2>
+              </div>
+            </div>
+
+            <div className="accountabilityStages">
+              {person.stages.map((stage) => (
+                <article className="accountabilityStageCard" key={stage.label}>
+                  <div className="accountabilityStageTop">
+                    <div>
+                      <p className="eyebrow">KPI</p>
+                      <h3>{stage.label}</h3>
+                    </div>
+                    <div className="accountabilityMetrics">
+                      <div>
+                        <span>META</span>
+                        <strong>{stage.meta}</strong>
+                        <small>
+                          {stage.backlog} backlog + {stage.scheduled} semana
+                        </small>
+                      </div>
+                      <div>
+                        <span>ENTREGAS</span>
+                        <strong>{stage.delivered}</strong>
+                        <small>de la meta</small>
+                      </div>
+                      <div className="accountabilityProductivityMetric">
+                        <span>% PRODUCTIVIDAD</span>
+                        <strong>{pct(stage.productivity)}</strong>
+                        <small>entregas ÷ meta</small>
+                      </div>
+                      {stage.advanced.length > 0 && (
+                        <div
+                          className="accountabilityAdvancedMetric"
+                          title={stage.advanced.map((r) => `${r.item.cliente} · ${fmt(r.done)}`).join("\n")}
+                        >
+                          <span>ADELANTADAS</span>
+                          <strong>{stage.advanced.length}</strong>
+                          <small>fuera de la meta</small>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="accountabilityTableWrap">
+                    <div className="accountabilityTableHeader">
+                      <div>CLIENTE</div>
+                      <div>FECHA ESPERADA</div>
+                      <div>FECHA DE ENTREGA</div>
+                    </div>
+                    {stage.rows.map((r) => {
+                      const ok = inWeek(r.done);
+                      return (
+                        <div
+                          className={`accountabilityTableRow ${ok ? "accountabilityDeliveredRow" : "accountabilityPendingRow"}`}
+                          key={r.item.key}
+                        >
+                          <div className="accountabilityClientCell">
+                            <strong>{r.item.cliente}</strong>
+                            {r.expected < weekStart && <span className="accountabilityBacklogTag">BACKLOG</span>}
+                          </div>
+                          <div>{fmt(r.expected)}</div>
+                          <div className={ok ? "accountabilityDoneDate" : "accountabilityMissingDate"}>
+                            {r.item.done ? fmt(r.item.done) : r.done ? "Ready" : "—"}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        {!people.length && (
+          <div className="emptyState accountabilityEmptyState">
+            No hay metas ni entregas para la semana seleccionada.
+          </div>
+        )}
+      </div>
+    </>
   );
 }
