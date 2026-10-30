@@ -107,6 +107,8 @@ export default function Gmc() {
   const [tipo, setTipo] = useState<"todos" | Category>("todos");
   const [estado, setEstado] = useState<Estado>("todas");
   const [query, setQuery] = useState("");
+  // Tabla: semana (lunes) de la fecha esperada, o de entrega si no tiene.
+  const [week, setWeek] = useState("todas");
   const [month, setMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -234,7 +236,28 @@ export default function Gmc() {
     return map;
   }, [visible]);
 
-  const tableRows = [...visible].sort(
+  const weekOptions = useMemo(() => {
+    const current = iso(mondayOf(new Date()));
+    const keys = new Set<string>();
+    visible.forEach((i) => {
+      const day = calendarDate(i);
+      if (day) keys.add(iso(mondayOf(parse(day))));
+    });
+    return [...keys]
+      .sort((a, b) => b.localeCompare(a))
+      .map((key) => ({
+        key,
+        label: `Sem ${isoWeek(parse(key))} · ${fmt(key)} – ${fmt(iso(addDays(parse(key), 6)))}${key === current ? " (esta semana)" : ""}`,
+      }));
+  }, [visible]);
+
+  const tableRows = visible
+    .filter((i) => {
+      if (week === "todas") return true;
+      const day = calendarDate(i);
+      return !!day && iso(mondayOf(parse(day))) === week;
+    })
+    .sort(
     (a, b) =>
       Number(delivered(a)) - Number(delivered(b)) ||
       (a.expected || "9999").localeCompare(b.expected || "9999") ||
@@ -415,6 +438,17 @@ export default function Gmc() {
                     <option value="todas">Todas</option>
                     <option value="pendientes">Pendientes</option>
                     <option value="entregadas">Entregadas</option>
+                  </select>
+                )}
+
+                {view === "table" && (
+                  <select value={week} onChange={(e) => setWeek(e.target.value)} aria-label="Semana">
+                    <option value="todas">Todas las semanas</option>
+                    {weekOptions.map((w) => (
+                      <option key={w.key} value={w.key}>
+                        {w.label}
+                      </option>
+                    ))}
                   </select>
                 )}
 
