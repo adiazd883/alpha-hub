@@ -6999,7 +6999,7 @@ button {
   font-size: 12px;
 }
 
-.csIrRow > span:last-child {
+.csIrRow > span.csIrDateOld {
   margin-left: auto;
   color: #556070;
 }
@@ -7057,4 +7057,28 @@ button {
 .csIrSave:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.csKindFilter {
+  width: fit-content;
+  margin-bottom: 12px;
+}
+
+.csIrBy {
+  color: #778397;
+}
+
+.csIrRow .csIrDate {
+  margin-left: auto;
+  color: #556070;
+}
+
+.csIrDelete {
+  border: 0;
+  background: transparent;
+  color: #c2413a;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }

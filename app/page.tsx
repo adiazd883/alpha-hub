@@ -1789,6 +1789,18 @@ export default function Home() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   });
   const [irSaving, setIrSaving] = useState(false);
+  // Quién registró cada initial review ("célula:fila").
+  const [irRegistrants, setIrRegistrants] = useState<
+    Record<string, { email: string; nombre: string; at: string }>
+  >({});
+
+  // Al entrar a CS se carga quién registró cada initial review.
+  useEffect(() => {
+    if (mainView === "cs") loadIrRegistrants();
+  }, [mainView]);
+
+  // Filtro de tipo de revisión en el calendario de CS.
+  const [csKinds, setCsKinds] = useState<CsKind[]>(["caratula", "dcl", "final", "nonvawa"]);
 
   const [nwAdminRows, setNwAdminRows] =
     useState<Record<string, string>[]>([]);
@@ -4184,11 +4196,15 @@ export default function Home() {
     return [...vawaEvents, ...nonVawaEvents];
   }, [data.rows, nwData.rows]);
 
+  const visibleCsEvents = csCalendarEvents.filter((event) =>
+    csKinds.includes(event.kind || "nonvawa")
+  );
+
   // Resumen de cada semana del calendario de CS: total, por tipo y por persona.
   function renderCsWeekSummary(week: Date[]) {
     const start = week[0].getTime();
     const end = addDays(week[week.length - 1], 1).getTime();
-    const events = csCalendarEvents.filter(
+    const events = visibleCsEvents.filter(
       (event) => event.date.getTime() >= start && event.date.getTime() < end
     );
     const completed = events.filter((event) => event.completed).length;
@@ -4257,6 +4273,47 @@ export default function Home() {
     [data.rows, isGeneral]
   );
 
+  async function loadIrRegistrants() {
+    try {
+      const res = await fetch("/api/initial-review", { cache: "no-store" });
+      const json = await res.json();
+      if (res.ok) setIrRegistrants(json.registrants || {});
+    } catch {
+      // Sin quién lo registró igual se ve la lista.
+    }
+  }
+
+  async function deleteInitialReview(row: CaseRow) {
+    if (!window.confirm(`¿Borrar el initial review de ${row["CLIENTE"]}?`)) return;
+    setError("");
+    try {
+      const target = row.__celula || celula;
+      const response = await fetch("/api/initial-review", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ celula: target, row: Number(row.__row), cliente: row["CLIENTE"] }),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || "No se pudo borrar");
+      setData((prev) => ({
+        ...prev,
+        rows: prev.rows.map((r) =>
+          r.__row === row.__row && r.__celula === row.__celula
+            ? { ...r, [INITIAL_REVIEW_HEADER]: "" }
+            : r
+        ),
+      }));
+      setIrRegistrants((prev) => {
+        const next = { ...prev };
+        delete next[`${target}:${row.__row}`];
+        return next;
+      });
+      setMessage("Initial review borrado");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo borrar");
+    }
+  }
+
   async function saveInitialReview() {
     const match = clientOptions.find(
       (option) => option.label.toUpperCase() === irClient.trim().toUpperCase()
@@ -4273,17 +4330,22 @@ export default function Home() {
     setError("");
     try {
       const target = match.row.__celula || celula;
-      const response = await fetch("/api/cases/update", {
+      const response = await fetch("/api/initial-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           celula: target,
           row: Number(match.row.__row),
-          changes: { [INITIAL_REVIEW_HEADER]: irDate },
+          cliente: match.row["CLIENTE"],
+          date: irDate,
         }),
       });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || "No se pudo guardar");
+      setIrRegistrants((prev) => ({
+        ...prev,
+        [`${target}:${match.row.__row}`]: json.registrant,
+      }));
       setData((prev) => ({
         ...prev,
         rows: prev.rows.map((row) =>
@@ -4357,7 +4419,17 @@ export default function Home() {
               {isGeneral && item.row.__celula && (
                 <span className="celulaTag">{vistaLabel(item.row.__celula as Celula)}</span>
               )}
-              <span>{formatDate(item.row[INITIAL_REVIEW_HEADER] || "")}</span>
+              <span className="csIrBy">
+                {irRegistrants[`${item.row.__celula || celula}:${item.row.__row}`]?.nombre
+                  ? `Registró: ${irRegistrants[`${item.row.__celula || celula}:${item.row.__row}`].nombre}`
+                  : "Registrado directo en la Sheet"}
+              </span>
+              <span className="csIrDate">{formatDate(item.row[INITIAL_REVIEW_HEADER] || "")}</span>
+              {role === "ADMIN" && (
+                <button className="csIrDelete" onClick={() => deleteInitialReview(item.row)}>
+                  Borrar
+                </button>
+              )}
             </div>
           ))}
           {!initialReviews.length && (
@@ -8504,6 +8576,29 @@ export default function Home() {
               </button>
             </header>
 
+            <div className="gmChips csKindFilter" role="group" aria-label="Tipo de revisión">
+              {(["caratula", "dcl", "final", "nonvawa"] as CsKind[]).map((kind) => {
+                const on = csKinds.includes(kind);
+                return (
+                  <button
+                    key={kind}
+                    className={on ? "active" : ""}
+                    aria-pressed={on}
+                    onClick={() =>
+                      setCsKinds((prev) =>
+                        on ? prev.filter((k) => k !== kind) : [...prev, kind]
+                      )
+                    }
+                  >
+                    {CS_KIND_LABEL[kind]}{" "}
+                    <span className="gmChipCount">
+                      {csCalendarEvents.filter((e) => (e.kind || "nonvawa") === kind).length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
             <section className="calendarCard">
               <div className="calendarToolbar">
                 <div className="calendarTitle">
@@ -8514,19 +8609,19 @@ export default function Home() {
 
                   <span>
                     {
-                      csCalendarEvents.filter(
+                      visibleCsEvents.filter(
                         (event) => !event.completed
                       ).length
                     }{" "}
                     pendientes
-                    {csCalendarEvents.some(
+                    {visibleCsEvents.some(
                       (event) => event.completed
                     ) && (
                       <>
                         {" "}
                         ·{" "}
                         {
-                          csCalendarEvents.filter(
+                          visibleCsEvents.filter(
                             (event) => event.completed
                           ).length
                         }{" "}
@@ -8566,7 +8661,7 @@ export default function Home() {
                         day.getMonth() ===
                         csCalendarMonth.getMonth();
                       const isToday = sameDay(day, new Date());
-                      const dayEvents = csCalendarEvents.filter(
+                      const dayEvents = visibleCsEvents.filter(
                         (event) => sameDay(event.date, day)
                       );
 
