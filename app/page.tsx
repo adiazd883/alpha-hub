@@ -2146,7 +2146,11 @@ export default function Home() {
     (role === "ADMIN" ||
       role === "ANALYST" ||
       role === "PARALEGAL" ||
-      role === "PSYCH")
+      role === "PSYCH" ||
+      // Ven al equipo (sin registrar).
+      role === "MANAGER" ||
+      role === "TL" ||
+      role === "CS")
       ? celula
       : null;
 

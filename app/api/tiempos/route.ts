@@ -4,6 +4,8 @@ import { isCelula, type Celula } from "@/lib/celulas";
 import {
   CATALOGO,
   KPIS_ANALISTA,
+  TEAM_ROLES,
+  teamScope,
   LONG_HOURS,
   MAX_DAYS_BACK,
   PUESTO_POR_ROL,
@@ -32,7 +34,14 @@ function profile(session: Session) {
   const isAdmin = session.role === "ADMIN";
   const puesto = PUESTO_POR_ROL[session.role] || null;
   const celulas = session.celulas.filter((c) => c === "alpha" || c === "gamma");
-  return { isAdmin, puesto, celulas, canRegister: isAdmin || (!!puesto && celulas.length > 0) };
+  return {
+    isAdmin,
+    puesto,
+    celulas,
+    canRegister: isAdmin || (!!puesto && celulas.length > 0),
+    // Admin, Manager, TL y CS ven al equipo (TL y CS solo sus células).
+    canSeeTeam: TEAM_ROLES.includes(session.role),
+  };
 }
 
 const daysBack = (date: string) =>
@@ -42,14 +51,19 @@ export async function GET(req: NextRequest) {
   const session = getSession(req);
   if (!session) return fail("No autenticado", 401);
   const me = profile(session);
-  if (!me.canRegister) return fail("El estudio de tiempos es para analistas, paralegales y psychs", 403);
+  if (!me.canRegister && !me.canSeeTeam) {
+    return fail("El estudio de tiempos es para analistas, paralegales y psychs", 403);
+  }
 
   try {
     const all = await listRegistros();
     // Cada quien ve solo lo suyo; el Admin ve todo (los últimos 120 días aquí, el CSV trae todo).
     const since = new Date(Date.now() - 120 * 86400000).toISOString();
     const mine = all.filter((r) => r.email === session.email);
-    const team = me.isAdmin ? all.filter((r) => r.inicio >= since) : [];
+    const scope = teamScope(session.role, me.celulas);
+    const team = me.canSeeTeam
+      ? all.filter((r) => r.inicio >= since && (!scope || scope.includes(r.celula)))
+      : [];
     return NextResponse.json({
       me: { email: session.email, nombre: nameOf(session.email), ...me },
       catalogo: CATALOGO,

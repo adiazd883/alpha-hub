@@ -49,6 +49,8 @@ export type Regreso = {
   // lleva las mismas unidas, para registros anteriores y el CSV.
   motivos?: string[];
   motivo: string;
+  // Lo calcula el servidor al listar (no se guarda).
+  numero?: number;
   detalle: string;
   para: string; // Person.id
   de: string; // Person.id
@@ -255,6 +257,26 @@ export function gruposDe(tipo: RegresoTipo, area: Area): MotivoGrupo[] {
     ...GRUPOS_POR_TIPO[tipo].filter((g) => g.grupo.startsWith(prefix)),
     OTRO,
   ];
+}
+
+/*
+ * Número de regreso: cuántas veces se ha regresado el mismo caso
+ * (cliente) a la misma área, en orden de envío. 1 = primera vez.
+ */
+export function numeroDeRegreso(items: Regreso[]) {
+  const key = (r: Regreso) =>
+    `${r.cliente.trim().toUpperCase()}|${r.area || areaDeMotivo(r.tipo, r.motivo) || ""}`;
+  const out = new Map<string, number>();
+  const seen = new Map<string, number>();
+  [...items]
+    .filter((r) => r.tipo === "regreso")
+    .sort((a, b) => a.enviado.localeCompare(b.enviado) || a.creado.localeCompare(b.creado))
+    .forEach((r) => {
+      const n = (seen.get(key(r)) || 0) + 1;
+      seen.set(key(r), n);
+      out.set(r.id, n);
+    });
+  return out;
 }
 
 // Cosas que se piden en un registro (los anteriores solo tienen "motivo").

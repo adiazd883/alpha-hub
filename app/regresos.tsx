@@ -17,6 +17,7 @@ import {
   gruposDe,
   isOverdue,
   motivosDe,
+  numeroDeRegreso,
   pareto,
   type ParetoRow,
   type ActualizacionOrigen,
@@ -167,6 +168,12 @@ export default function Regresos({
   );
   const nameOf = (id: string) => names.get(id) || "—";
 
+  // El servidor numera con todos los regresos; si falta, se calcula aquí.
+  const numero = useMemo(() => {
+    const local = numeroDeRegreso(items);
+    items.forEach((r) => r.numero && local.set(r.id, r.numero));
+    return local;
+  }, [items]);
   const mine = items.filter((r) => r.para === me && r.estado === "pendiente");
   const sent = items.filter(
     (r) => (r.de === me || r.deEmail === email) && r.estado === "pendiente"
@@ -483,7 +490,15 @@ export default function Regresos({
               <article key={r.id} className={`rgCard rgCard-${r.tipo} ${r.estado === "concretado" ? "rgCardDone" : ""}`}>
                 <div className="rgCardMain">
                   <div className="rgCardTop">
-                    <span className={`rgBadge rgBadge-${r.tipo}`}>{TIPO_LABELS[r.tipo]}</span>
+                    <span className={`rgBadge rgBadge-${r.tipo}`}>
+                      {TIPO_LABELS[r.tipo]}
+                      {r.tipo === "regreso" && numero.get(r.id) ? ` #${numero.get(r.id)}` : ""}
+                    </span>
+                    {(numero.get(r.id) || 0) > 1 && (
+                      <span className="rgRepeat" title="Veces que se ha regresado este caso a esta área">
+                        {numero.get(r.id)}ª vez
+                      </span>
+                    )}
                     <span className="rgMeta">{r.etapa}</span>
                     {r.area && <span className="rgMeta">{AREA_LABELS[r.area]}</span>}
                     {r.origen && <span className="rgMeta">{ORIGEN_LABELS[r.origen]}</span>}

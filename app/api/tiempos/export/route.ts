@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { listRegistros, toCsv } from "@/lib/tiempos";
+import { TEAM_ROLES, listRegistros, teamScope, toCsv } from "@/lib/tiempos";
 
 export const dynamic = "force-dynamic";
 
@@ -8,11 +8,18 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const session = getSession(req);
   if (!session) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-  if (session.role !== "ADMIN") {
-    return NextResponse.json({ error: "Solo Admin descarga el estudio" }, { status: 403 });
+  if (!TEAM_ROLES.includes(session.role)) {
+    return NextResponse.json({ error: "No puedes descargar el estudio" }, { status: 403 });
   }
 
-  const csv = toCsv(await listRegistros());
+  // TL y CS solo descargan lo de sus células.
+  const scope = teamScope(
+    session.role,
+    session.celulas.filter((c) => c === "alpha" || c === "gamma")
+  );
+  const csv = toCsv(
+    (await listRegistros()).filter((r) => !scope || scope.includes(r.celula))
+  );
   const date = new Date().toISOString().slice(0, 10);
   return new NextResponse(csv, {
     headers: {
