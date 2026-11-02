@@ -175,7 +175,7 @@ export default function EstudioTiempos({
                 <div>
                   <span className="tmDot" /> En curso desde {mxTime(running.inicio)}
                   <strong>
-                    {running.actividad}
+                    {running.otro ? `Otro: ${running.otro}` : running.actividad}
                     {running.kpi && ` · ${running.kpi}`}
                   </strong>
                   <small>{running.cliente}</small>
@@ -273,14 +273,33 @@ function EntryForm({
   const [puesto, setPuesto] = useState<Puesto>(editing?.puesto || me.puesto || "analista");
   const [kpi, setKpi] = useState(editing?.kpi || "");
   const [actividad, setActividad] = useState(editing?.actividad || "");
+  const [otro, setOtro] = useState(editing?.otro || "");
   const [cliente, setCliente] = useState(editing?.cliente || "");
   const [mode, setMode] = useState<"timer" | "manual">(editing || running ? "manual" : "timer");
   const [fecha, setFecha] = useState(editing ? mxDate(editing.inicio) : clock.today);
   const [inicio, setInicio] = useState(editing ? mxTime(editing.inicio) : "");
   const [fin, setFin] = useState(editing?.fin ? mxTime(editing.fin) : clock.now);
 
-  const grupos = data.catalogo[puesto];
-  const numero = (a: string) => grupos.flatMap((g) => g.actividades).indexOf(a) + 1;
+  // Grupos de su célula (Rap Sheet solo aparece en Gamma).
+  const celulaForm = editing?.celula || celula;
+  const grupos = data.catalogo[puesto]
+    .filter((g) => !g.celulas || g.celulas.includes(celulaForm))
+    // "Otro" siempre al final de la lista.
+    .sort((a, b) => Number(a.categoria === "Otro") - Number(b.categoria === "Otro"));
+  // 1, 2, 3… y los grupos con código con su propia numeración (RS-1…).
+  const numero = (a: string) => {
+    let n = 0;
+    for (const g of data.catalogo[puesto]) {
+      const i = g.actividades.indexOf(a);
+      if (g.codigo) {
+        if (i >= 0) return `${g.codigo}-${i + 1}`;
+        continue;
+      }
+      if (i >= 0) return n + i + 1;
+      n += g.actividades.length;
+    }
+    return "";
+  };
   const manual = mode === "manual";
   const minutes = (() => {
     if (!inicio || !fin) return null;
@@ -302,6 +321,7 @@ function EntryForm({
       puesto,
       kpi,
       actividad,
+      otro,
       cliente,
       celula: editing?.celula || celula,
       fecha,
@@ -402,6 +422,18 @@ function EntryForm({
           </select>
         </label>
 
+        {actividad === "Otro" && (
+          <label className="rgField tmWide">
+            <span>¿Qué actividad hiciste?</span>
+            <input
+              value={otro}
+              maxLength={150}
+              placeholder="Escribe la actividad"
+              onChange={(e) => setOtro(e.target.value)}
+            />
+          </label>
+        )}
+
         {manual && (
           <>
             <label className="rgField">
@@ -500,7 +532,7 @@ function MyWeek({
               </span>
               <div className="tmWhat">
                 <strong>
-                  {r.actividad}
+                  {r.otro ? `Otro: ${r.otro}` : r.actividad}
                   {r.kpi && <em> · {r.kpi}</em>}
                 </strong>
                 <small>
@@ -570,7 +602,9 @@ function TeamView({
   const porModo = sumBy((r) =>
     r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "Sin dato"
   );
-  const porActividad = sumBy((r) => `${r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`).slice(0, 12);
+  const porActividad = sumBy(
+    (r) => `${r.otro ? `Otro: ${r.otro}` : r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`
+  ).slice(0, 12);
   const max = (list: [string, { min: number }][]) => Math.max(1, ...list.map(([, v]) => v.min));
 
   const bars = (title: string, list: [string, { min: number; n: number }][], label: (k: string) => string) => (
