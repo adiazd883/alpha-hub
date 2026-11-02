@@ -215,12 +215,13 @@ export type Registro = {
   editado?: boolean;
 };
 
-// Quién ve al equipo (sin registrar): Admin y Manager todo; TL y CS su(s) célula(s).
-export const TEAM_ROLES = ["ADMIN", "MANAGER", "TL", "CS"];
+// Quién ve al equipo (sin registrar): Admin, Manager y Coordinadora
+// todo; TL y CS su(s) célula(s).
+export const TEAM_ROLES = ["ADMIN", "MANAGER", "COORDINATOR", "TL", "CS"];
 
 export function teamScope(role: string, celulas: Celula[]) {
   if (!TEAM_ROLES.includes(role)) return null;
-  return role === "ADMIN" || role === "MANAGER" ? null : celulas;
+  return ["ADMIN", "MANAGER", "COORDINATOR"].includes(role) ? null : celulas;
 }
 
 export const LONG_HOURS = 4;

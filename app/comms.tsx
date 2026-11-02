@@ -15,6 +15,7 @@ type Data = {
   me: string;
   position: string;
   canWrite: boolean;
+  canDelete: boolean;
 };
 
 type Periodo = "semana" | "pasada" | "mes" | "todo";
@@ -79,6 +80,24 @@ export default function Comunicaciones({
     const t = setTimeout(() => setNotice(""), 3000);
     return () => clearTimeout(t);
   }, [notice]);
+
+  async function remove(c: Comm) {
+    if (!window.confirm(`¿Borrar la comunicación de ${c.cliente} (${c.colaborador}, ${fmt(c.fecha)})?`)) return;
+    setError("");
+    try {
+      const res = await fetch("/api/comms", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vista, row: c.row, cliente: c.cliente, colaborador: c.colaborador, fecha: c.fecha }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "No se pudo borrar");
+      setNotice("Comunicación borrada de la Sheet");
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo borrar");
+    }
+  }
 
   const comms = data?.comms || [];
   const colabs = useMemo(() => [...new Set(comms.map((c) => c.colaborador).filter(Boolean))].sort(), [comms]);
@@ -202,6 +221,7 @@ export default function Comunicaciones({
                       <th>Tramcase</th>
                       <th>Documento / info</th>
                       <th>Notas</th>
+                      {data.canDelete && <th />}
                     </tr>
                   </thead>
                   <tbody>
@@ -238,6 +258,13 @@ export default function Comunicaciones({
                           )}
                         </td>
                         <td className="rsNota">{c.notas || "—"}</td>
+                        {data.canDelete && (
+                          <td>
+                            <button className="csIrDelete" onClick={() => remove(c)}>
+                              Borrar
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

@@ -7,7 +7,7 @@ import {
   TIPO_LABELS,
   canSee,
   daysBetween,
-  isLead,
+  canViewAll,
   isOverdue,
   todayMx,
 } from "@/lib/regresos";
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
-  if (!isLead(session.role)) {
+  if (!canViewAll(session.role)) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 

@@ -267,3 +267,58 @@ export async function addComm(
     if ((await redis(["GET", lockKey])) === token) await redis(["DEL", lockKey]);
   }
 }
+
+/*
+ * Borra un registro (solo Admin, por errores de captura). Deja la
+ * fila como las vacías: sin datos y con las casillas en falso; la
+ * fórmula de semana no se toca. Antes revisa que la fila siga
+ * siendo el mismo registro.
+ */
+export async function deleteComm(
+  vista: CommsVista,
+  target: { row: number; cliente: string; colaborador: string; fecha: string },
+  // Solo para pruebas: un cliente de Sheets simulado.
+  client?: Awaited<ReturnType<typeof getSheets>>
+) {
+  const { tab, lastCol, cols } = LAYOUTS[vista];
+  const sheets = client || (await getSheets());
+  const spreadsheetId = spreadsheetOf(vista);
+  const lockKey = `lock:comms:${vista}`;
+  const token = `${Date.now()}-${Math.random()}`;
+
+  let locked = false;
+  for (let i = 0; i < 20 && !locked; i++) {
+    locked = (await redis(["SET", lockKey, token, "NX", "PX", 15000])) === "OK";
+    if (!locked) await sleep(300);
+  }
+  if (!locked) throw new Error("Otra persona está registrando en este momento. Intenta de nuevo.");
+
+  try {
+    const check = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `'${tab}'!A${target.row}:${lastCol}${target.row}`,
+      valueRenderOption: "UNFORMATTED_VALUE",
+      dateTimeRenderOption: "SERIAL_NUMBER",
+    });
+    const cells = (check.data.values?.[0] || []) as unknown[];
+    const same =
+      text(cells[colIndex(cols.cliente!)]).toUpperCase() === target.cliente.trim().toUpperCase() &&
+      text(cells[colIndex(cols.colaborador!)]).toUpperCase() === target.colaborador.trim().toUpperCase() &&
+      isoDate(cells[colIndex(cols.fecha!)]) === target.fecha;
+    if (!same) throw new Error("El registro cambió en la Sheet. Recarga e intenta de nuevo.");
+
+    const values: (string | boolean)[] = [];
+    for (let c = 0; c <= colIndex(lastCol); c++) values.push("");
+    for (const f of ["mensajeTramcase", "notaTramcase"] as CommsField[]) {
+      if (cols[f]) values[colIndex(cols[f]!)] = false;
+    }
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `'${tab}'!A${target.row}:${lastCol}${target.row}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: [values] },
+    });
+  } finally {
+    if ((await redis(["GET", lockKey])) === token) await redis(["DEL", lockKey]);
+  }
+}

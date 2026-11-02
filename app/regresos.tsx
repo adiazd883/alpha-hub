@@ -12,7 +12,7 @@ import {
   TIPO_LABELS,
   canEdit,
   daysBetween,
-  isLead,
+  canViewAll,
   areaDeMotivo,
   gruposDe,
   isOverdue,
@@ -125,7 +125,8 @@ export default function Regresos({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const lead = isLead(role);
+  // Ve todo el equipo y el 80/20: Admin, Manager, Coordinadora, TL y CS.
+  const lead = canViewAll(role);
   const [tab, setTab] = useState<Tab>("mine");
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>("todos");
   const [celulaFilter, setCelulaFilter] = useState<Celula | "todas">("todas");

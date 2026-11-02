@@ -320,6 +320,11 @@ export function isLead(role: Role) {
   return LEAD_ROLES.has(role);
 }
 
+// Ven todos los registros de sus células (CS solo ve; no edita).
+export function canViewAll(role: Role) {
+  return isLead(role) || role === "CS";
+}
+
 export type Viewer = {
   email: string;
   personId: string | null;
@@ -328,7 +333,7 @@ export type Viewer = {
 };
 
 export function canSee(viewer: Viewer, r: Regreso) {
-  if (isLead(viewer.role) && viewer.celulas.includes(r.celula)) {
+  if (canViewAll(viewer.role) && viewer.celulas.includes(r.celula)) {
     return true;
   }
   return (
