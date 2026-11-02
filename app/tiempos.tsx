@@ -280,8 +280,26 @@ function EntryForm({
   const [inicio, setInicio] = useState(editing ? mxTime(editing.inicio) : "");
   const [fin, setFin] = useState(editing?.fin ? mxTime(editing.fin) : clock.now);
 
-  const grupos = data.catalogo[puesto];
-  const numero = (a: string) => grupos.flatMap((g) => g.actividades).indexOf(a) + 1;
+  // Grupos de su célula (Rap Sheet solo aparece en Gamma).
+  const celulaForm = editing?.celula || celula;
+  const grupos = data.catalogo[puesto]
+    .filter((g) => !g.celulas || g.celulas.includes(celulaForm))
+    // "Otro" siempre al final de la lista.
+    .sort((a, b) => Number(a.categoria === "Otro") - Number(b.categoria === "Otro"));
+  // 1, 2, 3… y los grupos con código con su propia numeración (RS-1…).
+  const numero = (a: string) => {
+    let n = 0;
+    for (const g of data.catalogo[puesto]) {
+      const i = g.actividades.indexOf(a);
+      if (g.codigo) {
+        if (i >= 0) return `${g.codigo}-${i + 1}`;
+        continue;
+      }
+      if (i >= 0) return n + i + 1;
+      n += g.actividades.length;
+    }
+    return "";
+  };
   const manual = mode === "manual";
   const minutes = (() => {
     if (!inicio || !fin) return null;

@@ -126,7 +126,12 @@ export async function POST(req: NextRequest) {
     const puesto = (me.isAdmin ? str(body.puesto, 20) || existing?.puesto : me.puesto) as Puesto | null;
     if (!puesto || !CATALOGO[puesto]) return fail("Elige el puesto");
     const actividad = str(body.actividad);
-    const categoria = categoriaDe(puesto, actividad);
+    const celulaPedida = str(body.celula, 10);
+    const categoria = categoriaDe(
+      puesto,
+      actividad,
+      isCelula(celulaPedida) ? (celulaPedida as Celula) : existing?.celula
+    );
     if (!categoria) return fail("Elige una actividad de la lista");
     // "Otro": tienen que escribir qué hicieron.
     const otro = actividad === OTRA_ACTIVIDAD ? str(body.otro, 150) : "";

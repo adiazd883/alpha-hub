@@ -29,7 +29,13 @@ export const PUESTO_POR_ROL: Partial<Record<Role, Puesto>> = {
 // Analistas indican si el tiempo es para la DCL o la CVL.
 export const KPIS_ANALISTA = ["DCL", "CVL"];
 
-export type Grupo = { categoria: string; actividades: string[] };
+export type Grupo = {
+  categoria: string;
+  actividades: string[];
+  // Grupo con numeración propia (p. ej. "RS-1") y solo para ciertas células.
+  codigo?: string;
+  celulas?: Celula[];
+};
 
 const POST_CLIENTE = "Post entrega · debido al cliente";
 const POST_ERROR = "Post entrega · error del colaborador";
@@ -192,14 +198,45 @@ for (const puesto of Object.keys(CATALOGO) as Puesto[]) {
   CATALOGO[puesto].push({ categoria: "Otro", actividades: [OTRA_ACTIVIDAD] });
 }
 
-export function categoriaDe(puesto: Puesto, actividad: string) {
-  return CATALOGO[puesto].find((g) => g.actividades.includes(actividad))?.categoria || null;
+// Rap Sheet: actividades de paralegales solo en Gamma, numeradas RS-1…RS-5.
+CATALOGO.paralegal.push({
+  categoria: "Rap Sheet (RS)",
+  codigo: "RS",
+  celulas: ["gamma"],
+  actividades: [
+    "RS · Búsqueda de estatus de cliente",
+    "RS · Llamada de seguimiento",
+    "RS · Correo de seguimiento",
+    "RS · Llamada/Correo seguimiento con proveedor",
+    "RS · Carga de RS en CRM",
+  ],
+});
+
+// Grupos que ve un puesto en una célula.
+export function gruposPara(puesto: Puesto, celula?: Celula) {
+  return CATALOGO[puesto].filter((g) => !g.celulas || !celula || g.celulas.includes(celula));
 }
 
-// Número de la actividad en la lista de su puesto (1, 2, 3… como en el PDF).
-export function numeroDe(puesto: Puesto, actividad: string) {
-  const i = CATALOGO[puesto].flatMap((g) => g.actividades).indexOf(actividad);
-  return i >= 0 ? i + 1 : null;
+export function categoriaDe(puesto: Puesto, actividad: string, celula?: Celula) {
+  return gruposPara(puesto, celula).find((g) => g.actividades.includes(actividad))?.categoria || null;
+}
+
+/*
+ * Número de la actividad: 1, 2, 3… en orden del PDF; los grupos
+ * con código llevan su propia numeración (RS-1, RS-2…).
+ */
+export function numeroDe(puesto: Puesto, actividad: string): string | number | null {
+  let n = 0;
+  for (const g of CATALOGO[puesto]) {
+    const i = g.actividades.indexOf(actividad);
+    if (g.codigo) {
+      if (i >= 0) return `${g.codigo}-${i + 1}`;
+      continue;
+    }
+    if (i >= 0) return n + i + 1;
+    n += g.actividades.length;
+  }
+  return null;
 }
 
 export type Registro = {
