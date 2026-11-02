@@ -4,6 +4,7 @@ import { isCelula, type Celula } from "@/lib/celulas";
 import {
   CATALOGO,
   KPIS_ANALISTA,
+  OTRA_ACTIVIDAD,
   TEAM_ROLES,
   teamScope,
   LONG_HOURS,
@@ -127,6 +128,9 @@ export async function POST(req: NextRequest) {
     const actividad = str(body.actividad);
     const categoria = categoriaDe(puesto, actividad);
     if (!categoria) return fail("Elige una actividad de la lista");
+    // "Otro": tienen que escribir qué hicieron.
+    const otro = actividad === OTRA_ACTIVIDAD ? str(body.otro, 150) : "";
+    if (actividad === OTRA_ACTIVIDAD && !otro) return fail("Escribe qué actividad hiciste");
     const kpi = puesto === "analista" ? str(body.kpi, 10) : "";
     if (puesto === "analista" && !KPIS_ANALISTA.includes(kpi)) return fail("Indica si es para DCL o CVL");
     const cliente = str(body.cliente).toUpperCase();
@@ -189,6 +193,7 @@ export async function POST(req: NextRequest) {
       fin,
       creado: existing?.creado || nowIso,
       prueba: existing ? existing.prueba : me.isAdmin,
+      otro: otro || undefined,
       modo: existing?.modo || (action === "start" ? "cronometro" : "manual"),
       editado:
         !!existing &&

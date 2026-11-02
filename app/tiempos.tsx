@@ -175,7 +175,7 @@ export default function EstudioTiempos({
                 <div>
                   <span className="tmDot" /> En curso desde {mxTime(running.inicio)}
                   <strong>
-                    {running.actividad}
+                    {running.otro ? `Otro: ${running.otro}` : running.actividad}
                     {running.kpi && ` · ${running.kpi}`}
                   </strong>
                   <small>{running.cliente}</small>
@@ -273,6 +273,7 @@ function EntryForm({
   const [puesto, setPuesto] = useState<Puesto>(editing?.puesto || me.puesto || "analista");
   const [kpi, setKpi] = useState(editing?.kpi || "");
   const [actividad, setActividad] = useState(editing?.actividad || "");
+  const [otro, setOtro] = useState(editing?.otro || "");
   const [cliente, setCliente] = useState(editing?.cliente || "");
   const [mode, setMode] = useState<"timer" | "manual">(editing || running ? "manual" : "timer");
   const [fecha, setFecha] = useState(editing ? mxDate(editing.inicio) : clock.today);
@@ -302,6 +303,7 @@ function EntryForm({
       puesto,
       kpi,
       actividad,
+      otro,
       cliente,
       celula: editing?.celula || celula,
       fecha,
@@ -402,6 +404,18 @@ function EntryForm({
           </select>
         </label>
 
+        {actividad === "Otro" && (
+          <label className="rgField tmWide">
+            <span>¿Qué actividad hiciste?</span>
+            <input
+              value={otro}
+              maxLength={150}
+              placeholder="Escribe la actividad"
+              onChange={(e) => setOtro(e.target.value)}
+            />
+          </label>
+        )}
+
         {manual && (
           <>
             <label className="rgField">
@@ -500,7 +514,7 @@ function MyWeek({
               </span>
               <div className="tmWhat">
                 <strong>
-                  {r.actividad}
+                  {r.otro ? `Otro: ${r.otro}` : r.actividad}
                   {r.kpi && <em> · {r.kpi}</em>}
                 </strong>
                 <small>
@@ -570,7 +584,9 @@ function TeamView({
   const porModo = sumBy((r) =>
     r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "Sin dato"
   );
-  const porActividad = sumBy((r) => `${r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`).slice(0, 12);
+  const porActividad = sumBy(
+    (r) => `${r.otro ? `Otro: ${r.otro}` : r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`
+  ).slice(0, 12);
   const max = (list: [string, { min: number }][]) => Math.max(1, ...list.map(([, v]) => v.min));
 
   const bars = (title: string, list: [string, { min: number; n: number }][], label: (k: string) => string) => (

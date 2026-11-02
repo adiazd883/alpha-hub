@@ -186,6 +186,12 @@ export const CATALOGO: Record<Puesto, Grupo[]> = {
   ],
 };
 
+// "Otro" en todos los puestos: la actividad se escribe a mano.
+export const OTRA_ACTIVIDAD = "Otro";
+for (const puesto of Object.keys(CATALOGO) as Puesto[]) {
+  CATALOGO[puesto].push({ categoria: "Otro", actividades: [OTRA_ACTIVIDAD] });
+}
+
 export function categoriaDe(puesto: Puesto, actividad: string) {
   return CATALOGO[puesto].find((g) => g.actividades.includes(actividad))?.categoria || null;
 }
@@ -213,6 +219,8 @@ export type Registro = {
   // Cómo se registró; "editado" si después se cambiaron las horas a mano.
   modo?: "cronometro" | "manual";
   editado?: boolean;
+  // Lo que escribieron cuando eligieron "Otro".
+  otro?: string;
 };
 
 // Quién ve al equipo (sin registrar): Admin, Manager y Coordinadora
@@ -279,7 +287,7 @@ export { minutes };
 // CSV con todo el histórico (para análisis aparte).
 export function toCsv(rows: Registro[]) {
   const header = [
-    "Cliente", "Colaborador", "Correo", "Célula", "Puesto", "KPI", "Categoría", "No. actividad", "Actividad",
+    "Cliente", "Colaborador", "Correo", "Célula", "Puesto", "KPI", "Categoría", "No. actividad", "Actividad", "Otro (descripción)",
     "Fecha", "Inicio", "Fin", "Duración (min)", "Semana (lunes)", "Modo", "Editado", "Prueba", "Registrado el", "ID",
   ];
   const monday = (date: string) => {
@@ -297,7 +305,7 @@ export function toCsv(rows: Registro[]) {
     .map((r) =>
       [
         r.cliente, r.nombre, r.email, r.celula, PUESTO_LABELS[r.puesto], r.kpi, r.categoria,
-        numeroDe(r.puesto, r.actividad) ?? "", r.actividad,
+        numeroDe(r.puesto, r.actividad) ?? "", r.actividad, r.otro || "",
         mxDate(r.inicio), mxTime(r.inicio), mxTime(r.fin!), minutes(r), monday(mxDate(r.inicio)),
         r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "",
         r.editado ? "SÍ" : "", r.prueba ? "SÍ" : "", mxDate(r.creado) + " " + mxTime(r.creado), r.id,

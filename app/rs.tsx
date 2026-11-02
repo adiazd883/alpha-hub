@@ -49,7 +49,7 @@ export default function RapSheet({ celula }: { celula: Celula }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [colab, setColab] = useState("todos");
-  const [estado, setEstado] = useState<Estado>("pendientes");
+  const [estado, setEstado] = useState<Estado>("todas");
   const [contacto, setContacto] = useState("todos");
   const [query, setQuery] = useState("");
 
@@ -204,9 +204,9 @@ export default function RapSheet({ celula }: { celula: Celula }) {
                 ))}
               </select>
               <select value={estado} onChange={(e) => setEstado(e.target.value as Estado)} aria-label="Estado">
-                <option value="pendientes">Pendientes</option>
-                <option value="recibidas">Recibidas</option>
-                <option value="todas">Todas</option>
+                <option value="todas">Todos (pendientes y recibidas)</option>
+                <option value="pendientes">Solo pendientes</option>
+                <option value="recibidas">Solo recibidas</option>
               </select>
               <select value={contacto} onChange={(e) => setContacto(e.target.value)} aria-label="Contacto">
                 <option value="todos">Cualquier contacto</option>
