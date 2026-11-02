@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, type Session } from "@/lib/session";
 import { isCelula } from "@/lib/celulas";
 import {
+  numeroDeRegreso,
   areasFor,
   canClose,
   canEdit,
@@ -51,7 +52,11 @@ export async function GET(req: NextRequest) {
   try {
     const roster = await getRoster();
     const viewer = viewerFor(session, roster);
-    const items = (await listRegresos()).filter((r) => canSee(viewer, r));
+    const all = await listRegresos();
+    const numero = numeroDeRegreso(all);
+    const items = all
+      .filter((r) => canSee(viewer, r))
+      .map((r) => ({ ...r, numero: numero.get(r.id) }));
     return NextResponse.json({
       items,
       roster,

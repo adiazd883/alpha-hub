@@ -7120,3 +7120,12 @@ button {
   font-size: 13px;
   font-weight: 650;
 }
+
+.rgRepeat {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fdecea;
+  color: #c2413a;
+  font-size: 11px;
+  font-weight: 800;
+}

@@ -2141,14 +2141,23 @@ export default function Home() {
   );
 
   // Estudio de tiempos: analistas, paralegales y psychs de Alpha y Gamma (y el Admin).
+  // Ven al equipo (sin registrar); también desde General.
+  const tiemposViewer =
+    role === "MANAGER" ||
+    role === "COORDINATOR" ||
+    role === "TL" ||
+    role === "CS";
   const tiemposCelula =
     (celula === "alpha" || celula === "gamma") &&
     (role === "ADMIN" ||
       role === "ANALYST" ||
       role === "PARALEGAL" ||
-      role === "PSYCH")
+      role === "PSYCH" ||
+      tiemposViewer)
       ? celula
-      : null;
+      : celula === "general" && (role === "ADMIN" || tiemposViewer)
+        ? "alpha"
+        : null;
 
   // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
   const rsCelula =

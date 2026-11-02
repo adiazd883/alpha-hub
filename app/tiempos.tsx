@@ -15,6 +15,8 @@ type Me = {
   email: string;
   nombre: string;
   isAdmin: boolean;
+  canRegister: boolean;
+  canSeeTeam: boolean;
   puesto: Puesto | null;
   celulas: Celula[];
 };
@@ -73,6 +75,8 @@ export default function EstudioTiempos({
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Registro | null>(null);
   const [tab, setTab] = useState<"mios" | "equipo">("mios");
+  // Manager, TL y CS solo ven al equipo.
+  const onlyTeam = !!data && !data.me.canRegister;
   const [, setTick] = useState(0);
 
   async function load() {
@@ -150,7 +154,7 @@ export default function EstudioTiempos({
           <button className="refreshButton" onClick={load}>
             ↻ Refresh
           </button>
-          {data?.me.isAdmin && (
+          {data?.me.canSeeTeam && (
             <a className="rgBtn rgBtnGhost" href="/api/tiempos/export">
               ⬇ Descargar CSV
             </a>
@@ -193,6 +197,7 @@ export default function EstudioTiempos({
               </section>
             )}
 
+            {!onlyTeam && (
             <EntryForm
               key={editing?.id || "new"}
               data={data}
@@ -203,8 +208,9 @@ export default function EstudioTiempos({
               onCancel={() => setEditing(null)}
               onSubmit={(body, msg) => act(body, msg)}
             />
+            )}
 
-            {data.me.isAdmin && (
+            {data.me.canSeeTeam && !onlyTeam && (
               <div className="rgTabs tmTabs" role="tablist">
                 {(["mios", "equipo"] as const).map((t) => (
                   <button
@@ -220,7 +226,7 @@ export default function EstudioTiempos({
               </div>
             )}
 
-            {tab === "equipo" && data.me.isAdmin ? (
+            {(tab === "equipo" || onlyTeam) && data.me.canSeeTeam ? (
               <TeamView rows={data.team} catalogo={data.catalogo} today={data.clock.today} />
             ) : (
               <MyWeek

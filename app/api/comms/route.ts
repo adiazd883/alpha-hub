@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, type Session } from "@/lib/session";
 import type { Role } from "@/lib/auth";
-import { addComm, commsName, commsPosition, loadComms, type CommsVista } from "@/lib/comms";
+import { addComm, commsName, commsPosition, deleteComm, loadComms, type CommsVista } from "@/lib/comms";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       me: commsName(session.email),
       position: commsPosition(session.role),
       canWrite: !READ_ONLY.has(session.role),
+      canDelete: session.role === "ADMIN",
     });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "Unknown error", 500);
@@ -78,5 +79,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, row });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "No se pudo registrar", 500);
+  }
+}
+
+// Borrar un registro mal capturado: solo Admin.
+export async function DELETE(req: NextRequest) {
+  const session = getSession(req);
+  if (!session) return fail("No autenticado", 401);
+  if (session.role !== "ADMIN") return fail("Solo Admin puede borrar comunicaciones", 403);
+  const body = await req.json().catch(() => ({}));
+  if (!canSee(session, body.vista)) return fail("No tienes acceso a estas comunicaciones", 403);
+
+  const row = Number(body.row);
+  if (!Number.isInteger(row) || row < 2) return fail("Datos incompletos");
+
+  try {
+    await deleteComm(body.vista, {
+      row,
+      cliente: str(body.cliente, 200),
+      colaborador: str(body.colaborador, 80),
+      fecha: str(body.fecha, 10),
+    });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "No se pudo borrar", 500);
   }
 }

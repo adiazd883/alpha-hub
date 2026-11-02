@@ -3,10 +3,11 @@ import { getSession } from "@/lib/session";
 import { CELULAS } from "@/lib/celulas";
 import {
   motivosDe,
+  numeroDeRegreso,
   TIPO_LABELS,
   canSee,
   daysBetween,
-  isLead,
+  canViewAll,
   isOverdue,
   todayMx,
 } from "@/lib/regresos";
@@ -27,6 +28,7 @@ const HEADER = [
   "ID",
   "RECEIPT NUMBER",
   "ETAPA",
+  "NO. DE REGRESO",
   "QUÉ SE PIDE",
   "COSAS A CORREGIR",
   "DETALLE",
@@ -54,7 +56,7 @@ export async function GET(req: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
-  if (!isLead(session.role)) {
+  if (!canViewAll(session.role)) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 
@@ -67,7 +69,9 @@ export async function GET(req: NextRequest) {
     celulas: session.celulas,
   };
   const today = todayMx();
-  const rows = (await listRegresos())
+  const all = await listRegresos();
+  const numero = numeroDeRegreso(all);
+  const rows = all
     .filter((r) => canSee(viewer, r))
     .sort((a, b) => a.enviado.localeCompare(b.enviado));
 
@@ -86,6 +90,7 @@ export async function GET(req: NextRequest) {
       r.clienteId,
       r.receipt,
       r.etapa,
+      r.tipo === "regreso" ? numero.get(r.id) ?? "" : "",
       r.motivo,
       motivosDe(r).length,
       r.detalle,
