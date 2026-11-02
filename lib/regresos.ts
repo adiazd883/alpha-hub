@@ -45,6 +45,9 @@ export type Regreso = {
   etapa: string;
   origen?: ActualizacionOrigen; // solo actualizaciones
   area?: Area;
+  // Lo que se pide corregir (puede ser más de una cosa). "motivo"
+  // lleva las mismas unidas, para registros anteriores y el CSV.
+  motivos?: string[];
   motivo: string;
   detalle: string;
   para: string; // Person.id
@@ -252,6 +255,11 @@ export function gruposDe(tipo: RegresoTipo, area: Area): MotivoGrupo[] {
     ...GRUPOS_POR_TIPO[tipo].filter((g) => g.grupo.startsWith(prefix)),
     OTRO,
   ];
+}
+
+// Cosas que se piden en un registro (los anteriores solo tienen "motivo").
+export function motivosDe(r: Pick<Regreso, "motivo" | "motivos">) {
+  return r.motivos?.length ? r.motivos : r.motivo ? [r.motivo] : [];
 }
 
 export function motivosOf(tipo: RegresoTipo, area: Area) {
