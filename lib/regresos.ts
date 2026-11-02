@@ -123,14 +123,31 @@ export const PUESTO_LABELS: Record<Puesto, string> = {
   otro: "Otro",
 };
 
-// Al analista se le regresa la DCL o la CVL.
-const ANALISTA: MotivoGrupo = {
-  grupo: "Analista",
+/*
+ * Analistas: los problemas recurrentes de la DCL vienen del
+ * "Análisis de los comentarios de LI" (jun–sep 2026). La CVL casi
+ * no tiene regresos, así que se describe a mano en el detalle.
+ */
+const ANALISTA_DCL: MotivoGrupo = {
+  grupo: "DCL",
   motivos: [
-    { label: "DCL", hint: "Regreso en la DCL." },
-    { label: "CVL", hint: "Regreso en la CVL." },
+    { label: "DCL · Direcciones no declaradas o que no cuadran con el affidavit", hint: "Domicilios de taxes, escrituras o cartas del IRS que no están en el record." },
+    { label: "DCL · Línea de tiempo de Shared Residence no corresponde con el NOID", hint: "Periodos discontinuos, fechas de separación distintas, narrativas que se contradicen." },
+    { label: "DCL · Nombres y fechas distintos entre formas, affidavit y DCL", hint: "Homologar nombres y años entre documentos." },
+    { label: "DCL · Errores de plantilla o copia y pega", hint: "Nombres o direcciones de otro cliente; riesgo de confidencialidad." },
+    { label: "DCL · Documentos duplicados", hint: "Documentos repetidos en el paquete o exhibits." },
+    { label: "DCL · Traducciones faltantes", hint: "Evidencia sin su traducción." },
+    { label: "DCL · Evidencia sin valor probativo o contraproducente", hint: "Documentos que apuntan a otra residencia, capturas sin valor, fotos sin daños visibles." },
+    { label: "DCL · Narrativa de abuso sin respaldo, sin contexto o exagerada", hint: "Afirmaciones sin evidencia, eventos sin contexto, lenguaje exagerado." },
   ],
 };
+
+const ANALISTA_CVL: MotivoGrupo = {
+  grupo: "CVL",
+  motivos: [{ label: "CVL", hint: "Describe el regreso de la CVL en el detalle." }],
+};
+
+const ANALISTA_GRUPOS = [ANALISTA_DCL, ANALISTA_CVL];
 
 const CS: MotivoGrupo = {
   grupo: "CS",
@@ -228,7 +245,7 @@ const GRUPOS_POR_TIPO: Record<RegresoTipo, MotivoGrupo[]> = {
 
 // Opciones de cada área; "Otro" va al final de todas.
 export function gruposDe(tipo: RegresoTipo, area: Area): MotivoGrupo[] {
-  if (area === "analista") return [ANALISTA, OTRO];
+  if (area === "analista") return [...ANALISTA_GRUPOS, OTRO];
   if (area === "cs") return [CS, OTRO];
   const prefix = area === "psych" ? "Psych" : "Paralegal";
   return [
@@ -243,7 +260,13 @@ export function motivosOf(tipo: RegresoTipo, area: Area) {
 
 // Área de un registro anterior a este campo, según su motivo.
 export function areaDeMotivo(tipo: RegresoTipo, motivo: string): Area | null {
-  if (ANALISTA.motivos.some((m) => m.label === motivo)) return "analista";
+  // "DCL" y "CVL" solos son de registros anteriores a esta lista.
+  if (
+    ["DCL", "CVL"].includes(motivo) ||
+    ANALISTA_GRUPOS.some((g) => g.motivos.some((m) => m.label === motivo))
+  ) {
+    return "analista";
+  }
   if (CS.motivos.some((m) => m.label === motivo)) return "cs";
   for (const area of ["paralegal", "psych"] as Area[]) {
     const g = GRUPOS_POR_TIPO[tipo].find(
