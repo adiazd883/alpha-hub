@@ -16,6 +16,7 @@ import {
   areaDeMotivo,
   gruposDe,
   isOverdue,
+  motivosDe,
   pareto,
   type ParetoRow,
   type ActualizacionOrigen,
@@ -62,7 +63,7 @@ type Draft = {
   limite: string;
 };
 
-type Pick = { motivo: string; para: string };
+type Pick = { motivos: string[]; para: string };
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
@@ -195,7 +196,7 @@ export default function Regresos({
         (tipoFilter === "todos" || r.tipo === tipoFilter) &&
         (celulaFilter === "todas" || r.celula === celulaFilter) &&
         (!q ||
-          [r.cliente, r.clienteId, r.receipt, r.motivo, r.detalle, r.etapa, nameOf(r.para), nameOf(r.de)]
+          [r.cliente, r.clienteId, r.receipt, motivosDe(r).join(" "), r.detalle, r.etapa, nameOf(r.para), nameOf(r.de)]
             .join(" ")
             .toLowerCase()
             .includes(q))
@@ -243,7 +244,7 @@ export default function Regresos({
       origen: r.origen || "",
       ...(() => {
         const area = r.area || areaDeMotivo(r.tipo, r.motivo) || "paralegal";
-        return { areas: [area], picks: { [area]: { motivo: r.motivo, para: r.para } } };
+        return { areas: [area], picks: { [area]: { motivos: motivosDe(r), para: r.para } } };
       })(),
       detalle: r.detalle,
       de: r.de,
@@ -494,7 +495,11 @@ export default function Regresos({
                     {r.clienteId && <small> · ID {r.clienteId}</small>}
                     {r.receipt && <small> · {r.receipt}</small>}
                   </h3>
-                  <p className="rgMotivo">{r.motivo}</p>
+                  <ul className="rgMotivoList">
+                    {motivosDe(r).map((m) => (
+                      <li key={m}>{m}</li>
+                    ))}
+                  </ul>
                   {r.detalle && <p className="rgDetalle">{r.detalle}</p>}
                   {r.nota && <p className="rgNota">Cierre: {r.nota}</p>}
                   <p className="rgPeople">
@@ -560,21 +565,21 @@ function MotivoPicker({
   label,
   tipo,
   area,
-  motivo,
+  motivos,
   para,
   people,
   showCelula,
-  onMotivo,
+  onMotivos,
   onPara,
 }: {
   label?: string;
   tipo: RegresoTipo;
   area: Area;
-  motivo: string;
+  motivos: string[];
   para: string;
   people: Person[];
   showCelula: boolean;
-  onMotivo: (v: string) => void;
+  onMotivos: (v: string[]) => void;
   onPara: (v: string) => void;
 }) {
   const grupos = gruposDe(tipo, area);
@@ -585,13 +590,16 @@ function MotivoPicker({
       : !p.puesto || p.puesto === area || p.id === para
   );
   const opciones = grupos.flatMap((g) => g.motivos);
-  const hint = opciones.find((m) => m.label === motivo)?.hint;
+  const hintOf = (label: string) => opciones.find((m) => m.label === label)?.hint;
+  // Las ya elegidas no se repiten en el desplegable.
   const options = (g: (typeof grupos)[number]) =>
-    g.motivos.map((m) => (
-      <option key={m.label} value={m.label}>
-        {m.label}
-      </option>
-    ));
+    g.motivos
+      .filter((m) => !motivos.includes(m.label))
+      .map((m) => (
+        <option key={m.label} value={m.label}>
+          {m.label}
+        </option>
+      ));
 
   return (
     <div className="rgPicker">
@@ -599,15 +607,13 @@ function MotivoPicker({
       <div className="rgRow">
         <select
           className="rgPickerMotivo"
-          value={motivo}
-          onChange={(e) => onMotivo(e.target.value)}
+          value=""
+          onChange={(e) => e.target.value && onMotivos([...motivos, e.target.value])}
           aria-label={`Qué se pide${label ? ` a ${label}` : ""}`}
         >
-          <option value="">Elige qué se pide…</option>
-          {/* Motivo de un registro anterior que ya no está en la lista. */}
-          {motivo && !opciones.some((m) => m.label === motivo) && (
-            <option value={motivo}>{motivo}</option>
-          )}
+          <option value="">
+            {motivos.length ? "+ Agregar otra cosa a corregir…" : "Elige qué se pide…"}
+          </option>
           {grupos.length > 2
             ? grupos.map((g) => (
                 <optgroup key={g.grupo} label={g.grupo}>
@@ -631,7 +637,29 @@ function MotivoPicker({
           ))}
         </select>
       </div>
-      {hint && <p className="rgMotivoHint">{hint}</p>}
+      {motivos.length > 0 && (
+        <ul className="rgPicked">
+          {motivos.map((m) => (
+            <li key={m} title={hintOf(m) || ""}>
+              <span>{m}</span>
+              <button
+                type="button"
+                aria-label={`Quitar ${m}`}
+                onClick={() => onMotivos(motivos.filter((x) => x !== m))}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {motivos.length > 0 && (
+        <p className="rgMotivoHint">
+          {motivos.length === 1
+            ? hintOf(motivos[0]) || ""
+            : `${motivos.length} cosas a corregir`}
+        </p>
+      )}
     </div>
   );
 }
@@ -681,7 +709,7 @@ function RegistroForm({
       ...prev,
       picks: {
         ...prev.picks,
-        [area]: { motivo: "", para: "", ...prev.picks[area], ...patch },
+        [area]: { motivos: [], para: "", ...prev.picks[area], ...patch },
       },
     }));
 
@@ -708,7 +736,7 @@ function RegistroForm({
     if (d.tipo === "actualizacion" && !d.origen) return setErr("Elige qué trajo el cliente");
     if (!d.areas.length) return setErr("Elige para qué área va");
     for (const a of d.areas) {
-      if (!d.picks[a]?.motivo) return setErr(`Elige qué se pide a ${AREA_LABELS[a]}`);
+      if (!d.picks[a]?.motivos?.length) return setErr(`Elige qué se pide a ${AREA_LABELS[a]}`);
       if (!d.picks[a]?.para) return setErr(`Elige para quién va (${AREA_LABELS[a]})`);
     }
     setSaving(true);
@@ -902,7 +930,7 @@ function RegistroForm({
                           ? prev.areas.filter((x) => x !== a)
                           : areasFor(role).filter((x) => x === a || prev.areas.includes(x)),
                       picks: prev.id
-                        ? { [a]: { motivo: "", para: prev.picks[prev.areas[0]]?.para || "" } }
+                        ? { [a]: { motivos: [], para: prev.picks[prev.areas[0]]?.para || "" } }
                         : prev.picks,
                     }))
                   }
@@ -923,11 +951,11 @@ function RegistroForm({
                 label={d.areas.length > 1 ? AREA_LABELS[a] : undefined}
                 tipo={d.tipo}
                 area={a}
-                motivo={d.picks[a]?.motivo || ""}
+                motivos={d.picks[a]?.motivos || []}
                 para={d.picks[a]?.para || ""}
                 people={people}
                 showCelula={celulas.length > 1}
-                onMotivo={(v) => setPick(a, { motivo: v })}
+                onMotivos={(v) => setPick(a, { motivos: v })}
                 onPara={(v) => setPick(a, { para: v })}
               />
             ))}
@@ -1098,7 +1126,16 @@ function ParetoView({
   };
 
   const byPerson = pareto(countBy((r) => r.para));
-  const byMotivo = pareto(countBy((r) => r.motivo));
+  // Cada cosa pedida cuenta por separado.
+  const motivoCounts = new Map<string, number>();
+  for (const r of base) for (const m of motivosDe(r)) motivoCounts.set(m, (motivoCounts.get(m) || 0) + 1);
+  const byMotivo = pareto(motivoCounts);
+
+  // Proporción: cuántas cosas se piden corregir por cada registro.
+  const items_ = (rows: Regreso[]) => rows.reduce((t, r) => t + motivosDe(r).length, 0);
+  const cosasRegreso = items_(regresos);
+  const porRegreso = regresos.length ? cosasRegreso / regresos.length : null;
+  const porActualizacion = actualizaciones.length ? items_(actualizaciones) / actualizaciones.length : null;
   const byEtapa = pareto(countBy((r) => r.etapa));
 
   // Últimas 12 semanas, regresos vs actualizaciones.
@@ -1121,9 +1158,12 @@ function ParetoView({
     list.push(r);
     people.set(r.para, list);
   }
-  const top = (rows: Regreso[], key: (r: Regreso) => string) => {
+  const top = (rows: Regreso[], key: (r: Regreso) => string | string[]) => {
     const m = new Map<string, number>();
-    rows.forEach((r) => m.set(key(r), (m.get(key(r)) || 0) + 1));
+    rows.forEach((r) => {
+      const keys = key(r);
+      (Array.isArray(keys) ? keys : [keys]).forEach((k) => m.set(k, (m.get(k) || 0) + 1));
+    });
     const best = [...m.entries()].sort((a, b) => b[1] - a[1])[0];
     return best ? `${best[0]} (${best[1]})` : "—";
   };
@@ -1137,7 +1177,9 @@ function ParetoView({
         regresos: reg.length,
         actualizaciones: rows.length - reg.length,
         share: regresos.length ? reg.length / regresos.length : 0,
-        motivo: top(reg, (r) => r.motivo),
+        motivo: top(reg, (r) => motivosDe(r)),
+        cosas: items_(reg),
+        porRegreso: reg.length ? items_(reg) / reg.length : null,
         etapa: top(reg, (r) => r.etapa),
         pendientes: rows.filter((r) => r.estado === "pendiente").length,
         aTiempo: closedRows.length
@@ -1164,6 +1206,14 @@ function ParetoView({
           <span>Regresos</span>
           <strong>{regresos.length}</strong>
           <em>{inPeriod.length ? pct(regresos.length / inPeriod.length) : "0%"} del total</em>
+        </div>
+        <div className="rgTile">
+          <span>Cosas por regreso</span>
+          <strong>{porRegreso === null ? "—" : porRegreso.toFixed(1)}</strong>
+          <em>
+            {cosasRegreso} cosas en {regresos.length} regresos
+            {porActualizacion !== null && ` · ${porActualizacion.toFixed(1)} por actualización`}
+          </em>
         </div>
         <div className="rgTile">
           <span>Actualizaciones</span>
@@ -1244,6 +1294,7 @@ function ParetoView({
                 <th>Regresos</th>
                 <th>% del total</th>
                 <th>Actualiz.</th>
+                <th>Cosas por regreso</th>
                 <th>Motivo más común</th>
                 <th>Etapa más común</th>
                 <th>Pendientes</th>
@@ -1259,6 +1310,7 @@ function ParetoView({
                   <td>{f.regresos}</td>
                   <td>{f.regresos ? pct(f.share) : "—"}</td>
                   <td>{f.actualizaciones}</td>
+                  <td>{f.porRegreso === null ? "—" : `${f.porRegreso.toFixed(1)} (${f.cosas})`}</td>
                   <td>{f.regresos ? f.motivo : "—"}</td>
                   <td>{f.regresos ? f.etapa : "—"}</td>
                   <td>{f.pendientes}</td>
@@ -1267,7 +1319,7 @@ function ParetoView({
               ))}
               {!feedback.length && (
                 <tr>
-                  <td colSpan={8} className="rgEmptyCell">
+                  <td colSpan={9} className="rgEmptyCell">
                     Sin registros en este periodo.
                   </td>
                 </tr>

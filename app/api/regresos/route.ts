@@ -96,8 +96,16 @@ function readFields(
   }
   const area = areasFor(session.role).find((a) => a === body.area);
   if (!area) return { error: "Elige para qué área va" } as const;
-  const motivo = str(body.motivo, 120);
-  if (!motivo) return { error: "Elige qué se pide" } as const;
+  // Puede pedirse más de una cosa en el mismo regreso.
+  const motivos = [
+    ...new Set(
+      (Array.isArray(body.motivos) ? body.motivos : [body.motivo])
+        .map((m: unknown) => str(m, 120))
+        .filter(Boolean)
+    ),
+  ].slice(0, 30) as string[];
+  if (!motivos.length) return { error: "Elige qué se pide" } as const;
+  const motivo = motivos.join(" · ");
   const enviado = isDateOnly(body.enviado) ? body.enviado : todayMx();
   const limite = isDateOnly(body.limite) ? body.limite : undefined;
   if (limite && limite < enviado) {
@@ -114,6 +122,7 @@ function readFields(
       etapa: str(body.etapa, 80) || "Otra",
       origen: tipo === "actualizacion" ? origen : undefined,
       area,
+      motivos,
       motivo,
       detalle: str(body.detalle, 2000),
       para,

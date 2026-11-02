@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { CELULAS } from "@/lib/celulas";
 import {
+  motivosDe,
   TIPO_LABELS,
   canSee,
   daysBetween,
@@ -27,6 +28,7 @@ const HEADER = [
   "RECEIPT NUMBER",
   "ETAPA",
   "QUÉ SE PIDE",
+  "COSAS A CORREGIR",
   "DETALLE",
   "PARA",
   "LO MANDA",
@@ -85,6 +87,7 @@ export async function GET(req: NextRequest) {
       r.receipt,
       r.etapa,
       r.motivo,
+      motivosDe(r).length,
       r.detalle,
       names.get(r.para) || r.para,
       names.get(r.de) || r.de,

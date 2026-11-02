@@ -7082,3 +7082,41 @@ button {
   text-decoration: underline;
   cursor: pointer;
 }
+
+.rgPicked {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rgPicked li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid #c9d6f5;
+  border-radius: 999px;
+  background: #f5f8ff;
+  color: #1f2b42;
+  font-size: 12px;
+}
+
+.rgPicked button {
+  border: 0;
+  background: transparent;
+  color: #778397;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rgMotivoList {
+  margin: 4px 0;
+  padding-left: 18px;
+  color: var(--rg-ink);
+  font-size: 13px;
+  font-weight: 650;
+}
