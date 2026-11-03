@@ -65,6 +65,7 @@ export const USER_NAMES: Record<string, string> = {
   "aramirezc@supportmendoza.com": "Alonso",
   "hjesus@supportmendoza.com": "Hector",
   "lcamaro@supportmendoza.com": "Les",
+  "jlara@supportmendoza.com": "Jazmin",
   "bcastellanos@supportmendoza.com": "Brenda",
   "vperez@supportmendoza.com": "Valeria",
 

@@ -106,6 +106,10 @@ const SHEET_NAMES: Record<string, string> = {
   "lmurillo@supportmendoza.com": "FERNANDO M.",
 };
 
+// Variantes del mismo nombre en la Sheet (igual que en calendarios).
+const COMMS_ALIASES: Record<string, string> = { JAZ: "JAZMIN" };
+const commsAlias = (name: string) => COMMS_ALIASES[name] || name;
+
 export function commsName(email: string) {
   return SHEET_NAMES[email] || (USER_NAMES[email] || email.split("@")[0]).toUpperCase();
 }
@@ -164,7 +168,7 @@ export async function loadComms(vista: CommsVista) {
   const all = ((res.data.values || []) as unknown[][]).map((r, i) => ({
     row: i + 2,
     cliente: text(get(r, "cliente")),
-    colaborador: text(get(r, "colaborador")).toUpperCase(),
+    colaborador: commsAlias(text(get(r, "colaborador")).toUpperCase()),
     posicion: text(get(r, "posicion")),
     fecha: isoDate(get(r, "fecha")),
     duracion: text(get(r, "duracion")),
