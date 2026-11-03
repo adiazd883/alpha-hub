@@ -122,6 +122,7 @@ type AccountabilityStageResult = {
   backlog: number;
   scheduled: number;
   advanced: number;
+  switches: number;
   productivity: number | null;
   rows: {
     client: string;
@@ -129,13 +130,30 @@ type AccountabilityStageResult = {
     done: string;
     delivered: boolean;
     backlog: boolean;
+    noteKey: string;
+    // Adelantada que cubrió a este cliente no entregado.
+    switchWith?: string;
   }[];
   advancedRows: {
     client: string;
     expected: string;
     done: string;
+    noteKey: string;
+    // Cliente de la meta que esta adelantada cubrió.
+    covers?: string;
   }[];
 };
+
+// Llave de la nota de rendición: célula | etapa | cliente.
+function accountabilityNoteKey(row: CaseRow, stage: TeamCalendar) {
+  const id =
+    (row["ID"] || "").trim() ||
+    (row["CLIENTE"] || "").trim().toUpperCase();
+
+  return `${row.__celula || "alpha"}|${stage}|${
+    row.__source === "NW" ? "NW-" : ""
+  }${id}`;
+}
 
 type AccountabilityCollaborator = {
   name: string;
@@ -1594,6 +1612,61 @@ const dateInputValue = (date: Date) => {
 const accountabilityExpectedLabel = (stage: TeamCalendar) =>
   stage === "mgm" ? "COMMITMENT" : "EXPECTED DONE";
 
+type AccountabilityNote = {
+  text: string;
+  by: string;
+  at: string;
+};
+
+/*
+ * Nota ("disclaimer") de un cliente en la rendición. Va fuera de
+ * Home para que no se vuelva a montar en cada render y se guarda
+ * al salir del campo.
+ */
+function AccountabilityNoteCell({
+  note,
+  onSave,
+}: {
+  note?: AccountabilityNote;
+  onSave: (text: string) => Promise<void>;
+}) {
+  const [text, setText] = useState(note?.text || "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setText(note?.text || "");
+  }, [note?.text]);
+
+  async function commit() {
+    if (text.trim() === (note?.text || "")) return;
+    setSaving(true);
+    try {
+      await onSave(text);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="accountabilityNoteCell">
+      <textarea
+        rows={1}
+        value={text}
+        placeholder="Agregar nota…"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+      />
+      <small>
+        {saving
+          ? "Guardando…"
+          : note
+            ? `${note.by} · ${new Date(note.at).toLocaleDateString("es-MX")}`
+            : ""}
+      </small>
+    </div>
+  );
+}
+
 export default function Home() {
   const [user, setUser] =
     useState<User | null>(null);
@@ -1730,6 +1803,13 @@ export default function Home() {
       -7
     )
   );
+
+  const [
+    accountabilityNotes,
+    setAccountabilityNotes,
+  ] = useState<Record<string, AccountabilityNote>>({});
+  const [accountabilityNoteError, setAccountabilityNoteError] =
+    useState("");
 
   const [search, setSearch] =
     useState("");
@@ -3753,6 +3833,49 @@ export default function Home() {
                 return;
               }
 
+              const metaSorted =
+                [...bucket.metaRows].sort(
+                  (a, b) =>
+                    a.expected.getTime() -
+                    b.expected.getTime()
+                );
+              const advancedSorted =
+                [...bucket.advancedRows].sort(
+                  (a, b) =>
+                    a.done.getTime() -
+                    b.done.getTime()
+                );
+
+              /*
+               * Switch: un cliente de la meta que no salió se cubre
+               * con una entrega adelantada (en orden: el primer
+               * pendiente con la primera adelantada).
+               */
+              const pendingRows =
+                metaSorted.filter(
+                  (item) =>
+                    !deliveredRows.includes(item)
+                );
+              const switches = Math.min(
+                pendingRows.length,
+                advancedSorted.length
+              );
+              const switchOf = new Map<
+                (typeof metaSorted)[number],
+                (typeof advancedSorted)[number]
+              >();
+              const coverOf = new Map<
+                (typeof advancedSorted)[number],
+                (typeof metaSorted)[number]
+              >();
+              for (let i = 0; i < switches; i += 1) {
+                switchOf.set(pendingRows[i], advancedSorted[i]);
+                coverOf.set(advancedSorted[i], pendingRows[i]);
+              }
+
+              const clientOf = (row: CaseRow) =>
+                row["CLIENTE"] || "Sin cliente";
+
               const stageResult: AccountabilityStageResult = {
                 stage,
                 label: stageLabel(stage),
@@ -3766,17 +3889,13 @@ export default function Home() {
                 scheduled,
                 advanced:
                   bucket.advancedRows.length,
+                switches,
                 productivity:
                   meta > 0
-                    ? (delivered / meta) * 100
+                    ? ((delivered + switches) / meta) * 100
                     : null,
                 rows:
-                  bucket.metaRows
-                    .sort(
-                      (a, b) =>
-                        a.expected.getTime() -
-                        b.expected.getTime()
-                    )
+                  metaSorted
                     .map((item) => ({
                       client:
                         item.row[
@@ -3804,14 +3923,13 @@ export default function Home() {
                       backlog:
                         item.expected.getTime() <
                         accountabilityWeekStart.getTime(),
+                      noteKey: accountabilityNoteKey(item.row, stage),
+                      switchWith: switchOf.has(item)
+                        ? clientOf(switchOf.get(item)!.row)
+                        : undefined,
                     })),
                 advancedRows:
-                  bucket.advancedRows
-                    .sort(
-                      (a, b) =>
-                        a.done.getTime() -
-                        b.done.getTime()
-                    )
+                  advancedSorted
                     .map((item) => ({
                       client:
                         item.row[
@@ -3828,6 +3946,10 @@ export default function Home() {
                         parseDateOnly(item.row[doneKey] || "")
                           ? formatDate(item.row[doneKey] || "")
                           : "Entregado (sin fecha)",
+                      noteKey: accountabilityNoteKey(item.row, stage),
+                      covers: coverOf.has(item)
+                        ? clientOf(coverOf.get(item)!.row)
+                        : undefined,
                     })),
               };
 
@@ -3932,14 +4054,27 @@ export default function Home() {
           0
         );
 
+      const switches =
+        collaborators.reduce(
+          (total, collaborator) =>
+            total +
+            collaborator.stages.reduce(
+              (sum, stage) =>
+                sum + stage.switches,
+              0
+            ),
+          0
+        );
+
       return {
         collaborators,
         meta,
         delivered,
         advanced,
+        switches,
         productivity:
           meta > 0
-            ? (delivered / meta) * 100
+            ? ((delivered + switches) / meta) * 100
             : null,
       };
     }, [
@@ -3956,6 +4091,52 @@ export default function Home() {
         -7
       )
     );
+  }
+
+  const accountabilityWeekKey =
+    dateInputValue(accountabilityWeekStart);
+
+  // Notas de la semana auditada (memoria del hub).
+  useEffect(() => {
+    if (mainView !== "accountability") return;
+    let cancelled = false;
+
+    fetch(`/api/rendicion-notes?week=${accountabilityWeekKey}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled) setAccountabilityNotes(json.notes || {});
+      })
+      .catch(() => {
+        if (!cancelled) setAccountabilityNotes({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mainView, accountabilityWeekKey]);
+
+  async function saveAccountabilityNote(field: string, text: string) {
+    setAccountabilityNoteError("");
+    try {
+      const res = await fetch("/api/rendicion-notes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ week: accountabilityWeekKey, field, text }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "No se pudo guardar la nota");
+
+      setAccountabilityNotes((prev) => {
+        const next = { ...prev };
+        if (json.note) next[field] = json.note;
+        else delete next[field];
+        return next;
+      });
+    } catch (e) {
+      setAccountabilityNoteError(
+        e instanceof Error ? e.message : "No se pudo guardar la nota"
+      );
+    }
   }
 
   function nextAccountabilityWeek() {
@@ -5197,15 +5378,20 @@ export default function Home() {
                     <input
                       type="date"
                       value={toInputDate(done)}
-                      onChange={(e) =>
-                        setSelectedCase({
-                          ...selectedCase,
-                          [item.doneHeader || ""]: e.target.value,
-                        })
-                      }
-                      onBlur={(e) =>
-                        saveCaseDate(item.doneHeader || "", e.target.value)
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        // Igual que en los campos: se guarda al elegirla.
+                        if (value && Number(value.slice(0, 4)) < 2000) {
+                          setSelectedCase({
+                            ...selectedCase,
+                            [item.doneHeader || ""]: value,
+                          });
+                          return;
+                        }
+
+                        saveCaseDate(item.doneHeader || "", value);
+                      }}
                     />
                   )}
                 </div>
@@ -5347,16 +5533,36 @@ export default function Home() {
               )
             )}
           </select>
+        ) : type === "date" ? (
+          /*
+           * La fecha se guarda al elegirla: este campo se vuelve a
+           * montar con cada cambio y el onBlur nunca llegaba, así
+           * que la fecha de entrega no subía a la Sheet. Vacío =
+           * se borra. Mientras se teclea el año (0002, 0020…) no
+           * se guarda nada.
+           */
+          <input
+            type="date"
+            value={toInputDate(value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              updateLocal(newValue);
+
+              if (newValue && Number(newValue.slice(0, 4)) < 2000) {
+                return;
+              }
+
+              saveField(
+                Number(selectedCase.__row),
+                header,
+                newValue
+              );
+            }}
+          />
         ) : (
           <input
             type={type}
-            value={
-              type === "date"
-                ? toInputDate(
-                    value
-                  )
-                : value
-            }
+            value={value}
             onChange={(e) =>
               updateLocal(
                 e.target.value
@@ -7643,6 +7849,11 @@ export default function Home() {
                   <strong>{accountabilityData.advanced}</strong>
                 </div>
 
+                <div>
+                  <span>SWITCH</span>
+                  <strong>{accountabilityData.switches}</strong>
+                </div>
+
                 <div className="accountabilityProductivitySummary">
                   <span>PRODUCTIVIDAD</span>
                   <strong>
@@ -7653,6 +7864,12 @@ export default function Home() {
                 </div>
               </div>
             </section>
+
+            {accountabilityNoteError && (
+              <div className="errorBanner">
+                {accountabilityNoteError}
+              </div>
+            )}
 
             <div className="accountabilityCollaborators">
               {accountabilityData.collaborators.map(
@@ -7709,7 +7926,11 @@ export default function Home() {
                                 <div>
                                   <span>ENTREGAS</span>
                                   <strong>{stage.delivered}</strong>
-                                  <small>de la meta</small>
+                                  <small>
+                                    de la meta
+                                    {stage.switches > 0 &&
+                                      ` + ${stage.switches} switch`}
+                                  </small>
                                 </div>
 
                                 <div className="accountabilityProductivityMetric">
@@ -7719,7 +7940,7 @@ export default function Home() {
                                       ? "—"
                                       : `${stage.productivity.toFixed(1)}%`}
                                   </strong>
-                                  <small>entregas ÷ meta</small>
+                                  <small>(entregas + switch) ÷ meta</small>
                                 </div>
 
                                 {stage.advanced > 0 && (
@@ -7742,7 +7963,11 @@ export default function Home() {
                                   >
                                     <span>ADELANTADAS</span>
                                     <strong>{stage.advanced}</strong>
-                                    <small>fuera de la meta</small>
+                                    <small>
+                                      {stage.switches > 0
+                                        ? `${stage.switches} cubren la meta`
+                                        : "fuera de la meta"}
+                                    </small>
                                   </button>
                                 )}
                               </div>
@@ -7753,6 +7978,7 @@ export default function Home() {
                                 <div>CLIENTE</div>
                                 <div>{stage.expectedLabel}</div>
                                 <div>FECHA DE ENTREGA</div>
+                                <div>NOTA</div>
                               </div>
 
                               {stage.rows.map(
@@ -7773,6 +7999,15 @@ export default function Home() {
                                           BACKLOG
                                         </span>
                                       )}
+
+                                      {item.switchWith && (
+                                        <span
+                                          className="accountabilitySwitchTag"
+                                          title={`Cubierto por ${item.switchWith} (adelantada)`}
+                                        >
+                                          SWITCH ⇄ {item.switchWith}
+                                        </span>
+                                      )}
                                     </div>
 
                                     <div>
@@ -7786,11 +8021,59 @@ export default function Home() {
                                     }>
                                       {item.done}
                                     </div>
+
+                                    <AccountabilityNoteCell
+                                      note={accountabilityNotes[item.noteKey]}
+                                      onSave={(text) =>
+                                        saveAccountabilityNote(item.noteKey, text)
+                                      }
+                                    />
                                   </div>
                                 )
                               )}
 
-                              {!stage.rows.length && (
+                              {stage.advancedRows.map(
+                                (item, index) => (
+                                  <div
+                                    className="accountabilityTableRow accountabilityAdvancedRow"
+                                    key={`${stage.stage}-adv-${item.client}-${index}`}
+                                  >
+                                    <div className="accountabilityClientCell">
+                                      <strong>{item.client}</strong>
+
+                                      <span className="accountabilityAdvancedTag">
+                                        ADELANTADA
+                                      </span>
+
+                                      {item.covers && (
+                                        <span
+                                          className="accountabilitySwitchTag"
+                                          title={`Cubre a ${item.covers}`}
+                                        >
+                                          SWITCH ⇄ {item.covers}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div>
+                                      {item.expected}
+                                    </div>
+
+                                    <div className="accountabilityDoneDate">
+                                      {item.done}
+                                    </div>
+
+                                    <AccountabilityNoteCell
+                                      note={accountabilityNotes[item.noteKey]}
+                                      onSave={(text) =>
+                                        saveAccountabilityNote(item.noteKey, text)
+                                      }
+                                    />
+                                  </div>
+                                )
+                              )}
+
+                              {!stage.rows.length && !stage.advancedRows.length && (
                                 <div className="accountabilityNoRows">
                                   No hubo casos dentro de la meta de esta semana.
                                 </div>
