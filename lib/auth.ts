@@ -25,6 +25,7 @@ export const USERS: Record<string, Role> = {
   "aramirezc@supportmendoza.com": "ANALYST",
   "hjesus@supportmendoza.com": "ANALYST",
   "lcamaro@supportmendoza.com": "ANALYST",
+  "jlara@supportmendoza.com": "PARALEGAL",
   "bcastellanos@supportmendoza.com": "MANAGER",
   "vperez@supportmendoza.com": "COORDINATOR",
   "aperezn@supportmendoza.com": "TL",
