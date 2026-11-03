@@ -127,7 +127,8 @@ export default function Regresos({
 
   // Ve todo el equipo y el 80/20: Admin, Manager, Coordinadora, TL y CS.
   const lead = canViewAll(role);
-  const [tab, setTab] = useState<Tab>("mine");
+  // Quien ve a todo el equipo abre directo en "Todos".
+  const [tab, setTab] = useState<Tab>(lead ? "all" : "mine");
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>("todos");
   const [celulaFilter, setCelulaFilter] = useState<Celula | "todas">("todas");
   const [search, setSearch] = useState("");

@@ -25,6 +25,7 @@ export const USERS: Record<string, Role> = {
   "aramirezc@supportmendoza.com": "ANALYST",
   "hjesus@supportmendoza.com": "ANALYST",
   "lcamaro@supportmendoza.com": "ANALYST",
+  "jlara@supportmendoza.com": "PARALEGAL",
   "bcastellanos@supportmendoza.com": "MANAGER",
   "vperez@supportmendoza.com": "COORDINATOR",
   "aperezn@supportmendoza.com": "TL",
@@ -64,6 +65,7 @@ export const USER_NAMES: Record<string, string> = {
   "aramirezc@supportmendoza.com": "Alonso",
   "hjesus@supportmendoza.com": "Hector",
   "lcamaro@supportmendoza.com": "Les",
+  "jlara@supportmendoza.com": "Jazmin",
   "bcastellanos@supportmendoza.com": "Brenda",
   "vperez@supportmendoza.com": "Valeria",
 
