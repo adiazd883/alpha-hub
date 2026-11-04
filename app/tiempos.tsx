@@ -252,6 +252,117 @@ export default function EstudioTiempos({
   );
 }
 
+// Sin acentos ni mayúsculas, para buscar.
+const fold = (v: string) =>
+  v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/*
+ * Buscador de actividad: al escribir ("ll") salen primero las que
+ * empiezan así y luego las que tienen una palabra que empieza así.
+ * También se puede buscar por número (12, RS-1).
+ */
+function ActivityPicker({
+  grupos,
+  numero,
+  value,
+  onChange,
+}: {
+  grupos: Grupo[];
+  numero: (a: string) => string | number;
+  value: string;
+  onChange: (a: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+
+  const options = useMemo(() => {
+    const q = fold(query);
+    const all = grupos.flatMap((g) =>
+      g.actividades.map((a) => ({ a, categoria: g.categoria, n: String(numero(a)) }))
+    );
+    if (!q) return all;
+    const rank = (o: (typeof all)[number]) => {
+      const name = fold(o.a);
+      if (name.startsWith(q) || fold(o.n).startsWith(q)) return 0;
+      return name.split(/[^a-z0-9]+/).some((w) => w.startsWith(q)) ? 1 : -1;
+    };
+    return all
+      .map((o) => ({ o, r: rank(o) }))
+      .filter((x) => x.r >= 0)
+      .sort((x, y) => x.r - y.r)
+      .map((x) => x.o);
+  }, [grupos, numero, query]);
+
+  function pick(a: string) {
+    onChange(a);
+    setQuery("");
+    setOpen(false);
+  }
+
+  const shown = value ? `${numero(value)}. ${value}` : "";
+
+  return (
+    <div className="tmPicker">
+      <input
+        value={open ? query : shown}
+        placeholder="Escribe para buscar (ej. LL) o elige de la lista…"
+        onFocus={() => {
+          setOpen(true);
+          setQuery("");
+          setActive(0);
+        }}
+        onBlur={() => setOpen(false)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setActive(0);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActive((i) => Math.min(options.length - 1, i + 1));
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActive((i) => Math.max(0, i - 1));
+          } else if (e.key === "Enter" && options[active]) {
+            e.preventDefault();
+            pick(options[active].a);
+            (e.target as HTMLInputElement).blur();
+          } else if (e.key === "Escape") {
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+      />
+      {open && (
+        <ul className="rgSuggest tmPickerList">
+          {options.map((o, i) => (
+            <li key={`${o.categoria}-${o.a}`}>
+              {(i === 0 || options[i - 1].categoria !== o.categoria) && !query && (
+                <div className="tmPickerGroup">{o.categoria}</div>
+              )}
+              <button
+                type="button"
+                className={i === active ? "active" : ""}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pick(o.a);
+                }}
+                onMouseEnter={() => setActive(i)}
+              >
+                <strong>
+                  {o.n}. {o.a}
+                </strong>
+                {query && <span>{o.categoria}</span>}
+              </button>
+            </li>
+          ))}
+          {!options.length && <li className="tmPickerEmpty">No hay actividades con “{query}”.</li>}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function EntryForm({
   data,
   celula,
@@ -406,21 +517,10 @@ function EntryForm({
           </div>
         )}
 
-        <label className="rgField tmWide">
+        <div className="rgField tmWide">
           <span>Actividad</span>
-          <select value={actividad} onChange={(e) => setActividad(e.target.value)}>
-            <option value="">Elige la actividad…</option>
-            {grupos.map((g) => (
-              <optgroup key={g.categoria} label={g.categoria}>
-                {g.actividades.map((a) => (
-                  <option key={a} value={a}>
-                    {numero(a)}. {a}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
+          <ActivityPicker grupos={grupos} numero={numero} value={actividad} onChange={setActividad} />
+        </div>
 
         {actividad === "Otro" && (
           <label className="rgField tmWide">
@@ -573,9 +673,21 @@ function TeamView({
   const [puesto, setPuesto] = useState("todos");
   const [persona, setPersona] = useState("todos");
   const [pruebas, setPruebas] = useState(false);
+  // Días sueltos de la semana; vacío = la semana completa.
+  const [dias, setDias] = useState<string[]>([]);
+  const [clientesSel, setClientesSel] = useState<string[]>([]);
+  const [clienteQuery, setClienteQuery] = useState("");
+  const [todas, setTodas] = useState(false);
+  const [zoom, setZoom] = useState<{ title: string; rows: Registro[] } | null>(null);
   const end = addDays(week, 6);
+  const semana = Array.from({ length: 7 }, (_, i) => addDays(week, i));
 
-  const base = rows.filter(
+  function moveWeek(to: string) {
+    setWeek(to);
+    setDias([]);
+  }
+
+  const enSemana = rows.filter(
     (r) =>
       r.fin &&
       (pruebas || !r.prueba) &&
@@ -584,9 +696,21 @@ function TeamView({
       (celula === "todas" || r.celula === celula) &&
       (puesto === "todos" || r.puesto === puesto)
   );
+  const base = enSemana.filter((r) => !dias.length || dias.includes(mxDate(r.inicio)));
   const personas = [...new Set(base.map((r) => r.nombre))].sort();
-  const visible = base.filter((r) => persona === "todos" || r.nombre === persona);
+  const porPersonaBase = base.filter((r) => persona === "todos" || r.nombre === persona);
+  const clientesDisp = [...new Set(porPersonaBase.map((r) => r.cliente))].sort();
+  const visible = porPersonaBase.filter(
+    (r) => !clientesSel.length || clientesSel.includes(r.cliente)
+  );
   const total = visible.reduce((t, r) => t + mins(r), 0);
+  const minDia = (d: string) =>
+    enSemana
+      .filter((r) => mxDate(r.inicio) === d && (persona === "todos" || r.nombre === persona))
+      .reduce((t, r) => t + mins(r), 0);
+  const sugeridos = clientesDisp
+    .filter((c) => !clientesSel.includes(c) && fold(c).includes(fold(clienteQuery)))
+    .slice(0, 8);
 
   const sumBy = (key: (r: Registro) => string) => {
     const m = new Map<string, { min: number; n: number }>();
@@ -602,16 +726,32 @@ function TeamView({
   const porModo = sumBy((r) =>
     r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "Sin dato"
   );
-  const porActividad = sumBy(
-    (r) => `${r.otro ? `Otro: ${r.otro}` : r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`
-  ).slice(0, 12);
+  const actividadDe = (r: Registro) =>
+    `${r.otro ? `Otro: ${r.otro}` : r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`;
+  const actividades = sumBy(actividadDe);
+  const verTodas = todas || persona !== "todos" || clientesSel.length > 0;
+  const porActividad = verTodas ? actividades : actividades.slice(0, 12);
   const max = (list: [string, { min: number }][]) => Math.max(1, ...list.map(([, v]) => v.min));
 
-  const bars = (title: string, list: [string, { min: number; n: number }][], label: (k: string) => string) => (
+  const bars = (
+    title: string,
+    list: [string, { min: number; n: number }][],
+    label: (k: string) => string,
+    onOpen?: (k: string) => void,
+    hint = "Doble clic para ver los clientes"
+  ) => (
     <section className="gmTableCard tmBars">
-      <h3>{title}</h3>
+      <h3>
+        {title}
+        {onOpen && list.length > 0 && <small> · {hint}</small>}
+      </h3>
       {list.map(([k, v]) => (
-        <div key={k} className="tmBar">
+        <div
+          key={k}
+          className={`tmBar ${onOpen ? "tmBarZoom" : ""}`}
+          onDoubleClick={onOpen ? () => onOpen(k) : undefined}
+          title={onOpen ? hint : undefined}
+        >
           <span className="tmBarLabel" title={label(k)}>
             {label(k)}
           </span>
@@ -631,11 +771,11 @@ function TeamView({
     <section className="tmTeam">
       <div className="gmFilters cmFilters">
         <div className="calendarControls">
-          <button onClick={() => setWeek(addDays(week, -7))}>‹</button>
-          <button className="todayButton" onClick={() => setWeek(mondayOf(today))}>
+          <button onClick={() => moveWeek(addDays(week, -7))}>‹</button>
+          <button className="todayButton" onClick={() => moveWeek(mondayOf(today))}>
             Semana del {fmtDay(week)}
           </button>
-          <button onClick={() => setWeek(addDays(week, 7))} disabled={week >= mondayOf(today)}>
+          <button onClick={() => moveWeek(addDays(week, 7))} disabled={week >= mondayOf(today)}>
             ›
           </button>
         </div>
@@ -672,15 +812,105 @@ function TeamView({
         </span>
       </div>
 
+      <div className="tmPeriod">
+        <div className="rgChips rgChipsSmall" role="group" aria-label="Días">
+          <button className={!dias.length ? "active" : ""} onClick={() => setDias([])}>
+            Toda la semana
+          </button>
+          {semana.map((d) => (
+            <button
+              key={d}
+              className={dias.includes(d) ? "active" : ""}
+              aria-pressed={dias.includes(d)}
+              disabled={d > today}
+              onClick={() =>
+                setDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()))
+              }
+              title="Elige uno o varios días"
+            >
+              {fmtDay(d)}
+              {minDia(d) > 0 && <em> · {Math.round((minDia(d) / 60) * 10) / 10} h</em>}
+            </button>
+          ))}
+        </div>
+
+        <div className="tmClientFilter">
+          {clientesSel.map((c) => (
+            <span key={c} className="tmClientChip">
+              {c}
+              <button aria-label={`Quitar ${c}`} onClick={() => setClientesSel((p) => p.filter((x) => x !== c))}>
+                ×
+              </button>
+            </span>
+          ))}
+          <div className="rgField tmClientSearch">
+            <input
+              value={clienteQuery}
+              placeholder={clientesSel.length ? "Agregar otro cliente…" : "Buscar cliente…"}
+              onChange={(e) => setClienteQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && sugeridos[0]) {
+                  setClientesSel((p) => [...p, sugeridos[0]]);
+                  setClienteQuery("");
+                }
+              }}
+            />
+            {clienteQuery && (
+              <ul className="rgSuggest">
+                {sugeridos.map((c) => (
+                  <li key={c}>
+                    <button
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setClientesSel((p) => [...p, c]);
+                        setClienteQuery("");
+                      }}
+                    >
+                      <strong>{c}</strong>
+                    </button>
+                  </li>
+                ))}
+                {!sugeridos.length && <li className="tmPickerEmpty">Sin clientes con “{clienteQuery}”.</li>}
+              </ul>
+            )}
+          </div>
+          {clientesSel.length > 0 && (
+            <button className="rgBtn rgBtnGhost" onClick={() => setClientesSel([])}>
+              Limpiar clientes
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="tmTeamGrid">
-        {bars("Por colaborador", porPersona, (k) => {
-          const [n, p] = k.split("|");
-          return `${n} · ${PUESTOS.find((x) => x.key === p)?.label || p}`;
-        })}
-        {bars("Por tipo de actividad", porCategoria, (k) => k)}
+        {bars(
+          "Por colaborador",
+          porPersona,
+          (k) => {
+            const [n, p] = k.split("|");
+            return `${n} · ${PUESTOS.find((x) => x.key === p)?.label || p}`;
+          },
+          persona === "todos" ? (k) => setPersona(k.split("|")[0]) : undefined,
+          "Doble clic para ver sus actividades"
+        )}
+        {bars("Por tipo de actividad", porCategoria, (k) => k, (k) =>
+          setZoom({ title: k, rows: visible.filter((r) => r.categoria === k) })
+        )}
         {bars("Cronómetro vs manual", porModo, (k) => k)}
       </div>
-      {bars("Actividades con más tiempo", porActividad, (k) => k)}
+      {bars(
+        persona === "todos" ? "Actividades con más tiempo" : `Actividades de ${persona}`,
+        porActividad,
+        (k) => k,
+        (k) => setZoom({ title: k, rows: visible.filter((r) => actividadDe(r) === k) })
+      )}
+      {!verTodas && actividades.length > 12 && (
+        <button className="rgBtn rgBtnGhost tmMore" onClick={() => setTodas(true)}>
+          Ver las {actividades.length} actividades
+        </button>
+      )}
+
+      {zoom && <ZoomClientes zoom={zoom} persona={persona} onClose={() => setZoom(null)} />}
 
       <p className="tmNote">
         Las actividades vienen de la lista de tareas de cada puesto ({Object.values(catalogo).reduce(
@@ -689,6 +919,72 @@ function TeamView({
         )} en total). El CSV trae todo el histórico.
       </p>
     </section>
+  );
+}
+
+// Zoom de una actividad: en qué clientes se fue ese tiempo.
+function ZoomClientes({
+  zoom,
+  persona,
+  onClose,
+}: {
+  zoom: { title: string; rows: Registro[] };
+  persona: string;
+  onClose: () => void;
+}) {
+  const porCliente = new Map<string, { min: number; n: number; personas: Set<string> }>();
+  zoom.rows.forEach((r) => {
+    const cur = porCliente.get(r.cliente) || { min: 0, n: 0, personas: new Set<string>() };
+    cur.min += mins(r);
+    cur.n += 1;
+    cur.personas.add(r.nombre);
+    porCliente.set(r.cliente, cur);
+  });
+  const list = [...porCliente.entries()].sort((a, b) => b[1].min - a[1].min);
+  const total = list.reduce((t, [, v]) => t + v.min, 0);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="tmZoomBackdrop" onClick={onClose}>
+      <section className="tmZoom" role="dialog" aria-label={zoom.title} onClick={(e) => e.stopPropagation()}>
+        <header>
+          <div>
+            <p className="eyebrow">{persona === "todos" ? "TODO EL EQUIPO" : persona}</p>
+            <h3>{zoom.title}</h3>
+            <span>
+              {hhmm(total)} · {zoom.rows.length} registros · {list.length} clientes
+            </span>
+          </div>
+          <button className="rgBtn rgBtnGhost" onClick={onClose}>
+            Cerrar
+          </button>
+        </header>
+        <div className="tmZoomTable">
+          <div className="tmZoomRow tmZoomHead">
+            <span>CLIENTE</span>
+            <span>TIEMPO</span>
+            <span>%</span>
+            <span>REGISTROS</span>
+          </div>
+          {list.map(([c, v]) => (
+            <div key={c} className="tmZoomRow">
+              <span>
+                <strong>{c}</strong>
+                {persona === "todos" && <small>{[...v.personas].sort().join(", ")}</small>}
+              </span>
+              <span>{hhmm(v.min)}</span>
+              <span>{total ? Math.round((v.min / total) * 100) : 0}%</span>
+              <span>{v.n}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
