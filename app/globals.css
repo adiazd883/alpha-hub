@@ -7608,3 +7608,59 @@ button {
   color: #1f2b42;
   font-size: 15px;
 }
+
+/* Tiempos: registros del equipo */
+
+.tmRange {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #778397;
+  font-size: 12px;
+}
+
+.tmRange input,
+.tmMonth {
+  padding: 6px 8px;
+  border: 1px solid #e2e7ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2b42;
+  font-size: 12px;
+}
+
+.tmDetalle {
+  margin-top: 14px;
+}
+
+.tmDetallePersona {
+  margin-top: 4px;
+}
+
+.tmDetalleNombre {
+  padding: 6px 0 2px;
+  color: #365ed3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.tmRowAlerta {
+  background: #fffaf0;
+}
+
+.tmAlertas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.tmAlertas b {
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #fff1d6;
+  color: #8a5a00;
+  font-size: 10px;
+  font-weight: 750;
+}
