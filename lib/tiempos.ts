@@ -42,11 +42,22 @@ export const GMC_PUESTOS: Puesto[] = ["gb", "gb_sup", "sr", "sr_sup", "ea", "gmc
 export type TiemposCelula = Celula | "gmc";
 
 /*
- * Puesto de cada persona de GMC (no sale del rol del hub).
- * Falta completar con el equipo.
+ * Puesto de cada persona de GMC (no sale del rol del hub). Los
+ * paralegales de GMC son GB.
  */
 export const GMC_PUESTO_POR_EMAIL: Record<string, Puesto> = {
   "gsanchez@supportmendoza.com": "gmc_tl",
+  "jnavarrete@supportmendoza.com": "gb_sup",
+  "cgarcia@supportmendoza.com": "sr_sup",
+  "dgutierrezve@supportmendoza.com": "ea",
+  "llopez@supportmendoza.com": "sr",
+  "amagana@supportmendoza.com": "gb",
+  "icalzada@supportmendoza.com": "gb",
+  "rmontes@supportmendoza.com": "gb",
+  "vfloresc@supportmendoza.com": "gb",
+  "vnyssen@supportmendoza.com": "gb",
+  "mcastror@supportmendoza.com": "gb",
+  "evazquez@supportmendoza.com": "gb",
 };
 
 export const PUESTO_POR_ROL: Partial<Record<Role, Puesto>> = {
