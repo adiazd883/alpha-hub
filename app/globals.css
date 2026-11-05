@@ -7664,3 +7664,22 @@ button {
   font-size: 10px;
   font-weight: 750;
 }
+
+/* Dashboard RFE: llegadas mensuales */
+
+.rfeMonthlyStack {
+  display: grid;
+  gap: 14px;
+}
+
+.rfeChartSub {
+  color: #8a94a6;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rfeChartNote {
+  margin: 0;
+  color: #8a94a6;
+  font-size: 11px;
+}

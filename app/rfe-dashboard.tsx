@@ -22,6 +22,7 @@ import type {
   HistoricoYear,
   ReceiptType,
 } from "@/lib/rfe/historico";
+import type { LlegadasData } from "@/lib/rfe/llegadas";
 
 /*
  * Dashboard RFE del área (vista General). Toma la Sheet
@@ -1488,6 +1489,174 @@ function UscisDonut({ data }: { data: HistoricoYear }) {
   );
 }
 
+type Serie = { key: string; label: string; className: string };
+
+/*
+ * Llegadas por mes (2025–2026), barras apiladas por tipo. Misma
+ * anatomía que la gráfica semanal.
+ */
+function MonthlyArrivalsChart({
+  title,
+  series,
+  months,
+}: {
+  title: string;
+  series: Serie[];
+  months: ({ mes: string } & Record<string, number | string>)[];
+}) {
+  const [hover, setHover] = useState<string | null>(null);
+  const { ref, width } = useWidth();
+  const val = (m: (typeof months)[number], k: string) => Number(m[k]) || 0;
+  const totalOf = (m: (typeof months)[number]) => series.reduce((t, s) => t + val(m, s.key), 0);
+
+  const frame = chartFrame(months.length, Math.max(1, ...months.map(totalOf)), width, 48);
+  const { SLOT, BAR } = frame;
+  const hovered = months.find((m) => m.mes === hover);
+  const label = (mes: string) => `${MONTHS[Number(mes.slice(5)) - 1]} ${mes.slice(2, 4)}`;
+  const totalAnio = (y: string) => months.filter((m) => m.mes.startsWith(y)).reduce((t, m) => t + totalOf(m), 0);
+
+  return (
+    <div className="rfeChartCard">
+      <div className="rfeChartHead">
+        <div className="rfeChartTitle">
+          {title}
+          <span className="rfeChartSub">
+            {" "}
+            · 2025: {totalAnio("2025")} · 2026: {totalAnio("2026")}
+          </span>
+        </div>
+
+        <div className="rfeLegend">
+          {series.map((s) => (
+            <span key={s.key}>
+              <i className={`rfeSwatchBar ${s.className}`} /> {s.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="rfeChartScroll" ref={ref}>
+        <svg width={frame.width} height={frame.height} role="img" aria-label={`Llegadas mensuales, ${title}`}>
+          <Gridlines frame={frame} />
+
+          {months.map((m, i) => {
+            const x = frame.slotX(i) + (SLOT - BAR) / 2;
+            const dim = hover && hover !== m.mes ? "rfeDim" : "";
+            const visibles = series.filter((s) => val(m, s.key) > 0);
+            let y = frame.baseY;
+            return (
+              <g
+                key={m.mes}
+                tabIndex={0}
+                onMouseEnter={() => setHover(m.mes)}
+                onMouseLeave={() => setHover(null)}
+                onFocus={() => setHover(m.mes)}
+                onBlur={() => setHover(null)}
+                className="rfeHit"
+              >
+                <rect x={frame.slotX(i)} y={PAD_TOP} width={SLOT} height={PLOT_HEIGHT} fill="transparent" />
+                {visibles.map((s, j) => {
+                  const h = frame.scaleY(val(m, s.key));
+                  // 2px de superficie entre segmentos apilados.
+                  if (j > 0) y -= 2;
+                  y -= h;
+                  return (
+                    <path
+                      key={s.key}
+                      d={columnPath(x, y, BAR, h, j === visibles.length - 1)}
+                      className={`${s.className}Fill ${dim}`}
+                    />
+                  );
+                })}
+                <text x={x + BAR / 2} y={frame.height - 6} textAnchor="middle" className="rfeTick">
+                  {label(m.mes)}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <div className="rfeTooltip">
+        {hovered ? (
+          <>
+            <strong>{label(hovered.mes)}</strong>
+            {series.map((s) => ` · ${s.label} ${val(hovered, s.key)}`).join("")} · Total {totalOf(hovered)}
+          </>
+        ) : (
+          <span>Pasa el cursor sobre una barra para ver el detalle</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LlegadasMensualesSection() {
+  const [data, setData] = useState<LlegadasData | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/rfe-dashboard/llegadas", { cache: "no-store" })
+      .then(async (response) => {
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.error || "No se pudieron cargar las llegadas");
+        setData(json);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"));
+  }, []);
+
+  return (
+    <section>
+      <div className="rfeSectionHead">
+        <p className="dashboardSectionEyebrow">LLEGADAS</p>
+        <h2>Llegadas mensuales por tipo · 2025 y 2026</h2>
+        <p>
+          VAWA DD y NOID: fecha REGISTERED (cuando nos llega) de Admin TLs y Admin TLs 2.0, sin repetir casos. VAWA NDD:
+          RECEIPT DATE de NO DUE DATE CONSULTA. NON VAWA: Date on Dropbox de RFE&apos;s (other forms).
+        </p>
+      </div>
+
+      {error && <p className="rfeEmpty">{error}</p>}
+      {!data && !error && <p className="rfeEmpty">Cargando llegadas…</p>}
+
+      {data && (
+        <div className="rfeMonthlyStack">
+          <MonthlyArrivalsChart
+            title="VAWA"
+            series={[
+              { key: "dd", label: "VAWA DD", className: "rfeSeries1" },
+              { key: "noid", label: "NOID", className: "rfeSeries2" },
+              { key: "ndd", label: "VAWA NDD", className: "rfeSeries3" },
+            ]}
+            months={data.vawa}
+          />
+          <MonthlyArrivalsChart
+            title="NON VAWA"
+            series={[
+              { key: "rfe", label: "RFE", className: "rfeSeries1" },
+              { key: "noid", label: "NOID", className: "rfeSeries2" },
+              { key: "otros", label: "Otros", className: "rfeSeries3" },
+            ]}
+            months={data.nonVawa}
+          />
+          <p className="rfeChartNote">
+            VAWA: NOID si la casilla NOID de Admin TLs 2.0 está marcada, NDD de la pestaña NO DUE DATE CONSULTA (por
+            RECEIPT DATE) y el resto DD.
+            {data.repetidos > 0 && ` ${data.repetidos} casos estaban en las dos Sheets y se contaron una vez.`}
+          </p>
+          {data.otrosTipos.length > 0 && (
+            <p className="rfeChartNote">
+              NON VAWA · Otros (lo que no es RFE ni NOID en la Sheet, p. ej. RFIE, RFE PIP, RFE Lozano, notices o
+              solicitudes informativas):{" "}
+              {data.otrosTipos.map((o) => `${o.tipo} (${o.n})`).join(", ")}.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function HistoricoSection() {
   const [data, setData] = useState<HistoricoData | null>(null);
   const [year, setYear] = useState<number | null>(null);
@@ -1732,6 +1901,8 @@ export default function RfeDashboard() {
                 ))}
               </div>
             </section>
+
+            <LlegadasMensualesSection />
 
             <HistoricoSection />
           </div>
