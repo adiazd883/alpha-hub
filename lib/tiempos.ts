@@ -300,13 +300,14 @@ CATALOGO.atty_galilea = [
   },
 ];
 
-// "Otro" en los puestos de Alpha, Gamma y Atty: la actividad se escribe a mano.
+/*
+ * "Otro" ya no se ofrece en ningún puesto (se quitó a pedido, nov
+ * 2026). Se conserva el nombre para leer registros viejos que lo
+ * usaron.
+ */
 export const OTRA_ACTIVIDAD = "Otro";
-for (const puesto of ["analista", "paralegal", "psych", "atty_scarlet", "atty_galilea"] as Puesto[]) {
-  CATALOGO[puesto].push({ categoria: "Otro", actividades: [OTRA_ACTIVIDAD] });
-}
 
-// En GMC el equivalente es "Actividad extraordinaria".
+// GMC: "Actividad extraordinaria" viene en su PDF; también pide escribir qué se hizo.
 export const ACTIVIDAD_EXTRAORDINARIA = "Actividad extraordinaria";
 export const ACTIVIDADES_LIBRES = [OTRA_ACTIVIDAD, ACTIVIDAD_EXTRAORDINARIA];
 

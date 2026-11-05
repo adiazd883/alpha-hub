@@ -440,9 +440,7 @@ function EntryForm({
   // Grupos de su célula (Rap Sheet solo aparece en Gamma).
   const celulaForm = editing?.celula || celula;
   const grupos = data.catalogo[puesto]
-    .filter((g) => !g.celulas || g.celulas.includes(celulaForm as Celula))
-    // "Otro" siempre al final de la lista.
-    .sort((a, b) => Number(a.categoria === "Otro") - Number(b.categoria === "Otro"));
+    .filter((g) => !g.celulas || g.celulas.includes(celulaForm as Celula));
   // 1, 2, 3… y los grupos con código con su propia numeración (RS-1…).
   const numero = (a: string) => {
     let n = 0;
