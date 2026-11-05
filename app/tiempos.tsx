@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
-import type { Grupo, Puesto, Registro } from "@/lib/tiempos";
+import type { Grupo, Puesto, Registro, TiemposCelula } from "@/lib/tiempos";
 
 /*
  * Estudio de tiempos en el hub: cada analista, paralegal y psych
@@ -18,7 +18,8 @@ type Me = {
   canRegister: boolean;
   canSeeTeam: boolean;
   puesto: Puesto | null;
-  celulas: Celula[];
+  gmcPuesto: Puesto | null;
+  celulas: TiemposCelula[];
 };
 
 type Data = {
@@ -28,13 +29,26 @@ type Data = {
   clock: { today: string; yesterday: string; now: string; nowIso: string };
   mine: Registro[];
   team: Registro[];
+  clientesGmc: string[];
+  sinCliente: string[];
 };
 
-const PUESTOS: { key: Puesto; label: string }[] = [
+const PUESTOS: { key: Puesto; label: string; gmc?: boolean }[] = [
   { key: "analista", label: "Analista" },
   { key: "paralegal", label: "Paralegal" },
   { key: "psych", label: "Psych" },
+  { key: "gb", label: "GB", gmc: true },
+  { key: "gb_sup", label: "Supervisor GB", gmc: true },
+  { key: "sr", label: "Special Reports", gmc: true },
+  { key: "sr_sup", label: "Supervisor SR", gmc: true },
+  { key: "ea", label: "Evidence Analyst", gmc: true },
+  { key: "gmc_tl", label: "TL GMC", gmc: true },
 ];
+
+// Actividades donde se escribe qué se hizo.
+const LIBRES = ["Otro", "Actividad extraordinaria"];
+const actividadLabel = (r: Registro) => (r.otro ? `${r.actividad}: ${r.otro}` : r.actividad);
+const celulaLabel = (c: string) => (c === "gmc" ? "GMC" : CELULAS[c as Celula]?.label || c);
 
 const OFFSET_MS = 6 * 3600000; // Ciudad de México
 const mxDate = (iso: string) => new Date(Date.parse(iso) - OFFSET_MS).toISOString().slice(0, 10);
@@ -66,7 +80,7 @@ export default function EstudioTiempos({
   celula,
   clientes = [],
 }: {
-  celula: Celula;
+  celula: TiemposCelula;
   clientes?: string[];
 }) {
   const [data, setData] = useState<Data | null>(null);
@@ -83,7 +97,7 @@ export default function EstudioTiempos({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/tiempos", { cache: "no-store" });
+      const res = await fetch(`/api/tiempos?celula=${celula}`, { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "No se pudo cargar el estudio de tiempos");
       setData(json);
@@ -146,7 +160,7 @@ export default function EstudioTiempos({
     <div className="rgPage tmPage">
       <header className="pageHeader">
         <div>
-          <p className="eyebrow">ESTUDIO DE TIEMPOS</p>
+          <p className="eyebrow">ESTUDIO DE TIEMPOS{celula === "gmc" && " · GMC"}</p>
           <h1>Estudio de tiempos</h1>
           <p>Registra en qué actividad trabajas y para qué cliente. Puedes registrar hoy o ayer.</p>
         </div>
@@ -175,7 +189,7 @@ export default function EstudioTiempos({
                 <div>
                   <span className="tmDot" /> En curso desde {mxTime(running.inicio)}
                   <strong>
-                    {running.otro ? `Otro: ${running.otro}` : running.actividad}
+                    {actividadLabel(running)}
                     {running.kpi && ` · ${running.kpi}`}
                   </strong>
                   <small>{running.cliente}</small>
@@ -202,7 +216,7 @@ export default function EstudioTiempos({
               key={editing?.id || "new"}
               data={data}
               celula={celula}
-              clientes={clientes}
+              clientes={celula === "gmc" ? data.clientesGmc : clientes}
               editing={editing}
               running={!!running}
               onCancel={() => setEditing(null)}
@@ -227,7 +241,12 @@ export default function EstudioTiempos({
             )}
 
             {(tab === "equipo" || onlyTeam) && data.me.canSeeTeam ? (
-              <TeamView rows={data.team} catalogo={data.catalogo} today={data.clock.today} />
+              <TeamView
+                rows={data.team}
+                catalogo={data.catalogo}
+                today={data.clock.today}
+                initialCelula={celula === "gmc" ? "gmc" : "todas"}
+              />
             ) : (
               <MyWeek
                 rows={data.mine}
@@ -279,7 +298,12 @@ function ActivityPicker({
   const options = useMemo(() => {
     const q = fold(query);
     const all = grupos.flatMap((g) =>
-      g.actividades.map((a) => ({ a, categoria: g.categoria, n: String(numero(a)) }))
+      g.actividades.map((a, i) => ({
+        a,
+        categoria: g.categoria,
+        n: String(numero(a)),
+        desc: g.descripciones?.[i] || "",
+      }))
     );
     if (!q) return all;
     const rank = (o: (typeof all)[number]) => {
@@ -352,7 +376,13 @@ function ActivityPicker({
                 <strong>
                   {o.n}. {o.a}
                 </strong>
-                {query && <span>{o.categoria}</span>}
+                {(query || o.desc) && (
+                  <span>
+                    {query && o.categoria}
+                    {query && o.desc && " · "}
+                    {o.desc}
+                  </span>
+                )}
               </button>
             </li>
           ))}
@@ -373,7 +403,7 @@ function EntryForm({
   onSubmit,
 }: {
   data: Data;
-  celula: Celula;
+  celula: TiemposCelula;
   clientes: string[];
   editing: Registro | null;
   running: boolean;
@@ -381,7 +411,10 @@ function EntryForm({
   onSubmit: (body: Record<string, unknown>, msg: string) => void;
 }) {
   const { me, clock } = data;
-  const [puesto, setPuesto] = useState<Puesto>(editing?.puesto || me.puesto || "analista");
+  const enGmc = (editing?.celula || celula) === "gmc";
+  const [puesto, setPuesto] = useState<Puesto>(
+    editing?.puesto || (enGmc ? me.gmcPuesto || "gb" : me.puesto || "analista")
+  );
   const [kpi, setKpi] = useState(editing?.kpi || "");
   const [actividad, setActividad] = useState(editing?.actividad || "");
   const [otro, setOtro] = useState(editing?.otro || "");
@@ -394,7 +427,7 @@ function EntryForm({
   // Grupos de su célula (Rap Sheet solo aparece en Gamma).
   const celulaForm = editing?.celula || celula;
   const grupos = data.catalogo[puesto]
-    .filter((g) => !g.celulas || g.celulas.includes(celulaForm))
+    .filter((g) => !g.celulas || g.celulas.includes(celulaForm as Celula))
     // "Otro" siempre al final de la lista.
     .sort((a, b) => Number(a.categoria === "Otro") - Number(b.categoria === "Otro"));
   // 1, 2, 3… y los grupos con código con su propia numeración (RS-1…).
@@ -402,6 +435,11 @@ function EntryForm({
     let n = 0;
     for (const g of data.catalogo[puesto]) {
       const i = g.actividades.indexOf(a);
+      // GMC: el número del PDF.
+      if (g.numeros) {
+        if (i >= 0) return g.numeros[i];
+        continue;
+      }
       if (g.codigo) {
         if (i >= 0) return `${g.codigo}-${i + 1}`;
         continue;
@@ -474,7 +512,7 @@ function EntryForm({
                 setActividad("");
               }}
             >
-              {PUESTOS.map((p) => (
+              {PUESTOS.filter((p) => !!p.gmc === enGmc).map((p) => (
                 <option key={p.key} value={p.key}>
                   {p.label}
                 </option>
@@ -484,11 +522,11 @@ function EntryForm({
         )}
 
         <label className="rgField tmWide">
-          <span>Cliente</span>
+          <span>Cliente{enGmc && data.sinCliente.includes(actividad) && " (opcional: actividad interna)"}</span>
           <input
             list="tm-clientes"
             value={cliente}
-            placeholder="Nombre del cliente"
+            placeholder={enGmc && data.sinCliente.includes(actividad) ? "Vacío = INTERNO" : "Nombre del cliente"}
             onChange={(e) => setCliente(e.target.value)}
           />
           <datalist id="tm-clientes">
@@ -522,7 +560,7 @@ function EntryForm({
           <ActivityPicker grupos={grupos} numero={numero} value={actividad} onChange={setActividad} />
         </div>
 
-        {actividad === "Otro" && (
+        {LIBRES.includes(actividad) && (
           <label className="rgField tmWide">
             <span>¿Qué actividad hiciste?</span>
             <input
@@ -632,7 +670,7 @@ function MyWeek({
               </span>
               <div className="tmWhat">
                 <strong>
-                  {r.otro ? `Otro: ${r.otro}` : r.actividad}
+                  {actividadLabel(r)}
                   {r.kpi && <em> · {r.kpi}</em>}
                 </strong>
                 <small>
@@ -663,13 +701,16 @@ function TeamView({
   rows,
   catalogo,
   today,
+  initialCelula,
 }: {
   rows: Registro[];
   catalogo: Record<Puesto, Grupo[]>;
   today: string;
+  initialCelula: string;
 }) {
   const [week, setWeek] = useState(mondayOf(today));
-  const [celula, setCelula] = useState("todas");
+  const [celula, setCelula] = useState(initialCelula);
+  const celulasEquipo = [...new Set(rows.map((r) => r.celula))].sort();
   const [puesto, setPuesto] = useState("todos");
   const [persona, setPersona] = useState("todos");
   const [pruebas, setPruebas] = useState(false);
@@ -727,7 +768,7 @@ function TeamView({
     r.modo === "cronometro" ? "Cronómetro" : r.modo === "manual" ? "Manual" : "Sin dato"
   );
   const actividadDe = (r: Registro) =>
-    `${r.otro ? `Otro: ${r.otro}` : r.actividad}${r.kpi ? ` · ${r.kpi}` : ""}`;
+    `${actividadLabel(r)}${r.kpi ? ` · ${r.kpi}` : ""}`;
   const actividades = sumBy(actividadDe);
   const verTodas = todas || persona !== "todos" || clientesSel.length > 0;
   const porActividad = verTodas ? actividades : actividades.slice(0, 12);
@@ -780,16 +821,18 @@ function TeamView({
           </button>
         </div>
         <select value={celula} onChange={(e) => setCelula(e.target.value)} aria-label="Célula">
-          <option value="todas">Alpha y Gamma</option>
-          {(["alpha", "gamma"] as Celula[]).map((c) => (
+          <option value="todas">Todas las células</option>
+          {[...new Set([...celulasEquipo, initialCelula].filter((c) => c !== "todas"))].map((c) => (
             <option key={c} value={c}>
-              {CELULAS[c].label}
+              {celulaLabel(c)}
             </option>
           ))}
         </select>
         <select value={puesto} onChange={(e) => setPuesto(e.target.value)} aria-label="Puesto">
           <option value="todos">Todos los puestos</option>
-          {PUESTOS.map((p) => (
+          {PUESTOS.filter(
+            (p) => celula === "todas" || !!p.gmc === (celula === "gmc")
+          ).map((p) => (
             <option key={p.key} value={p.key}>
               {p.label}
             </option>

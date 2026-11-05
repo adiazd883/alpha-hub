@@ -8,6 +8,7 @@ import Gmc from "./gmc";
 import RapSheet from "./rs";
 import Comunicaciones from "./comms";
 import EstudioTiempos from "./tiempos";
+import ComunicacionesGmc from "./comms-gmc";
 
 type Role =
   | "ADMIN"
@@ -2237,7 +2238,9 @@ export default function Home() {
       ? celula
       : celula === "general" && (role === "ADMIN" || tiemposViewer)
         ? "alpha"
-        : null;
+        : celula === "gmc" && user?.gmc
+          ? "gmc"
+          : null;
 
   // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
   const rsCelula =
@@ -6312,6 +6315,23 @@ export default function Home() {
                   Comunicaciones
                 </span>
               </button>
+
+              {tiemposCelula && (
+                <button
+                  className={`navItem ${
+                    mainView === "tiempos" ? "active" : ""
+                  }`}
+                  onClick={() => setMainView("tiempos")}
+                >
+                  <span className="navIcon">
+                    ⏱
+                  </span>
+
+                  <span>
+                    Estudio de tiempos
+                  </span>
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -6614,11 +6634,13 @@ export default function Home() {
           />
         )}
 
-        {mainView === "comms" && commsVista && (
+        {mainView === "comms" && commsVista === "gmc" && <ComunicacionesGmc />}
+
+        {mainView === "comms" && commsVista && commsVista !== "gmc" && (
           <Comunicaciones
             key={commsVista}
             vista={commsVista}
-            clientes={commsVista === "gmc" ? [] : commsClientes}
+            clientes={commsClientes}
           />
         )}
 

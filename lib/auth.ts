@@ -44,6 +44,18 @@ export const USERS: Record<string, Role> = {
 
   // GMC (Gov Branch)
   "gsanchez@supportmendoza.com": "TL",
+  // Equipo GMC (Gov Branch): solo ven GMC.
+  "amagana@supportmendoza.com": "PARALEGAL",
+  "cgarcia@supportmendoza.com": "TL",
+  "dgutierrezve@supportmendoza.com": "ANALYST",
+  "icalzada@supportmendoza.com": "PARALEGAL",
+  "jnavarrete@supportmendoza.com": "TL",
+  "rmontes@supportmendoza.com": "PARALEGAL",
+  "vfloresc@supportmendoza.com": "PARALEGAL",
+  "vnyssen@supportmendoza.com": "PARALEGAL",
+  "mcastror@supportmendoza.com": "PARALEGAL",
+  "evazquez@supportmendoza.com": "PARALEGAL",
+  "llopez@supportmendoza.com": "PARALEGAL",
 };
 
 /*
@@ -84,6 +96,17 @@ export const USER_NAMES: Record<string, string> = {
 
   // GMC
   "gsanchez@supportmendoza.com": "Gerson",
+  "amagana@supportmendoza.com": "Armando",
+  "cgarcia@supportmendoza.com": "Carolina",
+  "dgutierrezve@supportmendoza.com": "Diana P",
+  "icalzada@supportmendoza.com": "Itzel",
+  "jnavarrete@supportmendoza.com": "Jacob",
+  "rmontes@supportmendoza.com": "Renata",
+  "vfloresc@supportmendoza.com": "Viator",
+  "vnyssen@supportmendoza.com": "Viviana",
+  "mcastror@supportmendoza.com": "Martha",
+  "evazquez@supportmendoza.com": "Erik",
+  "llopez@supportmendoza.com": "Luis",
 };
 
 /*
@@ -114,6 +137,17 @@ export const USER_CELULAS: Record<string, Celula[]> = {
 
   // Equipo GMC: no tiene célula de casos, solo GMC.
   "gsanchez@supportmendoza.com": [],
+  "amagana@supportmendoza.com": [],
+  "cgarcia@supportmendoza.com": [],
+  "dgutierrezve@supportmendoza.com": [],
+  "icalzada@supportmendoza.com": [],
+  "jnavarrete@supportmendoza.com": [],
+  "rmontes@supportmendoza.com": [],
+  "vfloresc@supportmendoza.com": [],
+  "vnyssen@supportmendoza.com": [],
+  "mcastror@supportmendoza.com": [],
+  "evazquez@supportmendoza.com": [],
+  "llopez@supportmendoza.com": [],
 };
 
 /*
@@ -121,7 +155,19 @@ export const USER_CELULAS: Record<string, Celula[]> = {
  * estatus, fecha de entrega y link; la fecha esperada solo la
  * pone el Admin. Quien ve todas las células también ve GMC.
  */
+// Equipo GMC: entra a GMC y edita sus entregas (status, entrega y link).
 const GMC_MEMBERS = new Set<string>([
+  "amagana@supportmendoza.com",
+  "cgarcia@supportmendoza.com",
+  "dgutierrezve@supportmendoza.com",
+  "icalzada@supportmendoza.com",
+  "jnavarrete@supportmendoza.com",
+  "rmontes@supportmendoza.com",
+  "vfloresc@supportmendoza.com",
+  "vnyssen@supportmendoza.com",
+  "mcastror@supportmendoza.com",
+  "evazquez@supportmendoza.com",
+  "llopez@supportmendoza.com",
   "gsanchez@supportmendoza.com",
 ]);
 

@@ -7378,3 +7378,24 @@ button {
   font-size: 11px;
   font-weight: 800;
 }
+
+/* Comunicaciones GMC */
+
+.cgTipo {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.cgRequested {
+  background: #eef2ff;
+  color: #4b55a8;
+}
+
+.cgReceived {
+  background: #e9f7ef;
+  color: #327254;
+}
