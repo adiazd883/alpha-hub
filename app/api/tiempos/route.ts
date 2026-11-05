@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, type Session } from "@/lib/session";
 import { isCelula } from "@/lib/celulas";
 import { loadGmc } from "@/lib/gmc";
-import { loadAttyEvents } from "@/lib/atty";
+import { attyClientes } from "@/lib/atty";
 import { CELULA_KEYS } from "@/lib/celulas";
 import {
   ACTIVIDADES_LIBRES,
@@ -101,9 +101,7 @@ export async function GET(req: NextRequest) {
             .then((d) => unicos(d.items.map((i) => i.cliente)))
             .catch(() => [] as string[])
         : vista === "atty" && session.atty
-          ? await loadAttyEvents(CELULA_KEYS)
-              .then((d) => unicos(d.events.map((e) => e.cliente)))
-              .catch(() => [] as string[])
+          ? await attyClientes(CELULA_KEYS).catch(() => [] as string[])
           : [];
     return NextResponse.json({
       me: { email: session.email, nombre: nameOf(session.email), ...me },
@@ -191,10 +189,10 @@ export async function POST(req: NextRequest) {
     if (libre && !otro) return fail("Escribe qué actividad hiciste");
     const kpi = puesto === "analista" ? str(body.kpi, 10) : "";
     if (puesto === "analista" && !KPIS_ANALISTA.includes(kpi)) return fail("Indica si es para DCL o CVL");
-    // Actividades internas (GMC) y todo Atty: sin cliente quedan como "INTERNO".
+    // Sin cliente: actividades internas de GMC = "INTERNO"; Atty = "NO APLICA".
     const cliente =
       str(body.cliente).toUpperCase() ||
-      (enAtty || (enGmc && SIN_CLIENTE.has(actividad)) ? "INTERNO" : "");
+      (enAtty ? "NO APLICA" : enGmc && SIN_CLIENTE.has(actividad) ? "INTERNO" : "");
     if (!cliente) return fail("Escribe el cliente");
 
     let inicio: string;

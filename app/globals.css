@@ -7597,3 +7597,14 @@ button {
     position: static;
   }
 }
+
+.atSinPlazo {
+  margin-top: 14px;
+  padding: 14px 16px;
+}
+
+.atSinPlazo h3 {
+  margin: 0;
+  color: #1f2b42;
+  font-size: 15px;
+}

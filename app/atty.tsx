@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { AttyEvent, AttyTipo } from "@/lib/atty";
+import type { AttyEvent, AttySinPlazo, AttyTipo } from "@/lib/atty";
 
 /*
  * Calendario de las paralegales de Atty: DEADLINE de los VAWA
@@ -38,7 +38,7 @@ const pendiente = (e: AttyEvent) => !e.enviado && !cerrado(e);
 
 export default function AttyCalendar() {
   const [events, setEvents] = useState<AttyEvent[]>([]);
-  const [sinFecha, setSinFecha] = useState(0);
+  const [sinPlazo, setSinPlazo] = useState<AttySinPlazo[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +61,7 @@ export default function AttyCalendar() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "No se pudo cargar el calendario");
       setEvents(json.events);
-      setSinFecha(json.sinFecha || 0);
+      setSinPlazo(json.sinPlazo || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -268,10 +268,47 @@ export default function AttyCalendar() {
             </section>
           </div>
 
-          {sinFecha > 0 && (
-            <p className="tmNote">
-              {sinFecha} casos de estos tipos no tienen fecha (o no se pudo leer) y no aparecen en el calendario.
-            </p>
+          {sinPlazo.length > 0 && (
+            <section className="gmTableCard atSinPlazo">
+              <h3>Sin plazo · fuera del calendario</h3>
+              <span className="atDaySub">
+                Casos de estos tipos sin fecha límite en la Sheet ({sinPlazo.length}).
+              </span>
+              <div className="gmTableWrap">
+                <table className="gmTable">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Tipo</th>
+                      <th>Célula</th>
+                      <th>Por qué</th>
+                      <th>Estatus</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sinPlazo.map((c) => (
+                      <tr key={c.key}>
+                        <td>
+                          <strong>{c.cliente}</strong>
+                          {c.form && <div className="gmSub">{c.form}</div>}
+                        </td>
+                        <td>
+                          <i className={`atDot ${tipoClass(c.tipo)}`} /> {c.tipo}
+                        </td>
+                        <td>{c.celula === "alpha" ? "Alpha" : "Gamma"}</td>
+                        <td>{c.motivo}</td>
+                        <td>
+                          <span className={c.status === "SENT TO USCIS" ? "atStatusSent" : "atStatus"}>
+                            {c.status === "SENT TO USCIS" && "✓ "}
+                            {c.status || "Sin estatus"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
         </>
       )}

@@ -472,8 +472,14 @@ function EntryForm({
 
   // Clientes de la célula + los que ya registró.
   const sugerencias = useMemo(
-    () => [...new Set([...clientes, ...data.mine.map((r) => r.cliente)])].sort(),
-    [clientes, data.mine]
+    () => [
+      // En Atty, "NO APLICA" para actividades sin cliente.
+      ...(vista === "atty" ? ["NO APLICA"] : []),
+      ...[...new Set([...clientes, ...data.mine.map((r) => r.cliente)])]
+        .filter((c) => c !== "NO APLICA")
+        .sort(),
+    ],
+    [clientes, data.mine, vista]
   );
 
   function submit() {
@@ -539,7 +545,9 @@ function EntryForm({
           <input
             list="tm-clientes"
             value={cliente}
-            placeholder={clienteOpcional ? "Vacío = INTERNO" : "Nombre del cliente"}
+            placeholder={
+              clienteOpcional ? `Vacío = ${vista === "atty" ? "NO APLICA" : "INTERNO"}` : "Nombre del cliente"
+            }
             onChange={(e) => setCliente(e.target.value)}
           />
           <datalist id="tm-clientes">

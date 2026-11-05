@@ -25,6 +25,17 @@ export type AttyEvent = {
   form?: string;
 };
 
+// Casos que no van al calendario porque no tienen plazo.
+export type AttySinPlazo = {
+  key: string;
+  cliente: string;
+  celula: Celula;
+  tipo: AttyTipo;
+  motivo: string;
+  status: string;
+  form?: string;
+};
+
 const POR_DEADLINE: AttyTipo[] = ["DUE DATE", "NOID", "DD NOID", "NOIR"];
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -60,7 +71,7 @@ const norm = (v: string) => (v || "").trim().toUpperCase();
 
 export async function loadAttyEvents(celulas: Celula[]) {
   const events: AttyEvent[] = [];
-  let sinFecha = 0;
+  const sinPlazo: AttySinPlazo[] = [];
 
   const admins = await Promise.all(
     celulas.map(async (celula) => ({ celula, data: await readCases(celula) }))
@@ -71,12 +82,21 @@ export async function loadAttyEvents(celulas: Celula[]) {
       const campo = POR_DEADLINE.includes(tipo) ? "DEADLINE" : tipo === "NO DUE DATE" ? "COMMITMENT" : "";
       if (!campo) return;
       const fecha = parseFecha(row[campo]);
+      const status = norm(row["STATUS"]);
       if (!fecha) {
-        // NO DUE DATE sin commitment no va; los demás sin fecha se cuentan.
-        if (tipo !== "NO DUE DATE") sinFecha += 1;
+        // NO DUE DATE sin commitment no va; los demás se listan aparte.
+        if (tipo !== "NO DUE DATE") {
+          sinPlazo.push({
+            key: `${celula}-${row.__row}`,
+            cliente: (row["CLIENTE"] || "").trim(),
+            celula,
+            tipo,
+            motivo: (row[campo] || "").trim() ? `DEADLINE "${row[campo].trim()}"` : "Sin DEADLINE en ADMINs",
+            status,
+          });
+        }
         return;
       }
-      const status = norm(row["STATUS"]);
       events.push({
         key: `${celula}-${row.__row}`,
         fecha,
@@ -98,11 +118,22 @@ export async function loadAttyEvents(celulas: Celula[]) {
       const cliente = (row["CL"] || "").trim();
       if (!cliente) return;
       const fecha = parseFecha(row["Due Date"]);
+      const status = (row["GENERAL STATUS"] || "").trim();
       if (!fecha) {
-        sinFecha += 1;
+        // Sin plazo (p. ej. Due Date "N/A" en solicitudes informativas).
+        sinPlazo.push({
+          key: `nw-${row.__row}`,
+          cliente,
+          celula: "alpha",
+          tipo: "NON VAWA",
+          motivo: [(row["TIPO"] || "").trim(), `Due Date "${(row["Due Date"] || "").trim() || "vacío"}"`]
+            .filter(Boolean)
+            .join(" · "),
+          status: status.toUpperCase(),
+          form: (row["FORM"] || "").trim(),
+        });
         return;
       }
-      const status = (row["GENERAL STATUS"] || "").trim();
       events.push({
         key: `nw-${row.__row}`,
         fecha,
@@ -118,5 +149,17 @@ export async function loadAttyEvents(celulas: Celula[]) {
     });
   }
 
-  return { events: events.sort((a, b) => a.fecha.localeCompare(b.fecha)), sinFecha };
+  return { events: events.sort((a, b) => a.fecha.localeCompare(b.fecha)), sinPlazo };
+}
+
+// Todos los clientes de ADMINs (Alpha y Gamma) y de NW GENERAL, para el estudio de tiempos.
+export async function attyClientes(celulas: Celula[]) {
+  const names: string[] = [];
+  const admins = await Promise.all(celulas.map((c) => readCases(c)));
+  admins.forEach((d) => d.rows.forEach((r) => names.push(r["CLIENTE"] || "")));
+  if (celulas.includes("alpha")) {
+    const nw = await readSheetCases("NW GENERAL");
+    nw.rows.forEach((r) => names.push(r["CL"] || ""));
+  }
+  return [...new Set(names.map((n) => n.trim().toUpperCase()).filter(Boolean))].sort();
 }
