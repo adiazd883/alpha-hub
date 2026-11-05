@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   const scope = teamScope(session.role, [
     ...session.celulas.filter((c) => c === "alpha" || c === "gamma"),
     ...(session.gmc ? (["gmc"] as const) : []),
+    ...(session.atty ? (["atty"] as const) : []),
   ]);
   const csv = toCsv(
     (await listRegistros()).filter((r) => !scope || scope.includes(r.celula))

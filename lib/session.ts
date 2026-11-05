@@ -6,6 +6,7 @@ import type { NextRequest } from "next/server";
 import {
   USERS,
   celulasFor,
+  attyAccess,
   gmcAccess,
   type Role,
 } from "@/lib/auth";
@@ -58,6 +59,7 @@ export type Session = {
   role: Role;
   celulas: Celula[];
   gmc: boolean;
+  atty: boolean;
 };
 
 export function getSession(
@@ -109,5 +111,6 @@ export function getSession(
     role,
     celulas: celulasFor(email, role),
     gmc: gmcAccess(email, role),
+    atty: attyAccess(email, role),
   };
 }

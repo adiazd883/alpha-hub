@@ -56,6 +56,9 @@ export const USERS: Record<string, Role> = {
   "mcastror@supportmendoza.com": "PARALEGAL",
   "evazquez@supportmendoza.com": "PARALEGAL",
   "llopez@supportmendoza.com": "PARALEGAL",
+  // Paralegales de Atty (fuera de las células): solo ven la vista Atty.
+  "galdiazp@supportmendoza.com": "PARALEGAL",
+  "sreyesl@supportmendoza.com": "PARALEGAL",
 };
 
 /*
@@ -107,6 +110,8 @@ export const USER_NAMES: Record<string, string> = {
   "mcastror@supportmendoza.com": "Martha",
   "evazquez@supportmendoza.com": "Erik",
   "llopez@supportmendoza.com": "Luis",
+  "galdiazp@supportmendoza.com": "Galilea",
+  "sreyesl@supportmendoza.com": "Scarlet",
 };
 
 /*
@@ -148,6 +153,8 @@ export const USER_CELULAS: Record<string, Celula[]> = {
   "mcastror@supportmendoza.com": [],
   "evazquez@supportmendoza.com": [],
   "llopez@supportmendoza.com": [],
+  "galdiazp@supportmendoza.com": [],
+  "sreyesl@supportmendoza.com": [],
 };
 
 /*
@@ -173,6 +180,16 @@ const GMC_MEMBERS = new Set<string>([
 
 export function gmcAccess(email: string, role: Role) {
   return ALL_CELULAS_ROLES.has(role) || GMC_MEMBERS.has(email);
+}
+
+// Paralegales de Atty: calendario de fechas límite y estudio de tiempos.
+const ATTY_MEMBERS = new Set<string>([
+  "galdiazp@supportmendoza.com",
+  "sreyesl@supportmendoza.com",
+]);
+
+export function attyAccess(email: string, role: Role) {
+  return ALL_CELULAS_ROLES.has(role) || ATTY_MEMBERS.has(email);
 }
 
 export function gmcEditFields(
