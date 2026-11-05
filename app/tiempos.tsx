@@ -17,8 +17,8 @@ type Me = {
   isAdmin: boolean;
   canRegister: boolean;
   canSeeTeam: boolean;
-  puesto: Puesto | null;
-  gmcPuesto: Puesto | null;
+  // Con qué puesto registra en cada vista.
+  puestos: Partial<Record<TiemposCelula, Puesto>>;
   celulas: TiemposCelula[];
 };
 
@@ -29,26 +29,33 @@ type Data = {
   clock: { today: string; yesterday: string; now: string; nowIso: string };
   mine: Registro[];
   team: Registro[];
-  clientesGmc: string[];
+  clientesExtra: string[];
   sinCliente: string[];
 };
 
-const PUESTOS: { key: Puesto; label: string; gmc?: boolean }[] = [
-  { key: "analista", label: "Analista" },
-  { key: "paralegal", label: "Paralegal" },
-  { key: "psych", label: "Psych" },
-  { key: "gb", label: "GB", gmc: true },
-  { key: "gb_sup", label: "Supervisor GB", gmc: true },
-  { key: "sr", label: "Special Reports", gmc: true },
-  { key: "sr_sup", label: "Supervisor SR", gmc: true },
-  { key: "ea", label: "Evidence Analyst", gmc: true },
-  { key: "gmc_tl", label: "TL GMC", gmc: true },
+type VistaPuesto = "celulas" | "gmc" | "atty";
+
+const PUESTOS: { key: Puesto; label: string; vista: VistaPuesto }[] = [
+  { key: "analista", label: "Analista", vista: "celulas" },
+  { key: "paralegal", label: "Paralegal", vista: "celulas" },
+  { key: "psych", label: "Psych", vista: "celulas" },
+  { key: "gb", label: "GB", vista: "gmc" },
+  { key: "gb_sup", label: "Supervisor GB", vista: "gmc" },
+  { key: "sr", label: "Special Reports", vista: "gmc" },
+  { key: "sr_sup", label: "Supervisor SR", vista: "gmc" },
+  { key: "ea", label: "Evidence Analyst", vista: "gmc" },
+  { key: "gmc_tl", label: "TL GMC", vista: "gmc" },
+  { key: "atty_scarlet", label: "Paralegal Atty · Scarlet", vista: "atty" },
+  { key: "atty_galilea", label: "Paralegal Atty · Galilea", vista: "atty" },
 ];
+
+const vistaDe = (c: string): VistaPuesto => (c === "gmc" || c === "atty" ? c : "celulas");
 
 // Actividades donde se escribe qué se hizo.
 const LIBRES = ["Otro", "Actividad extraordinaria"];
 const actividadLabel = (r: Registro) => (r.otro ? `${r.actividad}: ${r.otro}` : r.actividad);
-const celulaLabel = (c: string) => (c === "gmc" ? "GMC" : CELULAS[c as Celula]?.label || c);
+const celulaLabel = (c: string) =>
+  c === "gmc" ? "GMC" : c === "atty" ? "Atty" : CELULAS[c as Celula]?.label || c;
 
 const OFFSET_MS = 6 * 3600000; // Ciudad de México
 const mxDate = (iso: string) => new Date(Date.parse(iso) - OFFSET_MS).toISOString().slice(0, 10);
@@ -160,7 +167,7 @@ export default function EstudioTiempos({
     <div className="rgPage tmPage">
       <header className="pageHeader">
         <div>
-          <p className="eyebrow">ESTUDIO DE TIEMPOS{celula === "gmc" && " · GMC"}</p>
+          <p className="eyebrow">ESTUDIO DE TIEMPOS{vistaDe(celula) !== "celulas" && ` · ${celulaLabel(celula).toUpperCase()}`}</p>
           <h1>Estudio de tiempos</h1>
           <p>Registra en qué actividad trabajas y para qué cliente. Puedes registrar hoy o ayer.</p>
         </div>
@@ -216,7 +223,7 @@ export default function EstudioTiempos({
               key={editing?.id || "new"}
               data={data}
               celula={celula}
-              clientes={celula === "gmc" ? data.clientesGmc : clientes}
+              clientes={vistaDe(celula) === "celulas" ? clientes : data.clientesExtra}
               editing={editing}
               running={!!running}
               onCancel={() => setEditing(null)}
@@ -245,7 +252,7 @@ export default function EstudioTiempos({
                 rows={data.team}
                 catalogo={data.catalogo}
                 today={data.clock.today}
-                initialCelula={celula === "gmc" ? "gmc" : "todas"}
+                initialCelula={vistaDe(celula) === "celulas" ? "todas" : celula}
               />
             ) : (
               <MyWeek
@@ -411,14 +418,20 @@ function EntryForm({
   onSubmit: (body: Record<string, unknown>, msg: string) => void;
 }) {
   const { me, clock } = data;
-  const enGmc = (editing?.celula || celula) === "gmc";
+  const celulaReg = editing?.celula || celula;
+  const vista = vistaDe(celulaReg);
   const [puesto, setPuesto] = useState<Puesto>(
-    editing?.puesto || (enGmc ? me.gmcPuesto || "gb" : me.puesto || "analista")
+    editing?.puesto ||
+      me.puestos[celulaReg] ||
+      PUESTOS.find((p) => p.vista === vista)!.key
   );
   const [kpi, setKpi] = useState(editing?.kpi || "");
   const [actividad, setActividad] = useState(editing?.actividad || "");
   const [otro, setOtro] = useState(editing?.otro || "");
   const [cliente, setCliente] = useState(editing?.cliente || "");
+  // GMC: el cliente es opcional en actividades internas; Atty: siempre.
+  const clienteOpcional =
+    vista === "atty" || (vista === "gmc" && data.sinCliente.includes(actividad));
   const [mode, setMode] = useState<"timer" | "manual">(editing || running ? "manual" : "timer");
   const [fecha, setFecha] = useState(editing ? mxDate(editing.inicio) : clock.today);
   const [inicio, setInicio] = useState(editing ? mxTime(editing.inicio) : "");
@@ -459,8 +472,14 @@ function EntryForm({
 
   // Clientes de la célula + los que ya registró.
   const sugerencias = useMemo(
-    () => [...new Set([...clientes, ...data.mine.map((r) => r.cliente)])].sort(),
-    [clientes, data.mine]
+    () => [
+      // En Atty, "NO APLICA" para actividades sin cliente.
+      ...(vista === "atty" ? ["NO APLICA"] : []),
+      ...[...new Set([...clientes, ...data.mine.map((r) => r.cliente)])]
+        .filter((c) => c !== "NO APLICA")
+        .sort(),
+    ],
+    [clientes, data.mine, vista]
   );
 
   function submit() {
@@ -512,7 +531,7 @@ function EntryForm({
                 setActividad("");
               }}
             >
-              {PUESTOS.filter((p) => !!p.gmc === enGmc).map((p) => (
+              {PUESTOS.filter((p) => p.vista === vista).map((p) => (
                 <option key={p.key} value={p.key}>
                   {p.label}
                 </option>
@@ -522,11 +541,13 @@ function EntryForm({
         )}
 
         <label className="rgField tmWide">
-          <span>Cliente{enGmc && data.sinCliente.includes(actividad) && " (opcional: actividad interna)"}</span>
+          <span>Cliente{clienteOpcional && " (opcional)"}</span>
           <input
             list="tm-clientes"
             value={cliente}
-            placeholder={enGmc && data.sinCliente.includes(actividad) ? "Vacío = INTERNO" : "Nombre del cliente"}
+            placeholder={
+              clienteOpcional ? `Vacío = ${vista === "atty" ? "NO APLICA" : "INTERNO"}` : "Nombre del cliente"
+            }
             onChange={(e) => setCliente(e.target.value)}
           />
           <datalist id="tm-clientes">
@@ -831,7 +852,7 @@ function TeamView({
         <select value={puesto} onChange={(e) => setPuesto(e.target.value)} aria-label="Puesto">
           <option value="todos">Todos los puestos</option>
           {PUESTOS.filter(
-            (p) => celula === "todas" || !!p.gmc === (celula === "gmc")
+            (p) => celula === "todas" || p.vista === vistaDe(celula)
           ).map((p) => (
             <option key={p.key} value={p.key}>
               {p.label}

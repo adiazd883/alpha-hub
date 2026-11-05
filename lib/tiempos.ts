@@ -22,7 +22,10 @@ export type Puesto =
   | "sr"
   | "sr_sup"
   | "ea"
-  | "gmc_tl";
+  | "gmc_tl"
+  // Paralegales de Atty (cada una con sus actividades)
+  | "atty_scarlet"
+  | "atty_galilea";
 
 export const PUESTO_LABELS: Record<Puesto, string> = {
   analista: "Analista",
@@ -34,12 +37,25 @@ export const PUESTO_LABELS: Record<Puesto, string> = {
   sr_sup: "Supervisor SR",
   ea: "Evidence Analyst",
   gmc_tl: "TL GMC",
+  atty_scarlet: "Paralegal Atty · Scarlet",
+  atty_galilea: "Paralegal Atty · Galilea",
 };
 
 export const GMC_PUESTOS: Puesto[] = ["gb", "gb_sup", "sr", "sr_sup", "ea", "gmc_tl"];
+export const ATTY_PUESTOS: Puesto[] = ["atty_scarlet", "atty_galilea"];
 
-// Alpha, Gamma o GMC: dónde se registró el tiempo.
-export type TiemposCelula = Celula | "gmc";
+// Alpha, Gamma, GMC o Atty: dónde se registró el tiempo.
+export type TiemposCelula = Celula | "gmc" | "atty";
+
+// Vista a la que pertenece un puesto ("celulas" = Alpha / Gamma).
+export const vistaDePuesto = (p: Puesto) =>
+  GMC_PUESTOS.includes(p) ? "gmc" : ATTY_PUESTOS.includes(p) ? "atty" : "celulas";
+export const vistaDeCelula = (c: TiemposCelula) => (c === "gmc" || c === "atty" ? c : "celulas");
+
+export const ATTY_PUESTO_POR_EMAIL: Record<string, Puesto> = {
+  "sreyesl@supportmendoza.com": "atty_scarlet",
+  "galdiazp@supportmendoza.com": "atty_galilea",
+};
 
 /*
  * Puesto de cada persona de GMC (no sale del rol del hub). Los
@@ -236,9 +252,57 @@ export const CATALOGO = {
   ],
 } as Record<Puesto, Grupo[]>;
 
-// "Otro" en los puestos de Alpha y Gamma: la actividad se escribe a mano.
+// PDF "ACTIVIDADES ATTY PARALEGAL" (Downloads, nov 2026).
+CATALOGO.atty_scarlet = [
+  {
+    categoria: "Case Review y agenda",
+    actividades: [
+      "Revisión y gestión de Agenda RFE CR",
+      "Gestión de Google Calendar para CRs y agenda de atty Anna Nuñez",
+      "Organización de material (recibos, dcls y formularios) para CR",
+      "Contacto con clientes previo a CR",
+      "Realización de videollamadas o llamadas CRs",
+      "Registro de CRs en informe semanal",
+      "Registro de CRs en CRM",
+      "Exportación de material multimedia a DB o CRM",
+      "Respuesta a correos de agenda actualizando el estatus sobre el CR",
+      "Enviar declaraciones y formularios a clientes",
+      "Mandar attestations en español e inglés a la atty para su firma",
+      "Mandar attestations firmadas por atty al paralegal correspondiente",
+      "Firmar formularios donde haya fungido como intérprete",
+      "Revisión de agenda para CR Orgánico (Transfer Lozano)",
+      "Seguimiento de casos NDD",
+      "Actualización de attestations",
+      "Agendar llamadas de CR",
+    ],
+  },
+];
+CATALOGO.atty_galilea = [
+  {
+    categoria: "Apoyo a Atty",
+    actividades: [
+      "Revisión de agenda Lozano Cases",
+      "Escalación y actualización de estatus de casos RFE con Atty",
+      "Hablar con Atty para los pendientes del día y seguimiento de CR",
+      "Actualización de reporte diario de Training con Atty Anna",
+      "Training con Atty Anna",
+      "Actualización de reporte diario de agenda de Atty para PMO",
+      "Actualización de sheet de CR general",
+      "Seguimiento y envío de firmas con RFE",
+      "Ensamble y llenado de formas de packets Lozano y de docs para firmas RFE",
+      "Brief, preparación y envío de documentos para CR del dia",
+      "Subir CR a CRM/DB",
+      "Impresión de hojas para firma de Atty.",
+      "Seguimiento de escalaciones de Lozano Cases",
+      "Proyecto Carga Pública",
+      "Actualización de agenda interna para Atty (Google Calendar)",
+    ],
+  },
+];
+
+// "Otro" en los puestos de Alpha, Gamma y Atty: la actividad se escribe a mano.
 export const OTRA_ACTIVIDAD = "Otro";
-for (const puesto of ["analista", "paralegal", "psych"] as Puesto[]) {
+for (const puesto of ["analista", "paralegal", "psych", "atty_scarlet", "atty_galilea"] as Puesto[]) {
   CATALOGO[puesto].push({ categoria: "Otro", actividades: [OTRA_ACTIVIDAD] });
 }
 
@@ -377,8 +441,10 @@ CATALOGO.sr_sup = juntar(SR_UNIVERSALES, TL_UNIVERSALES, SR_SUPERVISION);
 CATALOGO.ea = juntar(EA_TASKS);
 CATALOGO.gmc_tl = juntar(TL_UNIVERSALES, TL_TASKS, GB_SUPERVISION, SR_SUPERVISION);
 
-// Actividades internas de GMC: el cliente es opcional ("INTERNO").
+// Actividades internas (GMC y Atty): el cliente es opcional ("INTERNO").
 export const SIN_CLIENTE = new Set([
+  ...CATALOGO.atty_scarlet.flatMap((g) => g.actividades),
+  ...CATALOGO.atty_galilea.flatMap((g) => g.actividades),
   "Training", "Registros", ACTIVIDAD_EXTRAORDINARIA, "Sheet Management", "Status", "Team FU",
   "Plan Up", "Colab. Incidence validation", "Other teams communications", "Soft Accounting",
   "CRM Translation Auditing", "Team Auditing", "Key Solutions", "Client Assignation",

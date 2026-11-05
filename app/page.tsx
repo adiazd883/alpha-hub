@@ -9,6 +9,7 @@ import RapSheet from "./rs";
 import Comunicaciones from "./comms";
 import EstudioTiempos from "./tiempos";
 import ComunicacionesGmc from "./comms-gmc";
+import AttyCalendar from "./atty";
 
 type Role =
   | "ADMIN"
@@ -29,14 +30,16 @@ type CaseRow = Record<string, string> & {
  * Coordinator y Admin). Cada fila guarda su célula en
  * __celula para saber a qué Sheet escribir.
  */
-type Vista = Celula | "general" | "gmc";
+type Vista = Celula | "general" | "gmc" | "atty";
 
 const vistaLabel = (vista: Vista) =>
   vista === "general"
     ? "General"
     : vista === "gmc"
       ? "GMC"
-      : CELULAS[vista].label;
+      : vista === "atty"
+        ? "Atty"
+        : CELULAS[vista].label;
 
 // El número de fila se repite entre células.
 const rowKey = (row: CaseRow) =>
@@ -49,6 +52,8 @@ const vistasFor = (user: User): Vista[] => [
     ? (["general", ...user.celulas] as Vista[])
     : user.celulas),
   ...(user.gmc ? (["gmc"] as Vista[]) : []),
+  // Paralegales de Atty: calendario de fechas límite y tiempos.
+  ...(user.atty ? (["atty"] as Vista[]) : []),
 ];
 
 type User = {
@@ -57,9 +62,10 @@ type User = {
   role: Role | null;
   celulas: Celula[];
   gmc?: boolean;
+  atty?: boolean;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos" | "atty";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -1980,7 +1986,7 @@ export default function Home() {
     setError("");
 
     try {
-      if (!celula || !user || celula === "gmc") {
+      if (!celula || !user || celula === "gmc" || celula === "atty") {
         return;
       }
 
@@ -2154,6 +2160,7 @@ export default function Home() {
         )
       : celula !== null &&
         celula !== "gmc" &&
+        celula !== "atty" &&
         CELULAS[celula].hasNwGeneral;
 
   const isGeneral = celula === "general";
@@ -2240,11 +2247,13 @@ export default function Home() {
         ? "alpha"
         : celula === "gmc" && user?.gmc
           ? "gmc"
-          : null;
+          : celula === "atty" && user?.atty
+            ? "atty"
+            : null;
 
   // Célula con pestaña RS (Rap Sheet), p. ej. Gamma.
   const rsCelula =
-    celula && celula !== "general" && celula !== "gmc" && CELULAS[celula].hasRs
+    celula && celula !== "general" && celula !== "gmc" && celula !== "atty" && CELULAS[celula].hasRs
       ? celula
       : null;
 
@@ -2252,6 +2261,12 @@ export default function Home() {
   useEffect(() => {
     if (isGmc) setMainView("gmc");
   }, [isGmc]);
+
+  // Atty: calendario de fechas límite y estudio de tiempos.
+  const isAtty = celula === "atty";
+  useEffect(() => {
+    if (isAtty) setMainView("atty");
+  }, [isAtty]);
 
   // Clientes de la Sheet para ligar cada regreso a su caso.
   const regresoCases = useMemo(
@@ -6240,6 +6255,8 @@ export default function Home() {
               ? "R"
               : celula === "gmc"
               ? "GB"
+              : celula === "atty"
+              ? "AT"
               : celula
               ? CELULAS[celula].label.charAt(0)
               : "A"}
@@ -6284,7 +6301,39 @@ export default function Home() {
         </div>
 
         <nav className="sidebarNav">
-          {isGmc ? (
+          {isAtty ? (
+            <>
+              <button
+                className={`navItem ${
+                  mainView === "atty" ? "active" : ""
+                }`}
+                onClick={() => setMainView("atty")}
+              >
+                <span className="navIcon">
+                  ▦
+                </span>
+
+                <span>
+                  Calendario Atty
+                </span>
+              </button>
+
+              <button
+                className={`navItem ${
+                  mainView === "tiempos" ? "active" : ""
+                }`}
+                onClick={() => setMainView("tiempos")}
+              >
+                <span className="navIcon">
+                  ⏱
+                </span>
+
+                <span>
+                  Estudio de tiempos
+                </span>
+              </button>
+            </>
+          ) : isGmc ? (
             <>
               <button
                 className={`navItem ${
@@ -6625,6 +6674,8 @@ export default function Home() {
 
         {mainView === "gmc" && isGmc && <Gmc />}
 
+        {mainView === "atty" && isAtty && <AttyCalendar />}
+
         {mainView === "rs" && rsCelula && <RapSheet celula={rsCelula} />}
 
         {mainView === "tiempos" && tiemposCelula && (
@@ -6650,7 +6701,7 @@ export default function Home() {
             email={user.email || ""}
             celulas={user.celulas}
             defaultCelula={
-              celula === "general" || celula === "gmc"
+              celula === "general" || celula === "gmc" || celula === "atty"
                 ? user.celulas[0]
                 : celula
             }

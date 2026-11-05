@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, type Session } from "@/lib/session";
 import { isCelula } from "@/lib/celulas";
 import { loadGmc } from "@/lib/gmc";
+import { attyClientes } from "@/lib/atty";
+import { CELULA_KEYS } from "@/lib/celulas";
 import {
   ACTIVIDADES_LIBRES,
+  ATTY_PUESTO_POR_EMAIL,
   CATALOGO,
-  GMC_PUESTOS,
   GMC_PUESTO_POR_EMAIL,
+  vistaDeCelula,
+  vistaDePuesto,
   KPIS_ANALISTA,
   SIN_CLIENTE,
   TEAM_ROLES,
@@ -37,25 +41,32 @@ function fail(error: string, status = 400) {
 
 /*
  * Quién registra: analistas, paralegales y psychs de Alpha/Gamma;
- * en GMC, quien tenga puesto de GMC; el Admin para probar.
+ * en GMC y Atty, quien tenga puesto ahí; el Admin para probar.
+ * "puestos" dice con qué puesto registra cada quien en cada vista.
  */
 function profile(session: Session) {
   const isAdmin = session.role === "ADMIN";
-  const puesto = PUESTO_POR_ROL[session.role] || null;
-  const gmcPuesto = GMC_PUESTO_POR_EMAIL[session.email] || null;
+  const puestoCelula = PUESTO_POR_ROL[session.role];
   const celulas: TiemposCelula[] = [
     ...session.celulas.filter((c) => c === "alpha" || c === "gamma"),
     ...(session.gmc ? (["gmc"] as const) : []),
+    ...(session.atty ? (["atty"] as const) : []),
   ];
+  const puestos: Partial<Record<TiemposCelula, Puesto>> = {};
+  celulas.forEach((c) => {
+    const p =
+      c === "gmc"
+        ? GMC_PUESTO_POR_EMAIL[session.email]
+        : c === "atty"
+          ? ATTY_PUESTO_POR_EMAIL[session.email]
+          : puestoCelula;
+    if (p) puestos[c] = p;
+  });
   return {
     isAdmin,
-    puesto,
-    gmcPuesto,
+    puestos,
     celulas,
-    canRegister:
-      isAdmin ||
-      (!!puesto && celulas.some((c) => c !== "gmc")) ||
-      (!!gmcPuesto && session.gmc),
+    canRegister: isAdmin || Object.keys(puestos).length > 0,
     // Admin, Manager, TL y CS ven al equipo (TL y CS solo sus células).
     canSeeTeam: TEAM_ROLES.includes(session.role),
   };
@@ -81,16 +92,20 @@ export async function GET(req: NextRequest) {
     const team = me.canSeeTeam
       ? all.filter((r) => r.inicio >= since && (!scope || scope.includes(r.celula)))
       : [];
-    // Clientes de GMC (pestañas GMC, NON VAWA y OTHER) para el formulario.
-    const clientesGmc =
-      req.nextUrl.searchParams.get("celula") === "gmc" && session.gmc
+    // Clientes de GMC (pestañas GMC, NON VAWA y OTHER) o de Atty (calendario).
+    const vista = req.nextUrl.searchParams.get("celula");
+    const unicos = (list: string[]) => [...new Set(list.map((c) => c.trim().toUpperCase()).filter(Boolean))];
+    const clientesExtra =
+      vista === "gmc" && session.gmc
         ? await loadGmc()
-            .then((d) => [...new Set(d.items.map((i) => i.cliente.trim().toUpperCase()).filter(Boolean))])
+            .then((d) => unicos(d.items.map((i) => i.cliente)))
             .catch(() => [] as string[])
-        : [];
+        : vista === "atty" && session.atty
+          ? await attyClientes(CELULA_KEYS).catch(() => [] as string[])
+          : [];
     return NextResponse.json({
       me: { email: session.email, nombre: nameOf(session.email), ...me },
-      clientesGmc,
+      clientesExtra,
       sinCliente: [...SIN_CLIENTE],
       catalogo: CATALOGO,
       kpis: KPIS_ANALISTA,
@@ -151,18 +166,19 @@ export async function POST(req: NextRequest) {
     // Célula del registro: la pedida si tiene acceso; si no, la que ya tenía.
     const celulaIn = str(body.celula, 10);
     const celula: TiemposCelula =
-      (isCelula(celulaIn) || celulaIn === "gmc") &&
+      (isCelula(celulaIn) || celulaIn === "gmc" || celulaIn === "atty") &&
       (me.isAdmin || me.celulas.includes(celulaIn as TiemposCelula))
         ? (celulaIn as TiemposCelula)
         : existing?.celula || me.celulas.find((c) => c !== "gmc") || "alpha";
     const enGmc = celula === "gmc";
+    const enAtty = celula === "atty";
     if (enGmc && !session.gmc) return fail("No tienes acceso a GMC", 403);
+    if (enAtty && !session.atty) return fail("No tienes acceso a Atty", 403);
 
-    const puestoPropio = enGmc ? me.gmcPuesto : me.puesto;
-    const puesto = (me.isAdmin ? str(body.puesto, 20) || existing?.puesto : puestoPropio) as Puesto | null;
+    const puesto = (me.isAdmin ? str(body.puesto, 20) || existing?.puesto : me.puestos[celula]) as Puesto | null;
     if (!puesto || !CATALOGO[puesto]) return fail("Elige el puesto");
-    if (GMC_PUESTOS.includes(puesto) !== enGmc) {
-      return fail(enGmc ? "Elige un puesto de GMC" : "Ese puesto es de GMC");
+    if (vistaDePuesto(puesto) !== vistaDeCelula(celula)) {
+      return fail("Ese puesto no es de esta vista");
     }
     const actividad = str(body.actividad);
     const categoria = categoriaDe(puesto, actividad, celula);
@@ -173,9 +189,10 @@ export async function POST(req: NextRequest) {
     if (libre && !otro) return fail("Escribe qué actividad hiciste");
     const kpi = puesto === "analista" ? str(body.kpi, 10) : "";
     if (puesto === "analista" && !KPIS_ANALISTA.includes(kpi)) return fail("Indica si es para DCL o CVL");
-    // Actividades internas de GMC sin cliente quedan como "INTERNO".
+    // Sin cliente: actividades internas de GMC = "INTERNO"; Atty = "NO APLICA".
     const cliente =
-      str(body.cliente).toUpperCase() || (enGmc && SIN_CLIENTE.has(actividad) ? "INTERNO" : "");
+      str(body.cliente).toUpperCase() ||
+      (enAtty ? "NO APLICA" : enGmc && SIN_CLIENTE.has(actividad) ? "INTERNO" : "");
     if (!cliente) return fail("Escribe el cliente");
 
     let inicio: string;
