@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, type Session } from "@/lib/session";
-import { isCelula, type Celula } from "@/lib/celulas";
+import { isCelula } from "@/lib/celulas";
+import { loadGmc } from "@/lib/gmc";
 import {
+  ACTIVIDADES_LIBRES,
   CATALOGO,
+  GMC_PUESTOS,
+  GMC_PUESTO_POR_EMAIL,
   KPIS_ANALISTA,
-  OTRA_ACTIVIDAD,
+  SIN_CLIENTE,
   TEAM_ROLES,
   teamScope,
   LONG_HOURS,
@@ -22,6 +26,7 @@ import {
   saveRegistro,
   type Puesto,
   type Registro,
+  type TiemposCelula,
 } from "@/lib/tiempos";
 
 export const dynamic = "force-dynamic";
@@ -30,16 +35,27 @@ function fail(error: string, status = 400) {
   return NextResponse.json({ error }, { status });
 }
 
-// Quién registra: analistas, paralegales y psychs de Alpha/Gamma; el Admin para probar.
+/*
+ * Quién registra: analistas, paralegales y psychs de Alpha/Gamma;
+ * en GMC, quien tenga puesto de GMC; el Admin para probar.
+ */
 function profile(session: Session) {
   const isAdmin = session.role === "ADMIN";
   const puesto = PUESTO_POR_ROL[session.role] || null;
-  const celulas = session.celulas.filter((c) => c === "alpha" || c === "gamma");
+  const gmcPuesto = GMC_PUESTO_POR_EMAIL[session.email] || null;
+  const celulas: TiemposCelula[] = [
+    ...session.celulas.filter((c) => c === "alpha" || c === "gamma"),
+    ...(session.gmc ? (["gmc"] as const) : []),
+  ];
   return {
     isAdmin,
     puesto,
+    gmcPuesto,
     celulas,
-    canRegister: isAdmin || (!!puesto && celulas.length > 0),
+    canRegister:
+      isAdmin ||
+      (!!puesto && celulas.some((c) => c !== "gmc")) ||
+      (!!gmcPuesto && session.gmc),
     // Admin, Manager, TL y CS ven al equipo (TL y CS solo sus células).
     canSeeTeam: TEAM_ROLES.includes(session.role),
   };
@@ -65,8 +81,17 @@ export async function GET(req: NextRequest) {
     const team = me.canSeeTeam
       ? all.filter((r) => r.inicio >= since && (!scope || scope.includes(r.celula)))
       : [];
+    // Clientes de GMC (pestañas GMC, NON VAWA y OTHER) para el formulario.
+    const clientesGmc =
+      req.nextUrl.searchParams.get("celula") === "gmc" && session.gmc
+        ? await loadGmc()
+            .then((d) => [...new Set(d.items.map((i) => i.cliente.trim().toUpperCase()).filter(Boolean))])
+            .catch(() => [] as string[])
+        : [];
     return NextResponse.json({
       me: { email: session.email, nombre: nameOf(session.email), ...me },
+      clientesGmc,
+      sinCliente: [...SIN_CLIENTE],
       catalogo: CATALOGO,
       kpis: KPIS_ANALISTA,
       clock: clock(),
@@ -123,27 +148,35 @@ export async function POST(req: NextRequest) {
     }
     const owner = existing?.email || session.email;
 
-    const puesto = (me.isAdmin ? str(body.puesto, 20) || existing?.puesto : me.puesto) as Puesto | null;
+    // Célula del registro: la pedida si tiene acceso; si no, la que ya tenía.
+    const celulaIn = str(body.celula, 10);
+    const celula: TiemposCelula =
+      (isCelula(celulaIn) || celulaIn === "gmc") &&
+      (me.isAdmin || me.celulas.includes(celulaIn as TiemposCelula))
+        ? (celulaIn as TiemposCelula)
+        : existing?.celula || me.celulas.find((c) => c !== "gmc") || "alpha";
+    const enGmc = celula === "gmc";
+    if (enGmc && !session.gmc) return fail("No tienes acceso a GMC", 403);
+
+    const puestoPropio = enGmc ? me.gmcPuesto : me.puesto;
+    const puesto = (me.isAdmin ? str(body.puesto, 20) || existing?.puesto : puestoPropio) as Puesto | null;
     if (!puesto || !CATALOGO[puesto]) return fail("Elige el puesto");
+    if (GMC_PUESTOS.includes(puesto) !== enGmc) {
+      return fail(enGmc ? "Elige un puesto de GMC" : "Ese puesto es de GMC");
+    }
     const actividad = str(body.actividad);
-    const celulaPedida = str(body.celula, 10);
-    const categoria = categoriaDe(
-      puesto,
-      actividad,
-      isCelula(celulaPedida) ? (celulaPedida as Celula) : existing?.celula
-    );
+    const categoria = categoriaDe(puesto, actividad, celula);
     if (!categoria) return fail("Elige una actividad de la lista");
-    // "Otro": tienen que escribir qué hicieron.
-    const otro = actividad === OTRA_ACTIVIDAD ? str(body.otro, 150) : "";
-    if (actividad === OTRA_ACTIVIDAD && !otro) return fail("Escribe qué actividad hiciste");
+    // "Otro" / "Actividad extraordinaria": tienen que escribir qué hicieron.
+    const libre = ACTIVIDADES_LIBRES.includes(actividad);
+    const otro = libre ? str(body.otro, 150) : "";
+    if (libre && !otro) return fail("Escribe qué actividad hiciste");
     const kpi = puesto === "analista" ? str(body.kpi, 10) : "";
     if (puesto === "analista" && !KPIS_ANALISTA.includes(kpi)) return fail("Indica si es para DCL o CVL");
-    const cliente = str(body.cliente).toUpperCase();
+    // Actividades internas de GMC sin cliente quedan como "INTERNO".
+    const cliente =
+      str(body.cliente).toUpperCase() || (enGmc && SIN_CLIENTE.has(actividad) ? "INTERNO" : "");
     if (!cliente) return fail("Escribe el cliente");
-    const celulaIn = str(body.celula, 10);
-    const celula = (isCelula(celulaIn) && (me.isAdmin || me.celulas.includes(celulaIn as Celula))
-      ? celulaIn
-      : existing?.celula || me.celulas[0] || "alpha") as Celula;
 
     let inicio: string;
     let fin: string | null;

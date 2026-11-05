@@ -13,10 +13,10 @@ export async function GET(req: NextRequest) {
   }
 
   // TL y CS solo descargan lo de sus células.
-  const scope = teamScope(
-    session.role,
-    session.celulas.filter((c) => c === "alpha" || c === "gamma")
-  );
+  const scope = teamScope(session.role, [
+    ...session.celulas.filter((c) => c === "alpha" || c === "gamma"),
+    ...(session.gmc ? (["gmc"] as const) : []),
+  ]);
   const csv = toCsv(
     (await listRegistros()).filter((r) => !scope || scope.includes(r.celula))
   );
