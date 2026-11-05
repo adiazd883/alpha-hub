@@ -155,14 +155,8 @@ export const USER_CELULAS: Record<string, Celula[]> = {
  * estatus, fecha de entrega y link; la fecha esperada solo la
  * pone el Admin. Quien ve todas las células también ve GMC.
  */
+// Equipo GMC: entra a GMC y edita sus entregas (status, entrega y link).
 const GMC_MEMBERS = new Set<string>([
-  "gsanchez@supportmendoza.com",
-  // Supervisora SR: también edita entregas GMC.
-  "cgarcia@supportmendoza.com",
-]);
-
-// Equipo GMC: entra a GMC (entregas en lectura, comunicaciones y tiempos).
-const GMC_TEAM = new Set<string>([
   "amagana@supportmendoza.com",
   "cgarcia@supportmendoza.com",
   "dgutierrezve@supportmendoza.com",
@@ -178,7 +172,7 @@ const GMC_TEAM = new Set<string>([
 ]);
 
 export function gmcAccess(email: string, role: Role) {
-  return ALL_CELULAS_ROLES.has(role) || GMC_MEMBERS.has(email) || GMC_TEAM.has(email);
+  return ALL_CELULAS_ROLES.has(role) || GMC_MEMBERS.has(email);
 }
 
 export function gmcEditFields(
