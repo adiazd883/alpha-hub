@@ -95,7 +95,7 @@ export default function EstudioTiempos({
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Registro | null>(null);
-  const [tab, setTab] = useState<"mios" | "equipo">("mios");
+  const [tab, setTab] = useState<"mios" | "equipo" | "lista">("mios");
   // Manager, TL y CS solo ven al equipo.
   const onlyTeam = !!data && !data.me.canRegister;
   const [, setTick] = useState(0);
@@ -231,28 +231,40 @@ export default function EstudioTiempos({
             />
             )}
 
-            {data.me.canSeeTeam && !onlyTeam && (
+            {data.me.canSeeTeam && (
               <div className="rgTabs tmTabs" role="tablist">
-                {(["mios", "equipo"] as const).map((t) => (
+                {(onlyTeam ? (["equipo", "lista"] as const) : (["mios", "equipo", "lista"] as const)).map((t) => (
                   <button
                     key={t}
                     role="tab"
-                    aria-selected={tab === t}
-                    className={tab === t ? "active" : ""}
+                    aria-selected={tab === t || (onlyTeam && tab === "mios" && t === "equipo")}
+                    className={tab === t || (onlyTeam && tab === "mios" && t === "equipo") ? "active" : ""}
                     onClick={() => setTab(t)}
                   >
-                    {t === "mios" ? "Mis registros" : "Equipo"}
+                    {t === "mios" ? "Mis registros" : t === "equipo" ? "Equipo" : "Lista de registros"}
                   </button>
                 ))}
               </div>
             )}
 
-            {(tab === "equipo" || onlyTeam) && data.me.canSeeTeam ? (
+            {(tab !== "mios" || onlyTeam) && data.me.canSeeTeam ? (
               <TeamView
+                key={tab === "lista" ? "lista" : "equipo"}
+                lista={tab === "lista"}
                 rows={data.team}
                 catalogo={data.catalogo}
                 today={data.clock.today}
                 initialCelula={vistaDe(celula) === "celulas" ? "todas" : celula}
+                isAdmin={data.me.isAdmin}
+                onEdit={(r) => {
+                  setEditing(r);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                onDelete={(r) => {
+                  if (window.confirm(`¿Borrar "${r.actividad}" de ${r.nombre} (${r.cliente})?`)) {
+                    act({ action: "delete", id: r.id }, "Registro borrado");
+                  }
+                }}
               />
             ) : (
               <MyWeek
@@ -716,18 +728,53 @@ function MyWeek({
   );
 }
 
+/*
+ * Alertas para revisar registros: algo que suele ser un error de
+ * captura (cronómetro olvidado, registro de segundos, horas raras,
+ * capturado otro día, editado a mano).
+ */
+function alertasDe(r: Registro) {
+  const out: string[] = [];
+  const m = mins(r);
+  if (m > 240) out.push("Más de 4 h");
+  if (m < 3) out.push("Menos de 3 min");
+  const ini = mxTime(r.inicio);
+  const fin = r.fin ? mxTime(r.fin) : ini;
+  if (ini < "07:00" || fin > "21:00" || (r.fin && mxDate(r.fin) !== mxDate(r.inicio))) out.push("Fuera de horario");
+  if (r.creado && mxDate(r.creado) !== mxDate(r.inicio)) out.push("Capturado otro día");
+  if (r.editado) out.push("Editado");
+  return out;
+}
+
+type Modo = "semana" | "mes" | "rango";
+
 function TeamView({
   rows,
   catalogo,
   today,
   initialCelula,
+  lista,
+  isAdmin,
+  onEdit,
+  onDelete,
 }: {
   rows: Registro[];
   catalogo: Record<Puesto, Grupo[]>;
   today: string;
   initialCelula: string;
+  // "Lista de registros": mismos filtros, sin gráficas.
+  lista: boolean;
+  isAdmin: boolean;
+  onEdit: (r: Registro) => void;
+  onDelete: (r: Registro) => void;
 }) {
   const [week, setWeek] = useState(mondayOf(today));
+  // Periodo: semana (con días sueltos), mes o un rango de fechas.
+  const [modo, setModo] = useState<Modo>("semana");
+  const [mes, setMes] = useState(today.slice(0, 7));
+  const [desde, setDesde] = useState(mondayOf(today));
+  const [hasta, setHasta] = useState(today);
+  const [soloAlertas, setSoloAlertas] = useState(false);
   const [celula, setCelula] = useState(initialCelula);
   const celulasEquipo = [...new Set(rows.map((r) => r.celula))].sort();
   const [puesto, setPuesto] = useState("todos");
@@ -741,6 +788,22 @@ function TeamView({
   const [zoom, setZoom] = useState<{ title: string; rows: Registro[] } | null>(null);
   const end = addDays(week, 6);
   const semana = Array.from({ length: 7 }, (_, i) => addDays(week, i));
+  const finDeMes = (ym: string) => {
+    const [y, m] = ym.split("-").map(Number);
+    return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+  };
+  const moverMes = (ym: string, n: number) => {
+    const [y, m] = ym.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7);
+  };
+  const [from, to] =
+    modo === "semana"
+      ? [week, end]
+      : modo === "mes"
+        ? [`${mes}-01`, finDeMes(mes)]
+        : desde <= hasta
+          ? [desde, hasta]
+          : [hasta, desde];
 
   function moveWeek(to: string) {
     setWeek(to);
@@ -751,12 +814,14 @@ function TeamView({
     (r) =>
       r.fin &&
       (pruebas || !r.prueba) &&
-      mxDate(r.inicio) >= week &&
-      mxDate(r.inicio) <= end &&
+      mxDate(r.inicio) >= from &&
+      mxDate(r.inicio) <= to &&
       (celula === "todas" || r.celula === celula) &&
       (puesto === "todos" || r.puesto === puesto)
   );
-  const base = enSemana.filter((r) => !dias.length || dias.includes(mxDate(r.inicio)));
+  const base = enSemana.filter(
+    (r) => modo !== "semana" || !dias.length || dias.includes(mxDate(r.inicio))
+  );
   const personas = [...new Set(base.map((r) => r.nombre))].sort();
   const porPersonaBase = base.filter((r) => persona === "todos" || r.nombre === persona);
   const clientesDisp = [...new Set(porPersonaBase.map((r) => r.cliente))].sort();
@@ -830,15 +895,52 @@ function TeamView({
   return (
     <section className="tmTeam">
       <div className="gmFilters cmFilters">
-        <div className="calendarControls">
-          <button onClick={() => moveWeek(addDays(week, -7))}>‹</button>
-          <button className="todayButton" onClick={() => moveWeek(mondayOf(today))}>
-            Semana del {fmtDay(week)}
-          </button>
-          <button onClick={() => moveWeek(addDays(week, 7))} disabled={week >= mondayOf(today)}>
-            ›
-          </button>
+        <div className="rgSegment" role="group" aria-label="Periodo">
+          {(
+            [
+              ["semana", "Semana"],
+              ["mes", "Mes"],
+              ["rango", "Rango"],
+            ] as [Modo, string][]
+          ).map(([k, l]) => (
+            <button key={k} className={modo === k ? "active" : ""} onClick={() => setModo(k)}>
+              {l}
+            </button>
+          ))}
         </div>
+        {modo === "semana" && (
+          <div className="calendarControls">
+            <button onClick={() => moveWeek(addDays(week, -7))}>‹</button>
+            <button className="todayButton" onClick={() => moveWeek(mondayOf(today))}>
+              Semana del {fmtDay(week)}
+            </button>
+            <button onClick={() => moveWeek(addDays(week, 7))} disabled={week >= mondayOf(today)}>
+              ›
+            </button>
+          </div>
+        )}
+        {modo === "mes" && (
+          <div className="calendarControls">
+            <button onClick={() => setMes(moverMes(mes, -1))}>‹</button>
+            <input
+              type="month"
+              className="tmMonth"
+              value={mes}
+              max={today.slice(0, 7)}
+              onChange={(e) => e.target.value && setMes(e.target.value)}
+            />
+            <button onClick={() => setMes(moverMes(mes, 1))} disabled={mes >= today.slice(0, 7)}>
+              ›
+            </button>
+          </div>
+        )}
+        {modo === "rango" && (
+          <div className="tmRange">
+            <input type="date" value={desde} max={today} onChange={(e) => e.target.value && setDesde(e.target.value)} />
+            <span>a</span>
+            <input type="date" value={hasta} max={today} onChange={(e) => e.target.value && setHasta(e.target.value)} />
+          </div>
+        )}
         <select value={celula} onChange={(e) => setCelula(e.target.value)} aria-label="Célula">
           <option value="todas">Todas las células</option>
           {[...new Set([...celulasEquipo, initialCelula].filter((c) => c !== "todas"))].map((c) => (
@@ -875,6 +977,7 @@ function TeamView({
       </div>
 
       <div className="tmPeriod">
+        {modo === "semana" ? (
         <div className="rgChips rgChipsSmall" role="group" aria-label="Días">
           <button className={!dias.length ? "active" : ""} onClick={() => setDias([])}>
             Toda la semana
@@ -895,6 +998,11 @@ function TeamView({
             </button>
           ))}
         </div>
+        ) : (
+          <span className="rsCount">
+            Del {fmtDay(from)} al {fmtDay(to)}
+          </span>
+        )}
 
         <div className="tmClientFilter">
           {clientesSel.map((c) => (
@@ -944,6 +1052,18 @@ function TeamView({
         </div>
       </div>
 
+      {lista ? (
+        <RegistrosDetalle
+          rows={visible}
+          persona={persona}
+          soloAlertas={soloAlertas}
+          setSoloAlertas={setSoloAlertas}
+          isAdmin={isAdmin}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      ) : (
+      <>
       <div className="tmTeamGrid">
         {bars(
           "Por colaborador",
@@ -973,6 +1093,8 @@ function TeamView({
       )}
 
       {zoom && <ZoomClientes zoom={zoom} persona={persona} onClose={() => setZoom(null)} />}
+      </>
+      )}
 
       <p className="tmNote">
         Las actividades vienen de la lista de tareas de cada puesto ({Object.values(catalogo).reduce(
@@ -980,6 +1102,122 @@ function TeamView({
           0
         )} en total). El CSV trae todo el histórico.
       </p>
+    </section>
+  );
+}
+
+/*
+ * Lista de registros del periodo y filtros, por día y persona, para
+ * revisar dónde hay errores de captura. El Admin puede corregirlos.
+ */
+function RegistrosDetalle({
+  rows,
+  persona,
+  soloAlertas,
+  setSoloAlertas,
+  isAdmin,
+  onEdit,
+  onDelete,
+}: {
+  rows: Registro[];
+  persona: string;
+  soloAlertas: boolean;
+  setSoloAlertas: (v: boolean) => void;
+  isAdmin: boolean;
+  onEdit: (r: Registro) => void;
+  onDelete: (r: Registro) => void;
+}) {
+  const conAlerta = rows.filter((r) => alertasDe(r).length).length;
+  const lista = rows
+    .filter((r) => !soloAlertas || alertasDe(r).length)
+    .sort((a, b) => b.inicio.localeCompare(a.inicio));
+  // Día → persona → registros.
+  const porDia = new Map<string, Map<string, Registro[]>>();
+  lista.forEach((r) => {
+    const d = mxDate(r.inicio);
+    const dia = porDia.get(d) || new Map<string, Registro[]>();
+    dia.set(r.nombre, [...(dia.get(r.nombre) || []), r]);
+    porDia.set(d, dia);
+  });
+
+  return (
+    <section className="tmList tmDetalle">
+      <div className="tmListHead">
+        <div>
+          <h2>Registros {persona === "todos" ? "del equipo" : `de ${persona}`}</h2>
+          <span>
+            {lista.length} registros · {conAlerta} con alerta
+          </span>
+        </div>
+        <label className="tmCheck">
+          <input type="checkbox" checked={soloAlertas} onChange={(e) => setSoloAlertas(e.target.checked)} />
+          Solo con alerta
+        </label>
+      </div>
+
+      {[...porDia.entries()].map(([dia, personas]) => (
+        <div key={dia} className="tmDay">
+          <div className="tmDayHead">
+            <strong>{fmtDay(dia)}</strong>
+            <span>{hhmm([...personas.values()].flat().reduce((t, r) => t + mins(r), 0))}</span>
+          </div>
+          {[...personas.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([nombre, items]) => (
+              <div key={nombre} className="tmDetallePersona">
+                {persona === "todos" && (
+                  <div className="tmDetalleNombre">
+                    {nombre} · {hhmm(items.reduce((t, r) => t + mins(r), 0))}
+                  </div>
+                )}
+                {items
+                  .slice()
+                  .sort((a, b) => a.inicio.localeCompare(b.inicio))
+                  .map((r) => {
+                    const alertas = alertasDe(r);
+                    return (
+                      <div key={r.id} className={`tmRow ${alertas.length ? "tmRowAlerta" : ""}`}>
+                        <span className="tmTime">
+                          {mxTime(r.inicio)} – {r.fin ? mxTime(r.fin) : "…"}
+                        </span>
+                        <div className="tmWhat">
+                          <strong>
+                            {actividadLabel(r)}
+                            {r.kpi && <em> · {r.kpi}</em>}
+                          </strong>
+                          <small>
+                            {r.cliente} · {r.categoria}
+                            {r.prueba && " · prueba"}
+                          </small>
+                          {alertas.length > 0 && (
+                            <span className="tmAlertas">
+                              {alertas.map((a) => (
+                                <b key={a}>⚠ {a}</b>
+                              ))}
+                            </span>
+                          )}
+                        </div>
+                        <span className="tmDur">
+                          {hhmm(mins(r))}
+                          <ModeTag r={r} />
+                        </span>
+                        {isAdmin ? (
+                          <span className="rgCardMinor">
+                            <button onClick={() => onEdit(r)}>Editar</button>
+                            <button onClick={() => onDelete(r)}>Borrar</button>
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            ))}
+        </div>
+      ))}
+
+      {!lista.length && <div className="gmEmpty">Sin registros con estos filtros.</div>}
     </section>
   );
 }
