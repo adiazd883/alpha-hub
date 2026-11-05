@@ -1513,17 +1513,14 @@ function MonthlyArrivalsChart({
   const { SLOT, BAR } = frame;
   const hovered = months.find((m) => m.mes === hover);
   const label = (mes: string) => `${MONTHS[Number(mes.slice(5)) - 1]} ${mes.slice(2, 4)}`;
-  const totalAnio = (y: string) => months.filter((m) => m.mes.startsWith(y)).reduce((t, m) => t + totalOf(m), 0);
+  const total = months.reduce((t, m) => t + totalOf(m), 0);
 
   return (
     <div className="rfeChartCard">
       <div className="rfeChartHead">
         <div className="rfeChartTitle">
           {title}
-          <span className="rfeChartSub">
-            {" "}
-            · 2025: {totalAnio("2025")} · 2026: {totalAnio("2026")}
-          </span>
+          <span className="rfeChartSub"> · Total {total}</span>
         </div>
 
         <div className="rfeLegend">
@@ -1594,6 +1591,7 @@ function MonthlyArrivalsChart({
 function LlegadasMensualesSection() {
   const [data, setData] = useState<LlegadasData | null>(null);
   const [error, setError] = useState("");
+  const [year, setYear] = useState(String(Math.min(2026, Math.max(2025, new Date().getFullYear()))));
 
   useEffect(() => {
     fetch("/api/rfe-dashboard/llegadas", { cache: "no-store" })
@@ -1607,13 +1605,23 @@ function LlegadasMensualesSection() {
 
   return (
     <section>
-      <div className="rfeSectionHead">
-        <p className="dashboardSectionEyebrow">LLEGADAS</p>
-        <h2>Llegadas mensuales por tipo · 2025 y 2026</h2>
-        <p>
-          VAWA DD y NOID: fecha REGISTERED (cuando nos llega) de Admin TLs y Admin TLs 2.0, sin repetir casos. VAWA NDD:
-          RECEIPT DATE de NO DUE DATE CONSULTA. NON VAWA: Date on Dropbox de RFE&apos;s (other forms).
-        </p>
+      <div className="rfeSectionHeadRow">
+        <div className="rfeSectionHead">
+          <p className="dashboardSectionEyebrow">LLEGADAS</p>
+          <h2>Llegadas mensuales por tipo · {year}</h2>
+          <p>
+            VAWA DD y NOID: fecha REGISTERED (cuando nos llega) de Admin TLs y Admin TLs 2.0, sin repetir casos. VAWA
+            NDD: RECEIPT DATE de NO DUE DATE CONSULTA. NON VAWA: Date on Dropbox de RFE&apos;s (other forms).
+          </p>
+        </div>
+
+        <div className="celulaSwitch rfeYearSwitch" role="group" aria-label="Año">
+          {["2025", "2026"].map((y) => (
+            <button key={y} className={y === year ? "active" : ""} aria-pressed={y === year} onClick={() => setYear(y)}>
+              {y}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && <p className="rfeEmpty">{error}</p>}
@@ -1628,7 +1636,7 @@ function LlegadasMensualesSection() {
               { key: "noid", label: "NOID", className: "rfeSeries2" },
               { key: "ndd", label: "VAWA NDD", className: "rfeSeries3" },
             ]}
-            months={data.vawa}
+            months={data.vawa.filter((m) => m.mes.startsWith(year))}
           />
           <MonthlyArrivalsChart
             title="NON VAWA"
@@ -1637,7 +1645,7 @@ function LlegadasMensualesSection() {
               { key: "noid", label: "NOID", className: "rfeSeries2" },
               { key: "otros", label: "Otros", className: "rfeSeries3" },
             ]}
-            months={data.nonVawa}
+            months={data.nonVawa.filter((m) => m.mes.startsWith(year))}
           />
           <p className="rfeChartNote">
             VAWA: NOID si la casilla NOID de Admin TLs 2.0 está marcada, NDD de la pestaña NO DUE DATE CONSULTA (por
