@@ -169,6 +169,11 @@ export default function Regresos({
     [roster]
   );
   const nameOf = (id: string) => names.get(id) || "—";
+  // CS y TL (p. ej. Consuelo y Agustín) se analizan aparte de los colaboradores.
+  const lideres = useMemo(
+    () => new Set(roster.filter((p) => p.puesto === "cs" || p.puesto === "tl").map((p) => p.id)),
+    [roster]
+  );
 
   // El servidor numera con todos los regresos; si falta, se calcula aquí.
   const numero = useMemo(() => {
@@ -473,6 +478,7 @@ export default function Regresos({
           )}
           today={today}
           nameOf={nameOf}
+          esLider={(id) => lideres.has(id)}
         />
       ) : tab === "team" ? (
         <TeamEditor
@@ -1104,10 +1110,12 @@ function ParetoView({
   items,
   today,
   nameOf,
+  esLider,
 }: {
   items: Regreso[];
   today: string;
   nameOf: (id: string) => string;
+  esLider: (id: string) => boolean;
 }) {
   const [period, setPeriod] = useState<Period>("month");
 
@@ -1142,7 +1150,14 @@ function ParetoView({
     return m;
   };
 
-  const byPerson = pareto(countBy((r) => r.para));
+  // A quién le llega: colaboradores y, aparte, CS / TL.
+  const recibidos = countBy((r) => r.para);
+  const soloDe = (lider: boolean) =>
+    new Map([...recibidos].filter(([id]) => esLider(id) === lider));
+  const byPerson = pareto(soloDe(false));
+  const byLider = pareto(soloDe(true));
+  // Quién hace los regresos.
+  const byAutor = pareto(countBy((r) => r.de));
   // Cada cosa pedida cuenta por separado.
   const motivoCounts = new Map<string, number>();
   for (const r of base) for (const m of motivosDe(r)) motivoCounts.set(m, (motivoCounts.get(m) || 0) + 1);
@@ -1265,7 +1280,11 @@ function ParetoView({
       )}
 
       <div className="rgParetoGrid">
-        <ParetoCard title={`Por persona (${baseLabel} recibidos)`} rows={byPerson} label={nameOf} />
+        <ParetoCard title={`Por colaborador (${baseLabel} recibidos)`} rows={byPerson} label={nameOf} />
+        {byLider.length > 0 && (
+          <ParetoCard title={`CS / TL (${baseLabel} recibidos)`} rows={byLider} label={nameOf} />
+        )}
+        <ParetoCard title={`Quién hace los ${baseLabel}`} rows={byAutor} label={nameOf} />
         <ParetoCard title="Por qué se pide" rows={byMotivo} label={(k) => k} />
         <ParetoCard title="Por etapa" rows={byEtapa} label={(k) => k} />
 
