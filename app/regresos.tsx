@@ -1446,7 +1446,224 @@ function ParetoView({
           </table>
         </div>
       </section>
+
+      <MovimientosEtapa regresos={items} today={today} />
     </div>
+  );
+}
+
+/* ---------------- Movimientos de etapa ---------------- */
+
+type Movimiento = {
+  fecha: string;
+  celula: Celula;
+  key: string;
+  cliente: string;
+  clienteId: string;
+  receipt: string;
+  de: string;
+  a: string;
+};
+
+// Mismo orden que lib/movimientos (sin Carátula).
+const ETAPAS_MOV = ["1st Draft", "DOE / Psych", "EA", "Esc. CVL", "CVL", "MGM Review", "Envío / Filing"];
+const ordenMov = (e: string) => ETAPAS_MOV.indexOf(e);
+
+/*
+ * Cómo se mueven los casos entre etapas (foto diaria de ADMINs),
+ * cruzado con Regresos: un retroceso (volver a una etapa anterior)
+ * debería tener un regreso registrado en el hub.
+ */
+function MovimientosEtapa({ regresos, today }: { regresos: Regreso[]; today: string }) {
+  const [data, setData] = useState<{ eventos: Movimiento[]; desde: string | null } | null>(null);
+  const [error, setError] = useState("");
+  const [modo, setModo] = useState<"semana" | "mes">("semana");
+  const [ancla, setAncla] = useState(today);
+
+  useEffect(() => {
+    fetch("/api/regresos/movimientos", { cache: "no-store" })
+      .then(async (res) => {
+        const json = await res.json();
+        if (res.status === 403) return;
+        if (!res.ok) throw new Error(json.error || "No se pudieron cargar los movimientos");
+        setData(json);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"));
+  }, []);
+
+  if (!data && !error) return null;
+
+  const rango = (a: string): [string, string] => {
+    if (modo === "semana") {
+      const w = weekStart(a);
+      return [w, addDays(w, 6)];
+    }
+    const [y, m] = a.split("-").map(Number);
+    const fin = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+    return [`${a.slice(0, 7)}-01`, fin];
+  };
+  const [from, to] = rango(ancla);
+  const mover = (n: number) => {
+    if (modo === "semana") return setAncla(addDays(weekStart(ancla), 7 * n));
+    const [y, m] = ancla.split("-").map(Number);
+    setAncla(new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 10));
+  };
+  const [prevFrom, prevTo] = rango(modo === "semana" ? addDays(from, -7) : addDays(from, -1));
+
+  const eventos = (data?.eventos || []).filter((e) => e.fecha >= from && e.fecha <= to);
+  const previos = (data?.eventos || []).filter((e) => e.fecha >= prevFrom && e.fecha <= prevTo).length;
+
+  // Regreso registrado del mismo caso en los 7 días previos al movimiento.
+  const norm = (v?: string) => (v || "").trim().toUpperCase();
+  const tieneRegreso = (e: Movimiento) =>
+    regresos.some(
+      (r) =>
+        r.tipo === "regreso" &&
+        r.enviado <= e.fecha &&
+        r.enviado >= addDays(e.fecha, -7) &&
+        ((!!e.clienteId && r.clienteId === e.clienteId) ||
+          (!!e.receipt && norm(r.receipt) === norm(e.receipt)) ||
+          norm(r.cliente) === norm(e.cliente))
+    );
+  const esRetroceso = (e: Movimiento) => ordenMov(e.de) > ordenMov(e.a) && ordenMov(e.a) >= 0;
+
+  const filas = [...ETAPAS_MOV, "Cerrado"]
+    .map((etapa) => {
+      const entradas = eventos.filter((e) => e.a === etapa);
+      const salidas = eventos.filter((e) => e.de === etapa).length;
+      const retrocesos = entradas.filter(esRetroceso);
+      const desde = new Map<string, number>();
+      entradas.forEach((e) => desde.set(e.de, (desde.get(e.de) || 0) + 1));
+      return {
+        etapa,
+        entradas: entradas.length,
+        salidas,
+        balance: entradas.length - salidas,
+        retrocesos: retrocesos.length,
+        conRegreso: retrocesos.filter(tieneRegreso).length,
+        regresosEtapa: regresos.filter(
+          (r) => r.tipo === "regreso" && r.etapa === etapa && r.enviado >= from && r.enviado <= to
+        ).length,
+        desde: [...desde.entries()].sort((a, b) => b[1] - a[1]),
+      };
+    })
+    .filter((f) => f.entradas || f.salidas || f.regresosEtapa);
+
+  const total = (k: "entradas" | "salidas" | "retrocesos" | "conRegreso" | "regresosEtapa") =>
+    filas.reduce((t, f) => t + f[k], 0);
+
+  return (
+    <section className="rgCardBox rgMov">
+      <header className="rgMovHead">
+        <div>
+          <h3>Movimientos entre etapas</h3>
+          <p>
+            Cómo se mueven los casos de Alpha y Gamma (ADMINs) entre etapas, cruzado con los regresos registrados.
+            {data?.desde && ` Historial desde el ${fmtDate(data.desde)}.`}
+          </p>
+        </div>
+        <div className="rgMovControls">
+          <div className="rgSegment" role="group" aria-label="Periodo">
+            {(["semana", "mes"] as const).map((m) => (
+              <button key={m} className={modo === m ? "active" : ""} onClick={() => setModo(m)}>
+                {m === "semana" ? "Semana" : "Mes"}
+              </button>
+            ))}
+          </div>
+          <div className="rgMovNav">
+            <button onClick={() => mover(-1)} aria-label="Anterior">
+              ‹
+            </button>
+            <span>
+              {modo === "semana" ? `${fmtDate(from)} – ${fmtDate(to)}` : fmtDate(from).replace(/^\d+ /, "")}
+            </span>
+            <button onClick={() => mover(1)} disabled={to >= today} aria-label="Siguiente">
+              ›
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {error && <p className="rgEmptyCell">{error}</p>}
+
+      {data && (
+        <>
+          <p className="rgMovSummary">
+            <strong>{eventos.length}</strong> movimientos · {previos} {modo === "semana" ? "la semana" : "el mes"}{" "}
+            anterior
+            {total("retrocesos") > 0 &&
+              ` · ${total("retrocesos")} retrocesos, ${total("conRegreso")} con regreso registrado`}
+          </p>
+          <div className="rgTableWrap">
+            <table className="rgTable rgMovTable">
+              <thead>
+                <tr>
+                  <th>Etapa</th>
+                  <th>Entradas</th>
+                  <th>Salidas</th>
+                  <th>Balance</th>
+                  <th title="Casos que volvieron desde una etapa posterior">Retrocesos</th>
+                  <th title="Retrocesos con un regreso registrado en el hub (7 días antes)">Con regreso</th>
+                  <th title="Regresos registrados en el hub para esta etapa en el periodo">Regresos de la etapa</th>
+                  <th>Desde dónde venían</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filas.map((f) => (
+                  <tr key={f.etapa}>
+                    <td>
+                      <strong>{f.etapa}</strong>
+                    </td>
+                    <td>{f.entradas}</td>
+                    <td>{f.salidas}</td>
+                    <td className={f.balance > 0 ? "rgMovUp" : f.balance < 0 ? "rgMovDown" : ""}>
+                      {f.balance > 0 ? `▲ +${f.balance}` : f.balance < 0 ? `▼ ${f.balance}` : "0"}
+                    </td>
+                    <td>
+                      {f.retrocesos}
+                      {f.entradas > 0 && <em className="rgMovPct"> ({pct(f.retrocesos / f.entradas)})</em>}
+                    </td>
+                    <td>{f.retrocesos ? `${f.conRegreso} de ${f.retrocesos}` : "—"}</td>
+                    <td>{f.regresosEtapa}</td>
+                    <td>
+                      <div className="rgMovFrom">
+                        {f.desde.slice(0, 6).map(([de, n]) => (
+                          <span key={de}>
+                            {de} · {n}
+                          </span>
+                        ))}
+                        {f.desde.length > 6 && <em>+{f.desde.length - 6} más</em>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filas.length > 0 && (
+                  <tr className="rgMovTotal">
+                    <td>Total</td>
+                    <td>{total("entradas")}</td>
+                    <td>{total("salidas")}</td>
+                    <td>{total("entradas") - total("salidas")}</td>
+                    <td>{total("retrocesos")}</td>
+                    <td>{total("retrocesos") ? `${total("conRegreso")} de ${total("retrocesos")}` : "—"}</td>
+                    <td>{total("regresosEtapa")}</td>
+                    <td />
+                  </tr>
+                )}
+                {!filas.length && (
+                  <tr>
+                    <td colSpan={8} className="rgEmptyCell">
+                      {data.desde && from < data.desde
+                        ? "Todavía no hay historial para este periodo."
+                        : "Sin movimientos en este periodo."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
