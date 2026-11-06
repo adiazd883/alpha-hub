@@ -7737,3 +7737,91 @@ button {
 .rgBars li.rgUnpicked {
   opacity: 0.45;
 }
+
+/* Regresos: movimientos entre etapas */
+
+.rgMov {
+  margin-top: 14px;
+}
+
+.rgMovHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rgMovControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rgMovNav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rg-ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.rgMovNav button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rg-line);
+  border-radius: 8px;
+  background: var(--rg-surface);
+  cursor: pointer;
+}
+
+.rgMovNav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.rgMovSummary {
+  margin: 8px 0;
+  color: var(--rg-muted);
+  font-size: 12px;
+}
+
+.rgMovUp {
+  color: #b23b3b;
+  font-weight: 750;
+}
+
+.rgMovDown {
+  color: #327254;
+  font-weight: 750;
+}
+
+.rgMovPct {
+  color: var(--rg-muted);
+  font-style: normal;
+}
+
+.rgMovFrom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rgMovFrom span {
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #eef2fb;
+  color: #33415c;
+  font-size: 11px;
+}
+
+.rgMovFrom em {
+  color: var(--rg-muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.rgMovTotal td {
+  font-weight: 800;
+}
