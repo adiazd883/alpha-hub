@@ -1098,6 +1098,15 @@ function CloseDialog({
 
 type Period = "month" | "30" | "90" | "year" | "all";
 
+// Dimensiones del filtro cruzado del 80/20.
+type Dim = "para" | "de" | "motivo" | "etapa";
+const DIM_LABELS: Record<Dim, string> = {
+  para: "Le llega a",
+  de: "Lo hizo",
+  motivo: "Motivo",
+  etapa: "Etapa",
+};
+
 const PERIODS: { key: Period; label: string }[] = [
   { key: "month", label: "Este mes" },
   { key: "30", label: "30 días" },
@@ -1118,6 +1127,25 @@ function ParetoView({
   esLider: (id: string) => boolean;
 }) {
   const [period, setPeriod] = useState<Period>("month");
+  /*
+   * Filtros cruzados: al elegir una barra (persona, quién lo hizo,
+   * motivo o etapa) todo lo demás se recalcula con esa selección.
+   * La gráfica de esa dimensión sigue mostrando todas sus barras.
+   */
+  const [sel, setSel] = useState<Partial<Record<Dim, string>>>({});
+  const toggle = (dim: Dim, key: string) =>
+    setSel((s) => {
+      const next = { ...s };
+      if (next[dim] === key) delete next[dim];
+      else next[dim] = key;
+      return next;
+    });
+  const matches = (r: Regreso, dim: Dim, key: string) =>
+    dim === "para" ? r.para === key : dim === "de" ? r.de === key : dim === "etapa" ? r.etapa === key : motivosDe(r).includes(key);
+  const filtrar = (rows: Regreso[], skip?: Dim) =>
+    rows.filter((r) =>
+      (Object.entries(sel) as [Dim, string][]).every(([dim, key]) => dim === skip || matches(r, dim, key))
+    );
 
   const from =
     period === "month"
@@ -1128,7 +1156,8 @@ function ParetoView({
       ? ""
       : addDays(today, -Number(period) + 1);
 
-  const inPeriod = items.filter((r) => r.enviado >= from);
+  const enPeriodo = items.filter((r) => r.enviado >= from);
+  const inPeriod = filtrar(enPeriodo);
   const regresos = inPeriod.filter((r) => r.tipo === "regreso");
   const actualizaciones = inPeriod.filter((r) => r.tipo === "actualizacion");
   const closed = inPeriod.filter((r) => r.estado === "concretado" && r.concretado);
@@ -1141,26 +1170,30 @@ function ParetoView({
 
   // El 80/20 se hace sobre regresos (errores); si se filtran
   // solo actualizaciones, se hace sobre esas.
-  const base = regresos.length ? regresos : actualizaciones;
-  const baseLabel = regresos.length ? "regresos" : "actualizaciones";
+  const hayRegresos = enPeriodo.some((r) => r.tipo === "regreso");
+  const baseLabel = hayRegresos ? "regresos" : "actualizaciones";
+  const baseDe = (skip?: Dim) =>
+    filtrar(enPeriodo, skip).filter((r) => r.tipo === (hayRegresos ? "regreso" : "actualizacion"));
+  const base = baseDe();
 
-  const countBy = (key: (r: Regreso) => string) => {
+  // Cada gráfica se calcula sin su propio filtro, para seguir viendo todas sus barras.
+  const countBy = (dim: Dim, key: (r: Regreso) => string) => {
     const m = new Map<string, number>();
-    for (const r of base) m.set(key(r), (m.get(key(r)) || 0) + 1);
+    for (const r of baseDe(dim)) m.set(key(r), (m.get(key(r)) || 0) + 1);
     return m;
   };
 
   // A quién le llega: colaboradores y, aparte, CS / TL.
-  const recibidos = countBy((r) => r.para);
+  const recibidos = countBy("para", (r) => r.para);
   const soloDe = (lider: boolean) =>
     new Map([...recibidos].filter(([id]) => esLider(id) === lider));
   const byPerson = pareto(soloDe(false));
   const byLider = pareto(soloDe(true));
   // Quién hace los regresos.
-  const byAutor = pareto(countBy((r) => r.de));
+  const byAutor = pareto(countBy("de", (r) => r.de));
   // Cada cosa pedida cuenta por separado.
   const motivoCounts = new Map<string, number>();
-  for (const r of base) for (const m of motivosDe(r)) motivoCounts.set(m, (motivoCounts.get(m) || 0) + 1);
+  for (const r of baseDe("motivo")) for (const m of motivosDe(r)) motivoCounts.set(m, (motivoCounts.get(m) || 0) + 1);
   const byMotivo = pareto(motivoCounts);
 
   // Proporción: cuántas cosas se piden corregir por cada registro.
@@ -1168,13 +1201,14 @@ function ParetoView({
   const cosasRegreso = items_(regresos);
   const porRegreso = regresos.length ? cosasRegreso / regresos.length : null;
   const porActualizacion = actualizaciones.length ? items_(actualizaciones) / actualizaciones.length : null;
-  const byEtapa = pareto(countBy((r) => r.etapa));
+  const byEtapa = pareto(countBy("etapa", (r) => r.etapa));
 
-  // Últimas 12 semanas, regresos vs actualizaciones.
+  // Últimas 12 semanas, regresos vs actualizaciones (con la selección).
   const weeks = Array.from({ length: 12 }, (_, i) => addDays(weekStart(today), -7 * (11 - i)));
+  const itemsSel = filtrar(items);
   const weekly = weeks.map((w) => {
     const end = addDays(w, 7);
-    const inWeek = items.filter((r) => r.enviado >= w && r.enviado < end);
+    const inWeek = itemsSel.filter((r) => r.enviado >= w && r.enviado < end);
     return {
       week: w,
       regreso: inWeek.filter((r) => r.tipo === "regreso").length,
@@ -1233,6 +1267,24 @@ function ParetoView({
         ))}
       </div>
 
+      <div className="rgSelBar">
+        {Object.keys(sel).length ? (
+          <>
+            <span>Filtrando por:</span>
+            {(Object.entries(sel) as [Dim, string][]).map(([dim, key]) => (
+              <button key={dim} className="rgSelChip" onClick={() => toggle(dim, key)} title="Quitar filtro">
+                {DIM_LABELS[dim]}: {dim === "para" || dim === "de" ? nameOf(key) : key} ×
+              </button>
+            ))}
+            <button className="rgSelClear" onClick={() => setSel({})}>
+              Quitar todo
+            </button>
+          </>
+        ) : (
+          <span>Da clic en una barra para filtrar todo el análisis.</span>
+        )}
+      </div>
+
       <div className="rgTiles">
         <div className="rgTile">
           <span>Regresos</span>
@@ -1280,13 +1332,43 @@ function ParetoView({
       )}
 
       <div className="rgParetoGrid">
-        <ParetoCard title={`Por colaborador (${baseLabel} recibidos)`} rows={byPerson} label={nameOf} />
+        <ParetoCard
+          title={`Por colaborador (${baseLabel} recibidos)`}
+          rows={byPerson}
+          label={nameOf}
+          selected={sel.para}
+          onPick={(k) => toggle("para", k)}
+        />
         {byLider.length > 0 && (
-          <ParetoCard title={`CS / TL (${baseLabel} recibidos)`} rows={byLider} label={nameOf} />
+          <ParetoCard
+            title={`CS / TL (${baseLabel} recibidos)`}
+            rows={byLider}
+            label={nameOf}
+            selected={sel.para}
+            onPick={(k) => toggle("para", k)}
+          />
         )}
-        <ParetoCard title={`Quién hace los ${baseLabel}`} rows={byAutor} label={nameOf} />
-        <ParetoCard title="Por qué se pide" rows={byMotivo} label={(k) => k} />
-        <ParetoCard title="Por etapa" rows={byEtapa} label={(k) => k} />
+        <ParetoCard
+          title={`Quién hace los ${baseLabel}`}
+          rows={byAutor}
+          label={nameOf}
+          selected={sel.de}
+          onPick={(k) => toggle("de", k)}
+        />
+        <ParetoCard
+          title="Por qué se pide"
+          rows={byMotivo}
+          label={(k) => k}
+          selected={sel.motivo}
+          onPick={(k) => toggle("motivo", k)}
+        />
+        <ParetoCard
+          title="Por etapa"
+          rows={byEtapa}
+          label={(k) => k}
+          selected={sel.etapa}
+          onPick={(k) => toggle("etapa", k)}
+        />
 
         <section className="rgCardBox">
           <header>
@@ -1377,26 +1459,53 @@ function ParetoCard({
   title,
   rows,
   label,
+  selected,
+  onPick,
 }: {
   title: string;
   rows: ParetoRow[];
   label: (key: string) => string;
+  // Barra elegida (filtro cruzado) y qué hacer al darle clic.
+  selected?: string;
+  onPick?: (key: string) => void;
 }) {
   const max = rows[0]?.count || 1;
   const cut = rows.findIndex((r) => !r.vital);
+  // La barra elegida siempre se ve, aunque no esté en el top 10.
+  const shown = rows.slice(0, 10);
+  const extra = selected && !shown.some((r) => r.key === selected) ? rows.find((r) => r.key === selected) : undefined;
 
   return (
-    <section className="rgCardBox">
+    <section className={`rgCardBox ${selected ? "rgCardFiltered" : ""}`}>
       <header>
         <h3>{title}</h3>
-        <p>En color: los que suman el 80%.</p>
+        <p>En color: los que suman el 80%.{onPick && " Clic para filtrar."}</p>
       </header>
       {!rows.length ? (
         <p className="rgEmptyCell">Sin datos en este periodo.</p>
       ) : (
         <ol className="rgBars">
-          {rows.slice(0, 10).map((r, i) => (
-            <li key={r.key} className={`${r.vital ? "vital" : ""} ${i === cut ? "rgCut" : ""}`}>
+          {[...shown, ...(extra ? [extra] : [])].map((r, i) => (
+            <li
+              key={r.key}
+              className={`${r.vital ? "vital" : ""} ${i === cut ? "rgCut" : ""} ${onPick ? "rgPick" : ""} ${
+                selected === r.key ? "rgPicked" : selected ? "rgUnpicked" : ""
+              }`}
+              onClick={onPick ? () => onPick(r.key) : undefined}
+              role={onPick ? "button" : undefined}
+              tabIndex={onPick ? 0 : undefined}
+              aria-pressed={onPick ? selected === r.key : undefined}
+              onKeyDown={
+                onPick
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onPick(r.key);
+                      }
+                    }
+                  : undefined
+              }
+            >
               <span className="rgBarLabel" title={label(r.key)}>
                 {label(r.key)}
               </span>

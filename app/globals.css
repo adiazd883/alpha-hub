@@ -7683,3 +7683,57 @@ button {
   color: #8a94a6;
   font-size: 11px;
 }
+
+/* Regresos 80/20: filtro cruzado */
+
+.rgSelBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 4px;
+  color: var(--rg-muted);
+  font-size: 12px;
+}
+
+.rgSelChip {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--rg-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.rgSelClear {
+  border: 0;
+  background: none;
+  color: var(--rg-accent);
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rgCardFiltered {
+  box-shadow: inset 0 0 0 2px var(--rg-accent);
+}
+
+.rgBars li.rgPick {
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.rgBars li.rgPick:hover {
+  background: #f3f6fb;
+}
+
+.rgBars li.rgPicked {
+  background: #eef2ff;
+}
+
+.rgBars li.rgUnpicked {
+  opacity: 0.45;
+}
