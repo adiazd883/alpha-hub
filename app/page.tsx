@@ -1692,6 +1692,10 @@ export default function Home() {
       rows: [],
     });
 
+  // Opciones de los desplegables según la Sheet de cada célula.
+  const [sheetOptions, setSheetOptions] =
+    useState<Record<string, Record<string, string[]>>>({});
+
   const [loadingUser, setLoadingUser] =
     useState(true);
 
@@ -2031,6 +2035,12 @@ export default function Home() {
       } else {
         setNwAdminRows([]);
       }
+
+      setSheetOptions(
+        Object.fromEntries(
+          results.map(({ target, json }) => [target, json.options || {}])
+        )
+      );
 
       setData({
         title: results[0].json.title,
@@ -5427,6 +5437,12 @@ export default function Home() {
     );
   }
 
+  /*
+   * Se llama como función ({Field({...})}), no como <Field />: al
+   * estar definido dentro de Home, como componente se volvía a
+   * montar en cada cambio y el onBlur nunca llegaba (links y textos
+   * no se guardaban).
+   */
   function Field({
     label,
     header,
@@ -5452,6 +5468,19 @@ export default function Home() {
       selectedCase[
         header
       ] || "";
+
+    /*
+     * Lista de la Sheet de la célula del caso (si existe); si no,
+     * la del hub. El valor actual siempre aparece aunque ya no esté.
+     */
+    const fromSheet =
+      sheetOptions[selectedCase.__celula || celula || ""]?.[header];
+    const baseOptions =
+      fromSheet && fromSheet.length ? fromSheet : options || [];
+    const selectOptions =
+      value && !baseOptions.includes(value)
+        ? [...baseOptions, value]
+        : baseOptions;
 
     const updateLocal = (
       newValue: string
@@ -5540,7 +5569,7 @@ export default function Home() {
               —
             </option>
 
-            {(options || []).map(
+            {selectOptions.map(
               (option) => (
                 <option
                   key={option}
@@ -5736,6 +5765,7 @@ export default function Home() {
     );
   }
 
+  // Igual que Field: se llama como función para no volver a montarse.
   function StageContent({
     stage,
   }: {
@@ -5776,24 +5806,24 @@ export default function Home() {
               }
             />
 
-            <Field
-              label="Commitment"
-              header="COMMITMENT"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "Commitment",
+              header: "COMMITMENT",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="Sent to MGM"
-              header="SENT TO MGM"
-              type="date"
-            />
+            {Field({
+              label: "Sent to MGM",
+              header: "SENT TO MGM",
+              type: "date",
+            })}
 
-            <Field
-              label="Tipo"
-              header="DUE DATE/NO DUE DATE"
-              readOnly
-            />
+            {Field({
+              label: "Tipo",
+              header: "DUE DATE/NO DUE DATE",
+              readOnly: true,
+            })}
           </div>
         </section>
       );
@@ -5830,30 +5860,30 @@ export default function Home() {
               }
             />
 
-            <Field
-              label="PL Assigned"
-              header="PL ASSIGNED"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "PL Assigned",
+              header: "PL ASSIGNED",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="Expected Done"
-              header="CARÁTULA EXPECTED DONE"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "Expected Done",
+              header: "CARÁTULA EXPECTED DONE",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="Done"
-              header="CARATULA DONE"
-              type="date"
-            />
+            {Field({
+              label: "Done",
+              header: "CARATULA DONE",
+              type: "date",
+            })}
 
-            <Field
-              label="Link Carátula"
-              header="LINK CARÁTULA"
-            />
+            {Field({
+              label: "Link Carátula",
+              header: "LINK CARÁTULA",
+            })}
           </div>
         </section>
       );
@@ -5890,37 +5920,37 @@ export default function Home() {
               }
             />
 
-            <Field
-              label="Status 1st Draft"
-              header="STATUS 1ST DRAFT"
-              type="select"
-              options={[
+            {Field({
+              label: "Status 1st Draft",
+              header: "STATUS 1ST DRAFT",
+              type: "select",
+              options: [
                 "DONE",
                 "WORKING",
                 "NA",
                 "UNRESPONSIVE",
                 "CANCELLED/CLOSED",
                 "SPECIAL CASE",
-              ]}
-            />
+              ],
+            })}
 
-            <Field
-              label="Expected Done"
-              header="1ST DRAFT EXP DONE"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "Expected Done",
+              header: "1ST DRAFT EXP DONE",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="1st Draft Done"
-              header="1ST DRAFT DONE"
-              type="date"
-            />
+            {Field({
+              label: "1st Draft Done",
+              header: "1ST DRAFT DONE",
+              type: "date",
+            })}
 
-            <Field
-              label="Link Inf Affidavit"
-              header="LINK INF AFFIDAVIT"
-            />
+            {Field({
+              label: "Link Inf Affidavit",
+              header: "LINK INF AFFIDAVIT",
+            })}
           </div>
         </section>
       );
@@ -5957,18 +5987,18 @@ export default function Home() {
               }
             />
 
-            <Field
-              label="Expected Done"
-              header="PL CVL EXPECTED DONE"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "Expected Done",
+              header: "PL CVL EXPECTED DONE",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="Done"
-              header="PL CVL DONE"
-              type="date"
-            />
+            {Field({
+              label: "Done",
+              header: "PL CVL DONE",
+              type: "date",
+            })}
           </div>
         </section>
       );
@@ -6004,11 +6034,11 @@ export default function Home() {
               }
             />
 
-            <Field
-              label="DOE Status"
-              header="DOE STATUS"
-              type="select"
-              options={[
+            {Field({
+              label: "DOE Status",
+              header: "DOE STATUS",
+              type: "select",
+              options: [
                 "DONE",
                 "CORRECTIONS",
                 "REVIEW",
@@ -6017,39 +6047,39 @@ export default function Home() {
                 "ON HOLD",
                 "CANCELLED",
                 "NA",
-              ]}
-            />
+              ],
+            })}
 
-            <Field
-              label="Expected Done"
-              header="EXPECTED DONE (doe)"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "Expected Done",
+              header: "EXPECTED DONE (doe)",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="Done"
-              header="DONE (doe)"
-              type="date"
-            />
+            {Field({
+              label: "Done",
+              header: "DONE (doe)",
+              type: "date",
+            })}
 
-            <Field
-              label="Link DOE"
-              header="LINK DOE"
-            />
+            {Field({
+              label: "Link DOE",
+              header: "LINK DOE",
+            })}
 
             {/* Psych abre la carátula para editarla; el link no se cambia aquí. */}
-            <Field
-              label="Carátula"
-              header="LINK CARÁTULA"
-              readOnly
-            />
+            {Field({
+              label: "Carátula",
+              header: "LINK CARÁTULA",
+              readOnly: true,
+            })}
 
-            <Field
-              label="Class"
-              header="CLASS"
-              readOnly
-            />
+            {Field({
+              label: "Class",
+              header: "CLASS",
+              readOnly: true,
+            })}
           </div>
         </section>
       );
@@ -6085,68 +6115,83 @@ export default function Home() {
               }
             />
 
-            <Field
-              label="EA Assigned"
-              header="EA ASSIGNED"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "EA Assigned",
+              header: "EA ASSIGNED",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="EA Status"
-              header="EA STATUS"
-            />
+            {Field({
+              label: "EA Status",
+              header: "EA STATUS",
+              type: "select",
+              options: [
+                "READY",
+                "READY TL",
+                "WORKING",
+                "EN COLA",
+                "REGRESO",
+                "ESPERANDO INFO",
+                "PENIENTE DE REVISIÓN",
+                "SENT",
+                "ASIGNADO",
+                "NA",
+                "SPECIAL CASE",
+                "WAITING GMC",
+              ],
+            })}
 
-            <Field
-              label="Expected Done"
-              header="EA EXPECTED DONE"
-              type="date"
-              readOnly
-            />
+            {Field({
+              label: "Expected Done",
+              header: "EA EXPECTED DONE",
+              type: "date",
+              readOnly: true,
+            })}
 
-            <Field
-              label="EA Done"
-              header="EA DONE"
-              type="date"
-            />
+            {Field({
+              label: "EA Done",
+              header: "EA DONE",
+              type: "date",
+            })}
 
-            <Field
-              label="EA P.E."
-              header="EA P.E."
-              type="select"
-              options={[
+            {Field({
+              label: "EA P.E.",
+              header: "EA P.E.",
+              type: "select",
+              options: [
                 "APPROVED",
                 "CORRECTIONS",
                 "PENDING",
                 "NA",
-              ]}
-            />
+              ],
+            })}
 
-            <Field
-              label="Fecha P.E. Aprobada"
-              header="FECHA P.E. APROBADA"
-              type="date"
-            />
+            {Field({
+              label: "Fecha P.E. Aprobada",
+              header: "FECHA P.E. APROBADA",
+              type: "date",
+            })}
 
-            <Field
-              label="EA Stoppers"
-              header="EA STOPPERS"
-            />
+            {Field({
+              label: "EA Stoppers",
+              header: "EA STOPPERS",
+            })}
 
-            <Field
-              label="EA Hojas"
-              header="EA HOJAS"
-            />
+            {Field({
+              label: "EA Hojas",
+              header: "EA HOJAS",
+            })}
 
-            <Field
-              label="EA WS"
-              header="EA WS"
-            />
+            {Field({
+              label: "EA WS",
+              header: "EA WS",
+            })}
 
-            <Field
-              label="Link Drive"
-              header="EA LINK DRIVE"
-            />
+            {Field({
+              label: "Link Drive",
+              header: "EA LINK DRIVE",
+            })}
           </div>
         </section>
       );
@@ -6179,28 +6224,38 @@ export default function Home() {
             }
           />
 
-          <Field
-            label="CVL Status"
-            header="CVL STATUS"
-          />
+          {Field({
+            label: "CVL Status",
+            header: "CVL STATUS",
+            type: "select",
+            options: [
+              "DONE",
+              "DRAFT",
+              "WORKING",
+              "UPD",
+              "CORRECTIONS",
+              "CANCELLED",
+              "N/A",
+            ],
+          })}
 
-          <Field
-            label="Expected Done"
-            header="CVL EXPECTED DONE"
-            type="date"
-            readOnly
-          />
+          {Field({
+            label: "Expected Done",
+            header: "CVL EXPECTED DONE",
+            type: "date",
+            readOnly: true,
+          })}
 
-          <Field
-            label="Done CVL"
-            header="DONE CVL"
-            type="date"
-          />
+          {Field({
+            label: "Done CVL",
+            header: "DONE CVL",
+            type: "date",
+          })}
 
-          <Field
-            label="Link CVL"
-            header="LINK CVL"
-          />
+          {Field({
+            label: "Link CVL",
+            header: "LINK CVL",
+          })}
         </div>
       </section>
     );
@@ -9702,11 +9757,7 @@ export default function Home() {
               </div>
 
               <div className="modalBody">
-                <StageContent
-                  stage={
-                    selectedStage
-                  }
-                />
+                {StageContent({ stage: selectedStage })}
               </div>
             </div>
           </div>
@@ -9833,80 +9884,68 @@ export default function Home() {
                       </div>
 
                       <div className="fieldGrid">
-                        <Field
-                          label="Receipt Number"
-                          header="RECEIPT NUMBER"
-                          readOnly
-                        />
+                        {Field({
+                          label: "Receipt Number",
+                          header: "RECEIPT NUMBER",
+                          readOnly: true,
+                        })}
 
-                        <Field
-                          label="Receipt Date"
-                          header="RECEIPT DATE"
-                          type="date"
-                        />
+                        {Field({
+                          label: "Receipt Date",
+                          header: "RECEIPT DATE",
+                          type: "date",
+                        })}
 
-                        <Field
-                          label="Deadline"
-                          header="DEADLINE"
-                          type="date"
-                        />
+                        {Field({
+                          label: "Deadline",
+                          header: "DEADLINE",
+                          type: "date",
+                        })}
 
-                        <Field
-                          label="Commitment"
-                          header="COMMITMENT"
-                          type="date"
-                        />
+                        {Field({
+                          label: "Commitment",
+                          header: "COMMITMENT",
+                          type: "date",
+                        })}
 
-                        <Field
-                          label="Status"
-                          header="STATUS"
-                          type="select"
-                          options={[
+                        {Field({
+                          label: "Status",
+                          header: "STATUS",
+                          type: "select",
+                          options: [
                             "WORKING",
                             "MGM REVIEW",
                             "SENT TO USCIS",
                             "SPECIAL CASE",
                             "CANCELLED/CLOSED",
-                          ]}
-                        />
+                          ],
+                        })}
 
-                        <Field
-                          label="Sent to MGM"
-                          header="SENT TO MGM"
-                          type="date"
-                        />
+                        {Field({
+                          label: "Sent to MGM",
+                          header: "SENT TO MGM",
+                          type: "date",
+                        })}
                       </div>
 
-                      <Field
-                        label="Nota"
-                        header="NOTA"
-                        type="textarea"
-                      />
+                      {Field({
+                        label: "Nota",
+                        header: "NOTA",
+                        type: "textarea",
+                      })}
                     </section>
 
-                    <StageContent
-                      stage="psych"
-                    />
+                    {StageContent({ stage: "psych" })}
 
-                    <StageContent
-                      stage="caratula"
-                    />
+                    {StageContent({ stage: "caratula" })}
 
-                    <StageContent
-                      stage="draft"
-                    />
+                    {StageContent({ stage: "draft" })}
 
-                    <StageContent
-                      stage="plcvl"
-                    />
+                    {StageContent({ stage: "plcvl" })}
 
-                    <StageContent
-                      stage="ea"
-                    />
+                    {StageContent({ stage: "ea" })}
 
-                    <StageContent
-                      stage="cvl"
-                    />
+                    {StageContent({ stage: "cvl" })}
                   </>
                 )}
               </div>

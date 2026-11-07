@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readCases } from "@/lib/sheets";
+import { readCases, readValidations } from "@/lib/sheets";
 import { getSession } from "@/lib/session";
 import { isCelula } from "@/lib/celulas";
 
@@ -17,7 +17,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    return NextResponse.json(await readCases(celula));
+    const [cases, options] = await Promise.all([
+      readCases(celula),
+      // Si falla, el hub usa sus listas de siempre.
+      readValidations(celula).catch(() => ({})),
+    ]);
+    return NextResponse.json({ ...cases, options });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });
   }

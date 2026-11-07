@@ -166,6 +166,45 @@ async function alignedHeaders(
   );
 }
 
+/*
+ * Opciones de los desplegables de ADMINs (validación de la Sheet,
+ * fila 3), por título de columna ya alineado. Cada célula tiene
+ * sus propias listas (p. ej. DCL STATUS de Gamma ≠ Alpha).
+ */
+export async function readValidations(
+  celula: Celula
+): Promise<Record<string, string[]>> {
+  const {
+    sheets,
+    spreadsheetId,
+    title,
+  } = await getTargetSheet(celula);
+
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId,
+    ranges: [`'${title.replace(/'/g, "''")}'!A2:DZ3`],
+    fields: "sheets.data.rowData.values(formattedValue,dataValidation.condition)",
+  });
+
+  const rows = res.data.sheets?.[0]?.data?.[0]?.rowData || [];
+  const headers = await alignedHeaders(
+    celula,
+    (rows[0]?.values || []).map((v) => String(v.formattedValue ?? ""))
+  );
+  const options: Record<string, string[]> = {};
+
+  (rows[1]?.values || []).forEach((cell, i) => {
+    const condition = cell.dataValidation?.condition;
+    const header = headers[i];
+    if (!header || header in options || condition?.type !== "ONE_OF_LIST") return;
+    options[header] = (condition.values || [])
+      .map((v) => String(v.userEnteredValue ?? "").trim())
+      .filter(Boolean);
+  });
+
+  return options;
+}
+
 export async function readCases(
   celula: Celula
 ) {
