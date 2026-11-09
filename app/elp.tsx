@@ -608,25 +608,20 @@ function Copia({ items, sinFecha }: { items: ElpRevision[]; sinFecha: number }) 
 
   const scope = items.filter((i) => !selected.length || selected.includes(i.semana));
   const regresos = scope.filter((i) => i.regreso);
-  const sinHomologar = regresos.filter((i) => !i.homologada.length).length;
 
   const keysOf = (i: ElpRevision, campo: string): string[] => {
     const v = (x: string, empty: string) => [x || empty];
     switch (campo) {
       case "homologada":
-        return i.homologada.length ? i.homologada : [SIN];
+        return i.homologada;
       case "equipo":
         return v(i.equipo, "Sin asignar");
       case "tl":
         return v(i.tl, "Sin TL");
       case "colaborador":
         return v(i.colaborador, "Sin colaborador");
-      case "caseType":
-        return v(i.caseType, "Sin case type");
-      case "notice":
-        return v(i.notice, "Sin notice type");
       default:
-        return v(i.subtipo, "Sin subtipo");
+        return v(i.caseType, "Sin case type");
     }
   };
 
@@ -646,10 +641,8 @@ function Copia({ items, sinFecha }: { items: ElpRevision[]; sinFecha: number }) 
     ["Corrección homologada", "homologada"],
     ["Equipo a cargo", "equipo"],
     ["Case Type", "caseType"],
-    ["Notice Type", "notice"],
     ["TL", "tl"],
     ["Colaborador", "colaborador"],
-    ["Subtipo PMO", "subtipo"],
   ];
 
   return (
@@ -705,9 +698,7 @@ function Copia({ items, sinFecha }: { items: ElpRevision[]; sinFecha: number }) 
       <div className="elpSectionTitle">
         <h2>¿Qué se corrigió?</h2>
         <span>
-          {sinHomologar > 0
-            ? `${sinHomologar} de ${regresos.length} correcciones aún sin homologar · clic en una barra para ver esos casos`
-            : "Clic en una barra para ver esos casos"}
+          Según Corrección homologada · clic en una barra para ver esos casos
         </span>
       </div>
       <div className="elpRow2">
@@ -727,7 +718,7 @@ function Copia({ items, sinFecha }: { items: ElpRevision[]; sinFecha: number }) 
         rows={lista.map((i, n) => ({
           key: `${i.fecha}-${i.cliente}-${n}`,
           cliente: i.cliente,
-          tags: [i.notice, i.caseType, i.subtipo].filter(Boolean),
+          tags: [i.caseType].filter(Boolean),
           fecha: i.fecha,
           correctionType: i.correctionType,
           homologada: i.homologada,

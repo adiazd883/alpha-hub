@@ -6,7 +6,10 @@ import { getSheets } from "@/lib/sheets";
  * - ENVIOS SEMANALES: casos que mandamos a ELP por semana de envío,
  *   cruzados con su revisión (Corrections Needed: Yes / No /
  *   SIN REVISION).
- * - COPIA ELP: todo lo que ELP revisó, por fecha de revisión.
+ * - COPIA ELP: todo lo que ELP revisó, por fecha de revisión. Aquí
+ *   la corrección sale de "Corrección hologada": hay error o no
+ *   (NO ERROR / vacío = sin corrección). No se usan Notice Type,
+ *   Case Type ni Corrections Needed; el tipo de caso es SUBTIPO PMO.
  *
  * Fechas: la Sheet convirtió como día/mes las fechas m/d en las
  * que el día era 12 o menos, así que en esas celdas el día y el
@@ -41,9 +44,7 @@ export type ElpRevision = {
   fecha: string;
   semana: string;
   cliente: string;
-  notice: string;
-  caseType: string;
-  subtipo: string;
+  caseType: string; // SUBTIPO PMO
   regreso: boolean;
   correctionType: string;
   homologada: string[];
@@ -214,9 +215,6 @@ export function parseCopia(values: unknown[][]): { revisiones: ElpRevision[]; si
   const c = {
     fecha: col("COLUMNA 1", "FECHA", "DATE"),
     cliente: col("CLIENT NAME", "CLIENTE"),
-    notice: col("NOTICE TYPE"),
-    caseType: col("CASE TYPE"),
-    needed: col("CORRECTIONS NEEDED"),
     type: col("CORRECTION TYPE"),
     homologada: col("CORRECCIÓN HOLOGADA", "CORRECCION HOLOGADA", "CORRECCIÓN HOMOLOGADA"),
     equipo: col("EQUIPO A CARGO"),
@@ -236,17 +234,16 @@ export function parseCopia(values: unknown[][]): { revisiones: ElpRevision[]; si
       sinFecha++;
       return;
     }
-    const regreso = isYes(get(row, c.needed));
+    const homologada = splitList(get(row, c.homologada));
+    const regreso = homologada.length > 0;
     revisiones.push({
       fecha,
       semana: isoWeekKey(fecha),
       cliente,
-      notice: norm(get(row, c.notice)),
-      caseType: norm(get(row, c.caseType)),
-      subtipo: norm(get(row, c.subtipo)),
+      caseType: norm(get(row, c.subtipo)),
       regreso,
       correctionType: regreso ? text(get(row, c.type)) : "",
-      homologada: regreso ? splitList(get(row, c.homologada)) : [],
+      homologada,
       equipo: regreso ? text(get(row, c.equipo)) : "",
       tl: regreso ? norm(get(row, c.tl)) : "",
       colaborador: regreso ? norm(get(row, c.colaborador)) : "",
