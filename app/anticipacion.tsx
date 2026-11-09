@@ -44,6 +44,33 @@ const pct0 = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "�
 const monthKey = (iso: string) => iso.slice(0, 7);
 const monthLabel = (k: string) => `${MONTHS[Number(k.slice(5, 7)) - 1]} ${k.slice(2, 4)}`;
 
+// Semana ISO "aaaa-Www" de una fecha "aaaa-mm-dd".
+function weekKey(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const year = t.getUTCFullYear();
+  const week = Math.ceil(((t.getTime() - Date.UTC(year, 0, 1)) / 86400000 + 1) / 7);
+  return `${year}-W${String(week).padStart(2, "0")}`;
+}
+
+function weekRange(key: string) {
+  const [y, w] = key.split("-W").map(Number);
+  const jan4 = new Date(Date.UTC(y, 0, 4));
+  const start = new Date(jan4);
+  start.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7) + (w - 1) * 7);
+  const end = new Date(start);
+  end.setUTCDate(start.getUTCDate() + 6);
+  const f = (d: Date) => `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+  return `${f(start)} – ${f(end)}`;
+}
+
+const weekLabel = (k: string) => `Sem ${Number(k.split("-W")[1])}`;
+
+// En Regresos ELP se ven las semanas más recientes.
+const SEMANAS_VISIBLES = 13;
+
 function fmt(iso: string) {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
@@ -87,12 +114,17 @@ function TipRows({ title, rows }: { title: string; rows: [string, string, string
   );
 }
 
-export default function Anticipacion() {
+/*
+ * embedded: dentro de Regresos ELP, sin banner y por semanas
+ * (semana de llegada a revisión). Suelta: por año y mes.
+ */
+export default function Anticipacion({ embedded = false }: { embedded?: boolean }) {
   const [data, setData] = useState<AntData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [fuente, setFuente] = useState<AntFuente>("VAWA");
   const [year, setYear] = useState<string>("");
+  const [weeksSel, setWeeksSel] = useState<string[]>([]);
   const [tipoSel, setTipoSel] = useState<AntTipo | null>(null);
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -125,7 +157,16 @@ export default function Anticipacion() {
     if (years.length && !years.includes(year)) setYear(years[years.length - 1]);
   }, [years, year]);
 
-  const scope = deFuente.filter((c) => !year || year === "todos" || c.entrega.startsWith(year));
+  // Semanas con casos (más recientes) para el modo por semana.
+  const weeks = useMemo(
+    () => [...new Set(deFuente.map((c) => weekKey(c.entrega)))].sort().slice(-SEMANAS_VISIBLES),
+    [deFuente]
+  );
+  const activeWeeks = weeksSel.length ? weeksSel : weeks;
+
+  const scope = embedded
+    ? deFuente.filter((c) => activeWeeks.includes(weekKey(c.entrega)))
+    : deFuente.filter((c) => !year || year === "todos" || c.entrega.startsWith(year));
   const porTipo = ANT_TIPOS.map((t) => {
     const list = scope.filter((c) => c.tipo === t);
     return { tipo: t, list, avg: avg(list), urgentes: list.filter((c) => c.dias <= 3).length };
@@ -133,11 +174,15 @@ export default function Anticipacion() {
   const general = avg(scope);
   const urgentes = scope.filter((c) => c.dias <= 3).length;
 
-  const months = [...new Set(scope.map((c) => monthKey(c.entrega)))].sort();
+  // Agrupación de la gráfica: semana (embebido) o mes.
+  const groupOf = (c: AntCaso) => (embedded ? weekKey(c.entrega) : monthKey(c.entrega));
+  const groupLabel = (k: string) => (embedded ? `S${Number(k.split("-W")[1])}` : monthLabel(k));
+  const groupTitle = (k: string) => (embedded ? `${weekLabel(k)} · ${weekRange(k)}` : monthLabel(k));
+  const months = embedded ? activeWeeks.filter((w) => scope.some((c) => groupOf(c) === w)) : [...new Set(scope.map(groupOf))].sort();
   const monthly = months.map((m) => ({
     m,
     tipos: ANT_TIPOS.map((t) => {
-      const list = scope.filter((c) => c.tipo === t && monthKey(c.entrega) === m);
+      const list = scope.filter((c) => c.tipo === t && groupOf(c) === m);
       return { tipo: t, n: list.length, avg: avg(list) };
     }),
   }));
@@ -150,7 +195,8 @@ export default function Anticipacion() {
   const shown = showAll ? lista : lista.slice(0, 15);
 
   return (
-    <div className="rgPage elpPage">
+    <div className={embedded ? "" : "rgPage elpPage"}>
+      {!embedded && (
       <header className="elpBanner">
         <div>
           <p>ENTREGAS · MARGEN AL DEADLINE</p>
@@ -179,6 +225,7 @@ export default function Anticipacion() {
           </button>
         </div>
       </header>
+      )}
 
       {error && <div className="errorBanner">{error}</div>}
 
@@ -186,6 +233,52 @@ export default function Anticipacion() {
         <div className="loadingCard">Cargando…</div>
       ) : data ? (
         <>
+          {embedded && (
+            <div className="antFuenteBar">
+              <div className="antFuenteTabs" role="tablist" aria-label="Tipo de caso">
+                {ANT_FUENTES.map((f) => (
+                  <button
+                    key={f}
+                    role="tab"
+                    aria-selected={fuente === f}
+                    className={fuente === f ? "active" : ""}
+                    onClick={() => {
+                      setFuente(f);
+                      setTipoSel(null);
+                      setWeeksSel([]);
+                    }}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              <span>{FUENTE_SUB[fuente]}</span>
+            </div>
+          )}
+          {embedded ? (
+            <div className="elpToolbar">
+              <div className="elpWeekChips" role="group" aria-label="Semanas">
+                <button className={!weeksSel.length ? "active" : ""} onClick={() => setWeeksSel([])}>
+                  Todas
+                </button>
+                {weeks.map((w) => {
+                  const on = weeksSel.includes(w);
+                  return (
+                    <button
+                      key={w}
+                      className={on ? "active" : ""}
+                      aria-pressed={on}
+                      title={weekRange(w)}
+                      onClick={() => setWeeksSel(on ? weeksSel.filter((x) => x !== w) : [...weeksSel, w].sort())}
+                    >
+                      {weekLabel(w)}
+                    </button>
+                  );
+                })}
+              </div>
+              <span>Por semana de llegada a revisión · últimas {weeks.length} semanas</span>
+            </div>
+          ) : (
           <div className="elpToolbar">
             <div className="elpWeekChips" role="group" aria-label="Año">
               {years.map((y) => (
@@ -201,6 +294,7 @@ export default function Anticipacion() {
             </div>
             <span>{FUENTE_SUB[fuente]}</span>
           </div>
+          )}
 
           <div className="antHero">
             <div className="elpHeroTile antHeroMain">
@@ -241,7 +335,7 @@ export default function Anticipacion() {
           <div className="elpRow2 antRow">
             <section className="elpCard">
               <div className="elpCardHead">
-                <h3>Promedio por mes de llegada a revisión</h3>
+                <h3>Promedio por {embedded ? "semana" : "mes"} de llegada a revisión</h3>
                 <span>Días antes del deadline · pasa el mouse para ver el detalle</span>
               </div>
               {monthly.length ? (
@@ -253,7 +347,7 @@ export default function Anticipacion() {
                       tabIndex={0}
                       {...tip.bind(
                         <TipRows
-                          title={monthLabel(x.m)}
+                          title={groupTitle(x.m)}
                           rows={x.tipos.map((t) => [
                             TIPO_LABEL[t.tipo],
                             t.n ? `${f1(t.avg)} días · ${t.n} casos` : "—",
@@ -273,7 +367,7 @@ export default function Anticipacion() {
                           </div>
                         ))}
                       </div>
-                      <span className="elpColLabel">{monthLabel(x.m)}</span>
+                      <span className="elpColLabel">{groupLabel(x.m)}</span>
                     </div>
                   ))}
                 </div>
