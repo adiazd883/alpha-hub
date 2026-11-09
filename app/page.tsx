@@ -5,6 +5,7 @@ import { CELULAS, type Celula } from "@/lib/celulas";
 import RfeDashboard from "./rfe-dashboard";
 import Regresos from "./regresos";
 import ElpRegresos from "./elp";
+import Anticipacion from "./anticipacion";
 import Gmc from "./gmc";
 import RapSheet from "./rs";
 import Comunicaciones from "./comms";
@@ -66,7 +67,7 @@ type User = {
   atty?: boolean;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos" | "atty" | "elp";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos" | "atty" | "elp" | "anticipacion";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -6474,6 +6475,23 @@ export default function Home() {
             </button>
           )}
 
+          {isGeneral && (
+            <button
+              className={`navItem ${
+                mainView === "anticipacion" ? "active" : ""
+              }`}
+              onClick={() => setMainView("anticipacion")}
+            >
+              <span className="navIcon">
+                ⧗
+              </span>
+
+              <span>
+                Días antes del deadline
+              </span>
+            </button>
+          )}
+
 
           <button
             className={`navItem ${
@@ -6769,6 +6787,8 @@ export default function Home() {
         )}
 
         {mainView === "elp" && isGeneral && <ElpRegresos />}
+
+        {mainView === "anticipacion" && isGeneral && <Anticipacion />}
 
         {mainView === "regresos" && user.role && celula && (
           <Regresos

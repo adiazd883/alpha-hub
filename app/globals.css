@@ -8709,3 +8709,281 @@ button {
     font-size: 26px;
   }
 }
+
+/* Días antes del deadline (usa la base visual de Regresos ELP) */
+.elpPage {
+  --ant-noid: #2a78d6;
+  --ant-rfe-noid: #eb6834;
+  --ant-rfe: #1baf7a;
+}
+
+.antNoid {
+  background: var(--ant-noid);
+}
+
+.antRfeNoid {
+  background: var(--ant-rfe-noid);
+}
+
+.antRfe {
+  background: var(--ant-rfe);
+}
+
+/* Margen: rojo vencido, naranja 0–3, azules de menos a más margen */
+.antB0 {
+  background: #d03b3b;
+}
+
+.antB1 {
+  background: #ec835a;
+}
+
+.antB2 {
+  background: #86b6ef;
+}
+
+.antB3 {
+  background: #5598e7;
+}
+
+.antB4 {
+  background: #2a78d6;
+}
+
+.antB5 {
+  background: #184f95;
+}
+
+.antHero {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.antHero .elpHeroTile strong em {
+  margin-left: 2px;
+  color: var(--elp-muted);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.antHeroMain {
+  border: 0;
+  background: linear-gradient(150deg, #f5f8ff 0%, #e8effc 100%);
+}
+
+.antHeroMain strong {
+  font-size: 52px;
+}
+
+.antTipoTile {
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.antTipoTile span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.antTipoTile:hover {
+  border-color: #b7d3f6;
+}
+
+.antTipoTile.active {
+  border-color: var(--elp-accent);
+  box-shadow: 0 0 0 2px var(--elp-accent) inset;
+}
+
+.antRow {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+}
+
+.antMonths {
+  display: grid;
+  gap: 4px;
+}
+
+.antMonth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border-radius: 10px;
+  outline: none;
+}
+
+.antMonth:hover,
+.antMonth:focus-visible {
+  background: #f5f8fd;
+}
+
+.antMonthPlot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 190px;
+  border-bottom: 1px solid var(--elp-line);
+}
+
+.antBarSlot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  width: min(14px, 30%);
+  height: 100%;
+}
+
+.antBarSlot b {
+  margin-bottom: 3px;
+  white-space: nowrap;
+  color: var(--elp-ink-2);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.antBarSlot i {
+  display: block;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.4s ease, opacity 0.15s;
+}
+
+.antDim {
+  opacity: 0.25;
+}
+
+.antDist {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.antDistRow {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: opacity 0.15s;
+}
+
+.antDistName {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--elp-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.antDistName small {
+  margin-left: auto;
+  color: var(--elp-muted);
+  font-size: 12px;
+}
+
+.antDistBar {
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--elp-none);
+}
+
+.antDistBar i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-basis: 0;
+  min-width: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.antDistBar .antB2 {
+  color: #0d366b;
+}
+
+.antDistBar em {
+  padding-left: 10px;
+  align-self: center;
+  color: var(--elp-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.antCount {
+  margin-left: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #e8effc;
+  color: var(--elp-accent);
+  font-size: 12px;
+}
+
+.antSearch {
+  width: min(260px, 100%);
+  padding: 7px 12px;
+  border: 1px solid var(--elp-line);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.antTipoTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.antDias {
+  display: inline-block;
+  min-width: 34px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef2f8;
+  color: var(--elp-ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.antDiasTight {
+  background: #fdeee6;
+  color: #a4471f;
+}
+
+.antDiasLate {
+  background: #fde8e8;
+  color: #a12c2c;
+}
+
+@media (max-width: 1100px) {
+  .antHero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .antRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .antHero {
+    grid-template-columns: 1fr;
+  }
+}
