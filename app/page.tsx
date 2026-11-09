@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { CELULAS, type Celula } from "@/lib/celulas";
 import RfeDashboard from "./rfe-dashboard";
 import Regresos from "./regresos";
+import ElpRegresos from "./elp";
 import Gmc from "./gmc";
 import RapSheet from "./rs";
 import Comunicaciones from "./comms";
@@ -65,7 +66,7 @@ type User = {
   atty?: boolean;
 };
 
-type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos" | "atty";
+type MainView = "dashboard" | "cases" | "team" | "history" | "accountability" | "nwgeneral" | "cs" | "mgmreview" | "rfe" | "regresos" | "gmc" | "rs" | "comms" | "tiempos" | "atty" | "elp";
 
 type NwCalendarKind = "due" | "interno" | "revisioncs";
 
@@ -6456,6 +6457,23 @@ export default function Home() {
             </button>
           )}
 
+          {isGeneral && (
+            <button
+              className={`navItem ${
+                mainView === "elp" ? "active" : ""
+              }`}
+              onClick={() => setMainView("elp")}
+            >
+              <span className="navIcon">
+                ⟲
+              </span>
+
+              <span>
+                Regresos ELP
+              </span>
+            </button>
+          )}
+
 
           <button
             className={`navItem ${
@@ -6749,6 +6767,8 @@ export default function Home() {
             clientes={commsClientes}
           />
         )}
+
+        {mainView === "elp" && isGeneral && <ElpRegresos />}
 
         {mainView === "regresos" && user.role && celula && (
           <Regresos
