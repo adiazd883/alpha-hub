@@ -8987,3 +8987,59 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* Días antes del deadline dentro de Regresos ELP */
+.antFuenteBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.antFuenteBar > span {
+  color: var(--elp-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.antFuenteTabs {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid var(--elp-line);
+  border-radius: 999px;
+  background: var(--elp-surface);
+}
+
+.antFuenteTabs button {
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--elp-ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.antFuenteTabs button.active {
+  background: var(--elp-accent);
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .elpBannerSide,
+  .elpTabs {
+    width: 100%;
+  }
+
+  .elpTabs {
+    flex-wrap: wrap;
+    border-radius: 16px;
+  }
+
+  .elpTabs button {
+    flex: 1 1 auto;
+  }
+}

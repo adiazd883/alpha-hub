@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ElpCategoria, ElpData, ElpEnvio, ElpRevision } from "@/lib/elp";
+import Anticipacion from "./anticipacion";
 
 /*
  * Regresos de ELP (Sheet "ENTREGAS VS REGRESOS"), solo lectura,
@@ -347,7 +348,7 @@ export default function ElpRegresos() {
   const [data, setData] = useState<ElpData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"envios" | "copia">("envios");
+  const [tab, setTab] = useState<"envios" | "copia" | "deadline">("envios");
 
   async function load() {
     setLoading(true);
@@ -384,6 +385,9 @@ export default function ElpRegresos() {
             <button role="tab" aria-selected={tab === "copia"} className={tab === "copia" ? "active" : ""} onClick={() => setTab("copia")}>
               Revisiones ELP
             </button>
+            <button role="tab" aria-selected={tab === "deadline"} className={tab === "deadline" ? "active" : ""} onClick={() => setTab("deadline")}>
+              Días antes del deadline
+            </button>
           </div>
           <button className="elpRefresh" onClick={load} disabled={loading}>
             {loading ? "Cargando…" : "↻ Actualizar"}
@@ -393,7 +397,9 @@ export default function ElpRegresos() {
 
       {error && <div className="errorBanner">{error}</div>}
 
-      {loading && !data ? (
+      {tab === "deadline" ? (
+        <Anticipacion embedded />
+      ) : loading && !data ? (
         <div className="loadingCard">Cargando ELP…</div>
       ) : data ? (
         tab === "envios" ? (
