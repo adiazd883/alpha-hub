@@ -8,6 +8,10 @@ import { getSheets } from "@/lib/sheets";
  * - NON VAWA: TEAM solo "GERSON" = full GMC; con alguien más =
  *   compartido. Cada modo usa sus propias columnas.
  * - OTHER: COMMITMENT es la fecha esperada; no tiene estatus.
+ * - Rehab: la columna de colaborador de Rehab ("REHAB & 485" en
+ *   GMC y NON VAWA, "COLAB REHAB" en OTHER) genera una entrega
+ *   aparte para esa persona, con las fechas y estatus de la fila.
+ *   La pestaña REHAB no se usa.
  *
  * Al navegador solo sale lo necesario para el calendario.
  */
@@ -33,9 +37,9 @@ type Columns = {
 } & Record<GmcField, string | null>;
 
 const TAB_CONFIG: Record<GmcTab, { headerRow: number; lastCol: string }> = {
-  GMC: { headerRow: 2, lastCol: "W" },
-  "NON VAWA": { headerRow: 2, lastCol: "AR" },
-  OTHER: { headerRow: 1, lastCol: "J" },
+  GMC: { headerRow: 2, lastCol: "AH" },
+  "NON VAWA": { headerRow: 2, lastCol: "BA" },
+  OTHER: { headerRow: 1, lastCol: "Z" },
 };
 
 const GMC_COLUMNS: Columns = {
@@ -88,7 +92,6 @@ const NON_VAWA_FORM = "K";
 const GMC_CELULA = "I";
 const GMC_NOID = "W";
 const OTHER_TYPE = "E";
-const OTHER_REHAB = "G";
 // Columna sin título: "email" en un caso sin COLAB = ya está done.
 const OTHER_DONE_MARK = "J";
 
@@ -103,6 +106,9 @@ export type GmcItem = {
   tipo: string;
   detalle: string;
   member: string;
+  // "rehab" = la entrega de Rehab de la fila, a nombre de su colaborador.
+  parte: "principal" | "rehab";
+  // Colaborador de Rehab (en la entrega de Rehab, el principal).
   rehab: string;
   deadline: string | null;
   expected: string | null;
@@ -138,6 +144,15 @@ function quoted(tab: GmcTab) {
   return `'${tab.replace(/'/g, "''")}'`;
 }
 
+// La columna de Rehab se busca por su título, no por letra:
+// "REHAB & 485" (GMC, NON VAWA) o "COLAB REHAB" (OTHER).
+function rehabColumn(header: unknown[]): number {
+  const norm = header.map((h) => text(h).toUpperCase().replace(/\s+/g, " "));
+  const exact = norm.findIndex((h) => h === "REHAB & 485" || h === "COLAB REHAB");
+  if (exact >= 0) return exact;
+  return norm.findIndex((h) => /REHAB/.test(h) && !/LINK|DONE|STATUS|FECHA|DATE/.test(h));
+}
+
 function columnsFor(tab: GmcTab, row: unknown[]): Columns {
   if (tab === "GMC") return GMC_COLUMNS;
   if (tab === "OTHER") return OTHER_COLUMNS;
@@ -150,7 +165,12 @@ function isFullNonVawa(row: unknown[]) {
   return team.split(/[,/&]| Y /).filter((s) => s.trim()).length <= 1;
 }
 
-function toItem(tab: GmcTab, row: unknown[], rowNumber: number): GmcItem | null {
+function toItem(
+  tab: GmcTab,
+  row: unknown[],
+  rowNumber: number,
+  rehabCol = -1
+): GmcItem | null {
   const cols = columnsFor(tab, row);
   const get = (letter: string | null) => (letter ? row[colIndex(letter)] : "");
 
@@ -197,7 +217,8 @@ function toItem(tab: GmcTab, row: unknown[], rowNumber: number): GmcItem | null 
     tipo,
     detalle,
     member,
-    rehab: tab === "OTHER" ? text(get(OTHER_REHAB)) : "",
+    parte: "principal",
+    rehab: rehabCol >= 0 ? rehabName(row[rehabCol]) : "",
     deadline: isoDate(get(cols.deadline)),
     expected: isoDate(get(cols.expected)),
     done,
@@ -207,6 +228,29 @@ function toItem(tab: GmcTab, row: unknown[], rowNumber: number): GmcItem | null 
     link: text(get(cols.link)),
     editable,
   };
+}
+
+// Vacío, N/A o guion = no lleva Rehab.
+function rehabName(v: unknown) {
+  const name = text(v);
+  return /^(n\/?a|-+|no|ninguno)$/i.test(name) ? "" : name;
+}
+
+// La fila y, si tiene colaborador de Rehab, su entrega de Rehab.
+function toItems(tab: GmcTab, row: unknown[], rowNumber: number, rehabCol: number) {
+  const item = toItem(tab, row, rowNumber, rehabCol);
+  if (!item) return [];
+  if (!item.rehab) return [item];
+  return [
+    item,
+    {
+      ...item,
+      key: `${item.key}:rehab`,
+      parte: "rehab" as const,
+      member: item.rehab,
+      rehab: item.member,
+    },
+  ];
 }
 
 export async function loadGmc(): Promise<GmcData> {
@@ -224,9 +268,9 @@ export async function loadGmc(): Promise<GmcData> {
     const tab = GMC_TABS[i];
     const { headerRow } = TAB_CONFIG[tab];
     const values = (range.values || []) as unknown[][];
+    const rehabCol = rehabColumn(values[headerRow - 1] || []);
     values.slice(headerRow).forEach((row, j) => {
-      const item = toItem(tab, row, headerRow + j + 1);
-      if (item) items.push(item);
+      items.push(...toItems(tab, row, headerRow + j + 1, rehabCol));
     });
   });
 
@@ -248,12 +292,18 @@ export async function updateGmc(input: {
   const { tab, row, cliente, field, value } = input;
   const sheets = await getSheets();
 
-  const current = await sheets.spreadsheets.values.get({
+  const { headerRow, lastCol } = TAB_CONFIG[tab];
+  const current = await sheets.spreadsheets.values.batchGet({
     spreadsheetId: GMC_SPREADSHEET_ID,
-    range: `${quoted(tab)}!A${row}:${TAB_CONFIG[tab].lastCol}${row}`,
+    ranges: [
+      `${quoted(tab)}!A${headerRow}:${lastCol}${headerRow}`,
+      `${quoted(tab)}!A${row}:${lastCol}${row}`,
+    ],
     valueRenderOption: "UNFORMATTED_VALUE",
   });
-  const cells = (current.data.values?.[0] || []) as unknown[];
+  const [headerRange, rowRange] = current.data.valueRanges || [];
+  const rehabCol = rehabColumn((headerRange?.values?.[0] || []) as unknown[]);
+  const cells = (rowRange?.values?.[0] || []) as unknown[];
   const cols = columnsFor(tab, cells);
 
   if (text(cells[colIndex(cols.cliente)]) !== cliente.trim()) {
@@ -275,23 +325,24 @@ export async function updateGmc(input: {
 
   const updated = [...cells];
   updated[colIndex(column)] = value;
-  return toItemFromWrite(tab, updated, row, field, value);
+  return itemsFromWrite(tab, updated, row, rehabCol, field, value);
 }
 
-// La fila ya escrita, con la fecha como texto ISO.
-function toItemFromWrite(
+// La fila ya escrita (principal y Rehab), con la fecha como texto ISO.
+function itemsFromWrite(
   tab: GmcTab,
   cells: unknown[],
   row: number,
+  rehabCol: number,
   field: GmcField,
   value: string
 ) {
-  const item = toItem(tab, cells, row);
-  if (!item) return null;
-  if (field === "expected") item.expected = value || null;
-  if (field === "done") {
-    item.done = value || null;
-    if (tab === "OTHER") item.status = value ? "READY" : "WORKING";
-  }
-  return item;
+  return toItems(tab, cells, row, rehabCol).map((item) => {
+    if (field === "expected") item.expected = value || null;
+    if (field === "done") {
+      item.done = value || null;
+      if (tab === "OTHER") item.status = value ? "READY" : "WORKING";
+    }
+    return item;
+  });
 }
