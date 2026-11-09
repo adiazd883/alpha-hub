@@ -81,11 +81,13 @@ const CATEGORIES = [
   "VAWA NDD · Compartido",
   "Gov Request",
   "Non VAWA",
+  "Rehab",
 ] as const;
 
 type Category = (typeof CATEGORIES)[number];
 
 function category(i: GmcItem): Category {
+  if (i.parte === "rehab") return "Rehab";
   if (i.tab === "GMC") return "VAWA DD";
   if (i.tab === "NON VAWA") return "Non VAWA";
   const kind = otherKind(i);
@@ -93,6 +95,9 @@ function category(i: GmcItem): Category {
 }
 
 const tabTag = (tab: GmcTab) => (tab === "NON VAWA" ? "NV" : tab === "GMC" ? "GMC" : "OTH");
+
+// Etiqueta corta: la entrega de Rehab lleva "RH" junto a su pestaña.
+const itemTag = (i: GmcItem) => (i.parte === "rehab" ? `${tabTag(i.tab)} · RH` : tabTag(i.tab));
 
 export default function Gmc() {
   const [data, setData] = useState<(GmcData & { editFields: GmcField[] }) | null>(null);
@@ -153,7 +158,15 @@ export default function Gmc() {
       setData((prev) =>
         prev && {
           ...prev,
-          items: prev.items.map((x) => (x.key === item.key ? json.item || x : x)),
+          // La fila puede traer dos entregas (principal y Rehab).
+          items: (() => {
+            const same = (x: GmcItem) => x.tab === item.tab && x.row === item.row;
+            const fresh: GmcItem[] = json.items || [];
+            const at = prev.items.findIndex(same);
+            if (at < 0 || !fresh.length) return prev.items;
+            const rest = prev.items.filter((x) => !same(x));
+            return [...rest.slice(0, at), ...fresh, ...rest.slice(at)];
+          })(),
         }
       );
       setNotice("Guardado en la Sheet");
@@ -534,14 +547,14 @@ export default function Gmc() {
                                           ? "calendarEventPending"
                                           : "calendarEventFuture"
                                   } ${!delivered(i) && !i.member ? "calendarEventUnassigned" : ""}`}
-                                  title={`${i.tab} · ${i.tipo} · ${i.cliente}`}
+                                  title={`${i.tab}${i.parte === "rehab" ? " · Rehab" : ""} · ${i.tipo} · ${i.cliente}`}
                                   onClick={() => {
                                     setQuery(i.cliente);
                                     setView("table");
                                   }}
                                 >
                                   <strong>
-                                    <b className="teamStageTag">{tabTag(i.tab)}</b>
+                                    <b className="teamStageTag">{itemTag(i)}</b>
                                     {i.cliente}
                                   </strong>
                                   {delivered(i) ? (
@@ -588,13 +601,18 @@ export default function Gmc() {
                         return (
                           <tr key={i.key} className={delivered(i) ? "gmDone" : late ? "gmLate" : ""}>
                             <td>
-                              <b className="teamStageTag">{tabTag(i.tab)}</b>
+                              <b className="teamStageTag">{itemTag(i)}</b>
                               <div className="gmSub">{i.tipo}</div>
                             </td>
                             <td>
                               <strong>{i.cliente}</strong>
                               <div className="gmSub">
-                                {[i.clienteId && `ID ${i.clienteId}`, i.receipt, i.detalle, i.rehab && `Rehab: ${i.rehab}`]
+                                {[
+                                  i.clienteId && `ID ${i.clienteId}`,
+                                  i.receipt,
+                                  i.detalle,
+                                  i.rehab && (i.parte === "rehab" ? `Principal: ${i.rehab}` : `Rehab: ${i.rehab}`),
+                                ]
                                   .filter(Boolean)
                                   .join(" · ")}
                               </div>

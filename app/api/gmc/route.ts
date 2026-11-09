@@ -72,8 +72,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const item = await updateGmc({ tab, row, cliente, field, value });
-    return NextResponse.json({ item });
+    const items = await updateGmc({ tab, row, cliente, field, value });
+    return NextResponse.json({ items });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "No se pudo guardar", 500);
   }
