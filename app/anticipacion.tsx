@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ANT_FUENTES, ANT_TIPOS, type AntCaso, type AntData, type AntFuente, type AntTipo } from "@/lib/anticipacion-types";
+import { ANT_FUENTES, type AntCaso, type AntData } from "@/lib/anticipacion-types";
 
 /*
  * Días antes del deadline con los que los casos llegan a revisión
@@ -10,22 +10,24 @@ import { ANT_FUENTES, ANT_TIPOS, type AntCaso, type AntData, type AntFuente, typ
  * llegan con poco margen.
  */
 
-const TIPO_LABEL: Record<AntTipo, string> = {
-  NOID: "NOID",
-  "RFE DL NOID": "RFE con deadline de NOID",
+/*
+ * Todo junto: VAWA, NON VAWA y VISA T en una sola vista, y dos
+ * grupos: NOID (incluye RFE con deadline de NOID) y RFE.
+ */
+type Grupo = "NOID" | "RFE";
+const GRUPOS: Grupo[] = ["NOID", "RFE"];
+const grupoDe = (c: AntCaso): Grupo => (c.tipo === "RFE" ? "RFE" : "NOID");
+const TIPO_LABEL: Record<Grupo, string> = {
+  NOID: "NOID y RFE con deadline de NOID",
   RFE: "RFE",
 };
-// Colores categóricos fijos por tipo (azul, naranja, aqua).
-const TIPO_CLS: Record<AntTipo, string> = {
+// Colores categóricos fijos por grupo.
+const TIPO_CLS: Record<Grupo, string> = {
   NOID: "antNoid",
-  "RFE DL NOID": "antRfeNoid",
   RFE: "antRfe",
 };
-const FUENTE_SUB: Record<AntFuente, string> = {
-  VAWA: "Deadline − Ready for MGM Review · RFE's I-360 duedate",
-  "NON VAWA": "Due Date − Fecha RTP · NW General (Alpha)",
-  "VISA T": "Deadline − Ready for MGM Review · RFE/NOID VISA T",
-};
+const FUENTES_SUB =
+  "VAWA y VISA T: Deadline − Ready for MGM Review · NON VAWA: Due Date − Fecha RTP (NW General)";
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 // Margen con el que llegó a revisión.
@@ -122,10 +124,9 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
   const [data, setData] = useState<AntData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [fuente, setFuente] = useState<AntFuente>("VAWA");
   const [year, setYear] = useState<string>("");
   const [weeksSel, setWeeksSel] = useState<string[]>([]);
-  const [tipoSel, setTipoSel] = useState<AntTipo | null>(null);
+  const [tipoSel, setTipoSel] = useState<Grupo | null>(null);
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
   const tip = useTip();
@@ -149,10 +150,10 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
     load();
   }, []);
 
-  const deFuente = useMemo(() => (data?.casos || []).filter((c) => c.fuente === fuente), [data, fuente]);
+  const deFuente = useMemo(() => data?.casos || [], [data]);
   const years = useMemo(() => [...new Set(deFuente.map((c) => c.entrega.slice(0, 4)))].sort(), [deFuente]);
 
-  // Por defecto, el año más reciente de la fuente.
+  // Por defecto, el año más reciente.
   useEffect(() => {
     if (years.length && !years.includes(year)) setYear(years[years.length - 1]);
   }, [years, year]);
@@ -167,8 +168,8 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
   const scope = embedded
     ? deFuente.filter((c) => activeWeeks.includes(weekKey(c.entrega)))
     : deFuente.filter((c) => !year || year === "todos" || c.entrega.startsWith(year));
-  const porTipo = ANT_TIPOS.map((t) => {
-    const list = scope.filter((c) => c.tipo === t);
+  const porTipo = GRUPOS.map((t) => {
+    const list = scope.filter((c) => grupoDe(c) === t);
     return { tipo: t, list, avg: avg(list), urgentes: list.filter((c) => c.dias <= 3).length };
   });
   const general = avg(scope);
@@ -181,8 +182,8 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
   const months = embedded ? activeWeeks.filter((w) => scope.some((c) => groupOf(c) === w)) : [...new Set(scope.map(groupOf))].sort();
   const monthly = months.map((m) => ({
     m,
-    tipos: ANT_TIPOS.map((t) => {
-      const list = scope.filter((c) => c.tipo === t && groupOf(c) === m);
+    tipos: GRUPOS.map((t) => {
+      const list = scope.filter((c) => grupoDe(c) === t && groupOf(c) === m);
       return { tipo: t, n: list.length, avg: avg(list) };
     }),
   }));
@@ -190,7 +191,7 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
 
   const q = query.trim().toLowerCase();
   const lista = scope
-    .filter((c) => (!tipoSel || c.tipo === tipoSel) && (!q || c.cliente.toLowerCase().includes(q)))
+    .filter((c) => (!tipoSel || grupoDe(c) === tipoSel) && (!q || c.cliente.toLowerCase().includes(q)))
     .sort((a, b) => b.entrega.localeCompare(a.entrega) || a.dias - b.dias);
   const shown = showAll ? lista : lista.slice(0, 15);
 
@@ -204,22 +205,6 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
           <span>Con cuántos días de anticipación llegan los casos a revisión, en promedio.</span>
         </div>
         <div className="elpBannerSide">
-          <div className="elpTabs" role="tablist">
-            {ANT_FUENTES.map((f) => (
-              <button
-                key={f}
-                role="tab"
-                aria-selected={fuente === f}
-                className={fuente === f ? "active" : ""}
-                onClick={() => {
-                  setFuente(f);
-                  setTipoSel(null);
-                }}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
           <button className="elpRefresh" onClick={load} disabled={loading}>
             {loading ? "Cargando…" : "↻ Actualizar"}
           </button>
@@ -233,28 +218,6 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
         <div className="loadingCard">Cargando…</div>
       ) : data ? (
         <>
-          {embedded && (
-            <div className="antFuenteBar">
-              <div className="antFuenteTabs" role="tablist" aria-label="Tipo de caso">
-                {ANT_FUENTES.map((f) => (
-                  <button
-                    key={f}
-                    role="tab"
-                    aria-selected={fuente === f}
-                    className={fuente === f ? "active" : ""}
-                    onClick={() => {
-                      setFuente(f);
-                      setTipoSel(null);
-                      setWeeksSel([]);
-                    }}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-              <span>{FUENTE_SUB[fuente]}</span>
-            </div>
-          )}
           {embedded ? (
             <div className="elpToolbar">
               <div className="elpWeekChips" role="group" aria-label="Semanas">
@@ -276,7 +239,7 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
                   );
                 })}
               </div>
-              <span>Por semana de llegada a revisión · últimas {weeks.length} semanas</span>
+              <span>Semana de llegada a revisión · últimas {weeks.length} semanas · {FUENTES_SUB}</span>
             </div>
           ) : (
           <div className="elpToolbar">
@@ -292,20 +255,23 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
                 </button>
               )}
             </div>
-            <span>{FUENTE_SUB[fuente]}</span>
+            <span>{FUENTES_SUB}</span>
           </div>
           )}
 
           <div className="antHero">
             <div className="elpHeroTile antHeroMain">
               <div>
-                <span>Promedio general · {fuente}</span>
+                <span>Promedio general</span>
                 <strong>
                   {f1(general)} <em>días</em>
                 </strong>
                 <small>
-                  {scope.length} casos llegaron a revisión
-                  {data.pendientes[fuente] > 0 && ` · ${data.pendientes[fuente]} sin fecha de revisión`}
+                  {scope.length} casos llegaron a revisión ·{" "}
+                  {ANT_FUENTES.map((f) => [f, scope.filter((c) => c.fuente === f).length] as const)
+                    .filter(([, n]) => n > 0)
+                    .map(([f, n]) => `${f} ${n}`)
+                    .join(" · ")}
                 </small>
               </div>
             </div>
@@ -375,7 +341,7 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
                 <div className="elpEmpty">Sin casos en este periodo.</div>
               )}
               <div className="elpLegend">
-                {ANT_TIPOS.map((t) => (
+                {GRUPOS.map((t) => (
                   <span key={t}>
                     <i className={`elpSw ${TIPO_CLS[t]}`} />
                     {TIPO_LABEL[t]}
@@ -457,9 +423,10 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
                   <tr>
                     <th>Cliente</th>
                     <th>Tipo</th>
+                    <th>Origen</th>
                     <th>Recibo</th>
                     <th>Deadline</th>
-                    <th>{fuente === "NON VAWA" ? "Fecha RTP" : "Ready for MGM Review"}</th>
+                    <th>Llegó a revisión</th>
                     <th>Días antes</th>
                   </tr>
                 </thead>
@@ -472,9 +439,13 @@ export default function Anticipacion({ embedded = false }: { embedded?: boolean 
                       </td>
                       <td>
                         <span className="antTipoTag">
-                          <i className={`elpSw ${TIPO_CLS[c.tipo]}`} />
-                          {TIPO_LABEL[c.tipo]}
+                          <i className={`elpSw ${TIPO_CLS[grupoDe(c)]}`} />
+                          {c.tipo === "RFE DL NOID" ? "RFE con deadline de NOID" : c.tipo}
                         </span>
+                      </td>
+                      <td>
+                        <span className="antOrigen">{c.fuente}</span>
+                        <div className="gmSub">{c.fuente === "NON VAWA" ? "Fecha RTP" : "Ready for MGM Review"}</div>
                       </td>
                       <td>{fmt(c.recibo)}</td>
                       <td>{fmt(c.deadline)}</td>
