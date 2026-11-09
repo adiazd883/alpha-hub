@@ -8756,7 +8756,7 @@ button {
 
 .antHero {
   display: grid;
-  grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1.2fr repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -9042,4 +9042,13 @@ button {
   .elpTabs button {
     flex: 1 1 auto;
   }
+}
+
+.antOrigen {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef2f8;
+  color: var(--elp-ink-2);
+  font-size: 11px;
+  font-weight: 800;
 }
