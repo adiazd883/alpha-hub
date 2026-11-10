@@ -342,7 +342,33 @@ type MergedReviewEvent = {
   member?: string;
   // Solo Decisions (DAILY 290).
   decision?: DecisionCase;
+  // Solo MGM Review: estatus de su pestaña (STATUS, GENERAL STATUS
+  // o EVIDENCE STATUS), en mayúsculas.
+  status?: string;
 };
+
+/*
+ * Color por estatus en MGM Review. SENT TO USCIS no se muestra.
+ * - Morado: MGM REVIEW, READY MGM REVIEW, READY TO PRINT (RTP).
+ * - Amarillo: WORKING.
+ * - Rojo: SPECIAL CASE.
+ * - Gris: el resto (Assigned, Atty Review…).
+ */
+type MgmTono = "morado" | "amarillo" | "rojo" | "gris";
+const MGM_TONOS: { key: MgmTono; label: string }[] = [
+  { key: "morado", label: "MGM Review / RTP" },
+  { key: "amarillo", label: "Working" },
+  { key: "rojo", label: "Special Case" },
+  { key: "gris", label: "Otros" },
+];
+const mgmTono = (status = ""): MgmTono =>
+  /MGM REVIEW|READY TO PRINT|^RTP$/.test(status)
+    ? "morado"
+    : status === "WORKING"
+    ? "amarillo"
+    : status === "SPECIAL CASE"
+    ? "rojo"
+    : "gris";
 
 /*
  * MGM Review por deadline interno o por deadline con USCIS:
@@ -2215,6 +2241,19 @@ export default function Home() {
         CELULAS[celula].hasNwGeneral;
 
   const isGeneral = celula === "general";
+
+  /*
+   * Las vistas combinadas (CS, MGM Review) necesitan NW General y,
+   * MGM Review, también Decisions. Se cargan al entrar a la vista y
+   * también al cambiar de célula estando ya en ella (antes solo al
+   * dar clic en el menú, y al pasar de Gamma a General no se cargaba).
+   */
+  useEffect(() => {
+    if (mainView !== "cs" && mainView !== "mgmreview") return;
+    if (hasNwGeneral && !nwLoaded && !nwLoading) loadNwGeneral();
+    if (mainView === "mgmreview" && !decisionsLoaded) loadDecisions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainView, hasNwGeneral, nwLoaded]);
   const isGmc = celula === "gmc";
 
   /*
@@ -4743,6 +4782,7 @@ export default function Home() {
               date,
               completed: isStageDelivered(row, "mgm"),
               client: row["CLIENTE"] || "Sin cliente",
+              status: norm(row["STATUS"] || ""),
             }
           : null;
       })
@@ -4769,6 +4809,7 @@ export default function Home() {
                 norm(row["GENERAL STATUS"] || "")
               ),
               client: row["CL"] || "Sin cliente",
+              status: norm(row["GENERAL STATUS"] || ""),
             }
           : null;
       })
@@ -4790,6 +4831,7 @@ export default function Home() {
         completed: false,
         client: c.cliente,
         decision: c,
+        status: norm(c.status),
       };
     });
 
@@ -9268,7 +9310,9 @@ export default function Home() {
 
         {mainView === "mgmreview" && (() => {
           const visibles = mgmReviewCalendarEvents.filter(
-            (event) => mgmOrigin === "todos" || event.origin === mgmOrigin
+            (event) =>
+              event.status !== "SENT TO USCIS" &&
+              (mgmOrigin === "todos" || event.origin === mgmOrigin)
           );
           const monthEvents = visibles
             .filter(
@@ -9299,16 +9343,8 @@ export default function Home() {
             event.origin === "vawa" && isGeneral && event.row.__celula
               ? `VAWA · ${vistaLabel(event.row.__celula as Celula)}`
               : MGM_ORIGIN_LABEL[event.origin];
-          const eventClass = (event: MergedReviewEvent) =>
-            event.completed
-              ? "calendarEventDelivered"
-              : event.origin === "vawa"
-              ? "calendarEventVawa"
-              : event.origin === "decision"
-              ? "calendarEventDecision"
-              : "calendarEventNonVawa";
-          const pendientes = monthEvents.filter((e) => !e.completed).length;
-          const completadas = monthEvents.length - pendientes;
+          const eventClass = (event: MergedReviewEvent) => `mgmTono-${mgmTono(event.status)}`;
+          const porTono = (t: MgmTono) => monthEvents.filter((e) => mgmTono(e.status) === t).length;
           const fechaLabel = mgmDeadline === "uscis" ? "Deadline USCIS" : "Deadline interno";
           const otraLabel = mgmDeadline === "uscis" ? "Deadline interno" : "Deadline USCIS";
 
@@ -9330,7 +9366,7 @@ export default function Home() {
                 className="refreshButton"
                 onClick={() => {
                   loadCases();
-                  loadNwGeneral();
+                  if (hasNwGeneral) loadNwGeneral();
                   loadDecisions();
                 }}
               >
@@ -9340,6 +9376,14 @@ export default function Home() {
 
             {decisionsErr && (
               <div className="errorBanner">Decisions: {decisionsErr}</div>
+            )}
+
+            {hasNwGeneral && nwErr && (
+              <div className="errorBanner">NON-VAWA (NW General): {nwErr}</div>
+            )}
+
+            {hasNwGeneral && nwLoading && !nwLoaded && (
+              <div className="loadingCard">Cargando NON-VAWA…</div>
             )}
 
             <div className="mgmControls">
@@ -9395,9 +9439,17 @@ export default function Home() {
                   </h2>
 
                   <span>
-                    {pendientes} pendientes
-                    {completadas > 0 && <> · {completadas} completadas</>}
+                    {monthEvents.length} casos · sin Sent to USCIS
                   </span>
+                </div>
+
+                <div className="mgmLegend" aria-label="Colores por estatus">
+                  {MGM_TONOS.map((t) => (
+                    <span key={t.key}>
+                      <i className={`mgmSwatch mgmTono-${t.key}`} />
+                      {t.label} <b>{porTono(t.key)}</b>
+                    </span>
+                  ))}
                 </div>
 
                 <div className="calendarControls">
@@ -9462,18 +9514,11 @@ export default function Home() {
                               >
                                 <strong>{event.client}</strong>
 
-                                {event.completed ? (
-                                  <span className="deliveredEventLabel">
-                                    ✓ Entregado
-                                  </span>
-                                ) : (
-                                  <span>
-                                    {originLabel(event)}
-                                    {event.decision?.forms.length
-                                      ? ` · ${event.decision.forms.join(", ")}`
-                                      : ""}
-                                  </span>
-                                )}
+                                <span>
+                                  <i className={`mgmDot mgmDot-${event.origin}`} />
+                                  {originLabel(event)}
+                                  {event.status ? ` · ${event.status}` : ""}
+                                </span>
                               </button>
                             ))}
                           </div>
@@ -9489,11 +9534,16 @@ export default function Home() {
                   )}
                   {monthEvents.map((event) => {
                     const dias = diasA(event.date);
-                    const detalle = event.decision
-                      ? [event.decision.forms.join(", "), event.decision.status].filter(Boolean).join(" · ")
-                      : event.origin === "vawa"
-                      ? [event.row["DUE DATE/NO DUE DATE"], event.row["STATUS"]].filter(Boolean).join(" · ")
-                      : [event.row["TIPO"], event.row["GENERAL STATUS"]].filter(Boolean).join(" · ");
+                    const detalle = [
+                      event.decision
+                        ? event.decision.forms.join(", ")
+                        : event.origin === "vawa"
+                        ? event.row["DUE DATE/NO DUE DATE"]
+                        : event.row["TIPO"],
+                      event.status,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ");
                     return (
                       <button
                         key={`${event.origin}-${rowKey(event.row)}`}
@@ -9507,6 +9557,7 @@ export default function Home() {
                         <span className="mgmRowMain">
                           <strong>{event.client}</strong>
                           <small>
+                            <i className={`mgmDot mgmDot-${event.origin}`} />
                             {originLabel(event)}
                             {detalle && ` · ${detalle}`}
                           </small>
@@ -9517,12 +9568,10 @@ export default function Home() {
                         </span>
                         <span
                           className={`mgmRowDias ${
-                            event.completed ? "mgmOk" : dias < 0 ? "mgmLate" : dias <= 3 ? "mgmSoon" : ""
+                            dias < 0 ? "mgmLate" : dias <= 3 ? "mgmSoon" : ""
                           }`}
                         >
-                          {event.completed
-                            ? "✓ Entregado"
-                            : dias < 0
+                          {dias < 0
                             ? `Vencido ${-dias} d`
                             : dias === 0
                             ? "Hoy"
