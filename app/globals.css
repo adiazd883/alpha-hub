@@ -9052,3 +9052,85 @@ button {
   font-size: 11px;
   font-weight: 800;
 }
+
+/* ======================================================
+   MGM REVIEW · Decisions, filtros y lista
+====================================================== */
+.calendarEventDecision {
+  border-left-color: #c0641c;
+  background: #fff3e8;
+  color: #8f4610;
+}
+
+.mgmControls {
+  --rg-ink: #1f2b42;
+  --rg-line: #e2e7ee;
+  --rg-surface: #ffffff;
+  --rg-accent: #365ed3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+}
+
+.mgmDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.mgmDot-vawa { background: #0e8f80; }
+.mgmDot-nonvawa { background: #7049ae; }
+.mgmDot-decision { background: #c0641c; }
+
+.mgmList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.mgmRow {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 110px 104px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e6e9f0;
+  border-left: 4px solid;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.mgmRow:hover { filter: brightness(0.98); }
+.mgmRow small { display: block; font-size: 11.5px; opacity: 0.8; }
+.mgmRowMain { min-width: 0; }
+.mgmRowMain strong,
+.mgmRowMain small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mgmRowMain strong { display: block; }
+.mgmRowDate strong { font-size: 15px; }
+.mgmRowOther span { font-weight: 700; }
+.mgmRowDias {
+  justify-self: end;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffffb3;
+  font-size: 12px;
+  font-weight: 800;
+  color: #44506a;
+}
+.mgmRowDias.mgmLate { background: #fde8e8; color: #b42323; }
+.mgmRowDias.mgmSoon { background: #fff1e0; color: #a3530f; }
+.mgmRowDias.mgmOk { background: #e6f6ec; color: #2f6b46; }
+
+@media (max-width: 700px) {
+  .mgmRow {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+  .mgmRowOther { grid-column: 1; }
+  .mgmRowDias { grid-column: 2; }
+}
