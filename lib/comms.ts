@@ -108,7 +108,13 @@ const SHEET_NAMES: Record<string, string> = {
 
 // Variantes del mismo nombre en la Sheet (igual que en calendarios).
 const COMMS_ALIASES: Record<string, string> = { JAZ: "JAZMIN" };
-const commsAlias = (name: string) => COMMS_ALIASES[name] || name;
+// Nombres anteriores por célula: en Alpha, "ALONSO" ahora es Andres
+// (en Gamma, Jesus Alonso conserva su nombre).
+const VISTA_ALIASES: Partial<Record<CommsVista, Record<string, string>>> = {
+  alpha: { ALONSO: "ANDRES" },
+};
+const commsAlias = (name: string, vista?: CommsVista) =>
+  (vista && VISTA_ALIASES[vista]?.[name]) || COMMS_ALIASES[name] || name;
 
 export function commsName(email: string) {
   return SHEET_NAMES[email] || (USER_NAMES[email] || email.split("@")[0]).toUpperCase();
@@ -168,7 +174,7 @@ export async function loadComms(vista: CommsVista) {
   const all = ((res.data.values || []) as unknown[][]).map((r, i) => ({
     row: i + 2,
     cliente: text(get(r, "cliente")),
-    colaborador: commsAlias(text(get(r, "colaborador")).toUpperCase()),
+    colaborador: commsAlias(text(get(r, "colaborador")).toUpperCase(), vista),
     posicion: text(get(r, "posicion")),
     fecha: isoDate(get(r, "fecha")),
     duracion: text(get(r, "duracion")),
@@ -307,7 +313,8 @@ export async function deleteComm(
     const cells = (check.data.values?.[0] || []) as unknown[];
     const same =
       text(cells[colIndex(cols.cliente!)]).toUpperCase() === target.cliente.trim().toUpperCase() &&
-      text(cells[colIndex(cols.colaborador!)]).toUpperCase() === target.colaborador.trim().toUpperCase() &&
+      commsAlias(text(cells[colIndex(cols.colaborador!)]).toUpperCase(), vista) ===
+        commsAlias(target.colaborador.trim().toUpperCase(), vista) &&
       isoDate(cells[colIndex(cols.fecha!)]) === target.fecha;
     if (!same) throw new Error("El registro cambió en la Sheet. Recarga e intenta de nuevo.");
 

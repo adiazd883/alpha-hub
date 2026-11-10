@@ -553,16 +553,23 @@ export function clock() {
 export const nameOf = (email: string) =>
   USER_NAMES[email] || email.split("@")[0].toUpperCase();
 
+// El nombre guardado es el de cuando se capturó: se muestra el actual
+// del hub (p. ej. el "Alonso" de Alpha ahora es Andres).
+function conNombreActual(r: Registro): Registro {
+  const actual = r.email ? USER_NAMES[r.email.toLowerCase()] : undefined;
+  return actual && actual !== r.nombre ? { ...r, nombre: actual } : r;
+}
+
 export async function listRegistros(): Promise<Registro[]> {
   const flat: string[] = (await redis(["HGETALL", KEY])) || [];
   const out: Registro[] = [];
-  for (let i = 1; i < flat.length; i += 2) out.push(JSON.parse(flat[i]) as Registro);
+  for (let i = 1; i < flat.length; i += 2) out.push(conNombreActual(JSON.parse(flat[i]) as Registro));
   return out;
 }
 
 export async function getRegistro(id: string) {
   const raw = await redis(["HGET", KEY, id]);
-  return raw ? (JSON.parse(raw) as Registro) : null;
+  return raw ? conNombreActual(JSON.parse(raw) as Registro) : null;
 }
 
 export async function saveRegistro(r: Registro) {
