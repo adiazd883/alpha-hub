@@ -72,6 +72,12 @@ function seedRoster(): Person[] {
     }));
 }
 
+// Nombres que se cambiaron en el hub: la lista guardada se actualiza sola.
+const PREVIOUS_NAMES: Record<string, string[]> = {
+  // Había dos "Alonso" (Alpha y Gamma); el de Alpha es Andres.
+  "aramirezc@supportmendoza.com": ["Alonso"],
+};
+
 /*
  * Quien tenga acceso al hub y aún no esté en la lista se
  * agrega solo, para que siempre pueda ver lo suyo.
@@ -86,9 +92,12 @@ export async function getRoster(): Promise<Person[]> {
       ...p,
       // Quien no tenga puesto toma el de su rol en el hub.
       puesto: p.puesto || puestoDe(p.email),
-      // Si aún tiene el nombre automático (usuario del correo), toma el real.
+      // Si aún tiene el nombre automático (usuario del correo) o uno
+      // anterior, toma el real.
       name:
-        p.email && p.name === defaultName(p.email) && USER_NAMES[p.email]
+        p.email &&
+        USER_NAMES[p.email] &&
+        (p.name === defaultName(p.email) || PREVIOUS_NAMES[p.email]?.includes(p.name))
           ? USER_NAMES[p.email]
           : p.name,
     })),
