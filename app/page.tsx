@@ -12,6 +12,7 @@ import Comunicaciones from "./comms";
 import EstudioTiempos from "./tiempos";
 import ComunicacionesGmc from "./comms-gmc";
 import AttyCalendar from "./atty";
+import type { DecisionCase } from "@/lib/decisions-types";
 
 type Role =
   | "ADMIN"
@@ -331,7 +332,7 @@ const NONVAWA_DELIVERED_STATUSES = new Set([
 ]);
 
 type MergedReviewEvent = {
-  origin: "vawa" | "nonvawa";
+  origin: "vawa" | "nonvawa" | "decision";
   row: CaseRow;
   date: Date;
   completed: boolean;
@@ -339,6 +340,24 @@ type MergedReviewEvent = {
   // Solo en el calendario de CS.
   kind?: CsKind;
   member?: string;
+  // Solo Decisions (DAILY 290).
+  decision?: DecisionCase;
+};
+
+/*
+ * MGM Review por deadline interno o por deadline con USCIS:
+ * - VAWA: COMMITMENT / DEADLINE (ADMINs).
+ * - NON-VAWA: DEADLINE INTERNO / Due Date (NW GENERAL).
+ * - Decisions: DATE DD − 5 días (domingo → sábado) / DATE DD.
+ */
+type MgmDeadline = "interno" | "uscis";
+const VAWA_USCIS_DATE_HEADER = "DEADLINE";
+const NONVAWA_USCIS_DATE_HEADER = "Due Date";
+
+const MGM_ORIGIN_LABEL: Record<MergedReviewEvent["origin"], string> = {
+  vawa: "VAWA",
+  nonvawa: "NON-VAWA",
+  decision: "DECISIONS",
 };
 
 const norm = (value: string) =>
@@ -1795,6 +1814,13 @@ export default function Home() {
     );
   });
 
+  const [mgmDeadline, setMgmDeadline] = useState<MgmDeadline>("interno");
+  const [mgmLayout, setMgmLayout] = useState<"calendario" | "lista">("calendario");
+  const [mgmOrigin, setMgmOrigin] = useState<"todos" | MergedReviewEvent["origin"]>("todos");
+  const [decisions, setDecisions] = useState<DecisionCase[]>([]);
+  const [decisionsLoaded, setDecisionsLoaded] = useState(false);
+  const [decisionsErr, setDecisionsErr] = useState("");
+
   const [
     historyMonth,
     setHistoryMonth,
@@ -2065,6 +2091,19 @@ export default function Home() {
       );
     } finally {
       setLoadingCases(false);
+    }
+  }
+
+  async function loadDecisions() {
+    setDecisionsErr("");
+    try {
+      const res = await fetch("/api/decisions", { cache: "no-store" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "No se pudieron cargar los Decisions");
+      setDecisions(json.casos || []);
+      setDecisionsLoaded(true);
+    } catch (e) {
+      setDecisionsErr(e instanceof Error ? e.message : "Error");
     }
   }
 
@@ -4690,7 +4729,11 @@ export default function Home() {
     const vawaEvents: MergedReviewEvent[] = data.rows
       .map((row): MergedReviewEvent | null => {
         const date = parseDateOnly(
-          row[VAWA_MGM_DATE_HEADER] || ""
+          row[
+            mgmDeadline === "uscis"
+              ? VAWA_USCIS_DATE_HEADER
+              : VAWA_MGM_DATE_HEADER
+          ] || ""
         );
 
         return date
@@ -4710,7 +4753,11 @@ export default function Home() {
     const nonVawaEvents: MergedReviewEvent[] = nwData.rows
       .map((row): MergedReviewEvent | null => {
         const date = parseDateOnly(
-          row[NONVAWA_DEADLINE_INTERNO_DATE_HEADER] || ""
+          row[
+            mgmDeadline === "uscis"
+              ? NONVAWA_USCIS_DATE_HEADER
+              : NONVAWA_DEADLINE_INTERNO_DATE_HEADER
+          ] || ""
         );
 
         return date
@@ -4729,8 +4776,25 @@ export default function Home() {
         (item): item is MergedReviewEvent => item !== null
       );
 
-    return [...vawaEvents, ...nonVawaEvents];
-  }, [data.rows, nwData.rows]);
+    // Solo vienen los activos, así que ninguno está entregado.
+    const decisionEvents: MergedReviewEvent[] = decisions.map((c) => {
+      const [y, m, d] = (
+        mgmDeadline === "uscis" ? c.deadlineUscis : c.deadlineInterno
+      )
+        .split("-")
+        .map(Number);
+      return {
+        origin: "decision" as const,
+        row: { __row: c.key, CLIENTE: c.cliente },
+        date: new Date(y, m - 1, d),
+        completed: false,
+        client: c.cliente,
+        decision: c,
+      };
+    });
+
+    return [...vawaEvents, ...nonVawaEvents, ...decisionEvents];
+  }, [data.rows, nwData.rows, decisions, mgmDeadline]);
 
   function previousMonth() {
     setCalendarMonth(
@@ -4959,12 +5023,20 @@ export default function Home() {
   function openMgmReview() {
     setMainView("mgmreview");
 
+    if (!decisionsLoaded) loadDecisions();
+
     if (hasNwGeneral && !nwLoaded && !nwLoading) {
       loadNwGeneral();
     }
   }
 
   function openMgmReviewEvent(event: MergedReviewEvent) {
+    // Decisions no tiene ficha en el hub: el detalle va en la lista.
+    if (event.origin === "decision") {
+      setMgmLayout("lista");
+      return;
+    }
+
     if (event.origin === "vawa") {
       openTeamCase(event.row, "mgm");
       return;
@@ -9194,16 +9266,63 @@ export default function Home() {
           </>
         )}
 
-        {mainView === "mgmreview" && (
+        {mainView === "mgmreview" && (() => {
+          const visibles = mgmReviewCalendarEvents.filter(
+            (event) => mgmOrigin === "todos" || event.origin === mgmOrigin
+          );
+          const monthEvents = visibles
+            .filter(
+              (event) =>
+                event.date.getMonth() === mgmReviewCalendarMonth.getMonth() &&
+                event.date.getFullYear() === mgmReviewCalendarMonth.getFullYear()
+            )
+            .sort((a, b) => a.date.getTime() - b.date.getTime() || a.client.localeCompare(b.client));
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const diasA = (d: Date) => Math.round((d.getTime() - todayStart.getTime()) / 86400000);
+          const fmtDate = (d: Date | null) =>
+            d ? `${d.getDate()} ${monthNames[d.getMonth()].slice(0, 3).toLowerCase()}` : "—";
+          // La otra fecha del caso (si se ve por interno, la de USCIS y al revés).
+          const otraFecha = (event: MergedReviewEvent): Date | null => {
+            if (event.decision) {
+              const iso = mgmDeadline === "uscis" ? event.decision.deadlineInterno : event.decision.deadlineUscis;
+              const [y, m, d] = iso.split("-").map(Number);
+              return new Date(y, m - 1, d);
+            }
+            const header =
+              event.origin === "vawa"
+                ? mgmDeadline === "uscis" ? VAWA_MGM_DATE_HEADER : VAWA_USCIS_DATE_HEADER
+                : mgmDeadline === "uscis" ? NONVAWA_DEADLINE_INTERNO_DATE_HEADER : NONVAWA_USCIS_DATE_HEADER;
+            return parseDateOnly(event.row[header] || "");
+          };
+          const originLabel = (event: MergedReviewEvent) =>
+            event.origin === "vawa" && isGeneral && event.row.__celula
+              ? `VAWA · ${vistaLabel(event.row.__celula as Celula)}`
+              : MGM_ORIGIN_LABEL[event.origin];
+          const eventClass = (event: MergedReviewEvent) =>
+            event.completed
+              ? "calendarEventDelivered"
+              : event.origin === "vawa"
+              ? "calendarEventVawa"
+              : event.origin === "decision"
+              ? "calendarEventDecision"
+              : "calendarEventNonVawa";
+          const pendientes = monthEvents.filter((e) => !e.completed).length;
+          const completadas = monthEvents.length - pendientes;
+          const fechaLabel = mgmDeadline === "uscis" ? "Deadline USCIS" : "Deadline interno";
+          const otraLabel = mgmDeadline === "uscis" ? "Deadline interno" : "Deadline USCIS";
+
+          return (
           <>
             <header className="pageHeader">
               <div>
                 <p className="eyebrow">MGM REVIEW</p>
                 <h1>MGM Review</h1>
                 <p>
-                  Calendario unificado de metas MGM Review
-                  (VAWA) y entregas por Deadline Interno
-                  (NON-VAWA).
+                  VAWA (ADMINs), NON-VAWA (NW General) y Decisions (DAILY 290), por{" "}
+                  {mgmDeadline === "uscis"
+                    ? "deadline con USCIS: DEADLINE, Due Date y DATE DD."
+                    : "deadline interno: Commitment, Deadline Interno y, en Decisions, 5 días antes del DATE DD (si cae en domingo, el sábado)."}
                 </p>
               </div>
 
@@ -9212,11 +9331,56 @@ export default function Home() {
                 onClick={() => {
                   loadCases();
                   loadNwGeneral();
+                  loadDecisions();
                 }}
               >
                 ↻ Refresh
               </button>
             </header>
+
+            {decisionsErr && (
+              <div className="errorBanner">Decisions: {decisionsErr}</div>
+            )}
+
+            <div className="mgmControls">
+              <div className="rgChips rgChipsSmall" role="group" aria-label="Fecha">
+                {(["interno", "uscis"] as MgmDeadline[]).map((k) => (
+                  <button
+                    key={k}
+                    className={mgmDeadline === k ? "active" : ""}
+                    aria-pressed={mgmDeadline === k}
+                    onClick={() => setMgmDeadline(k)}
+                  >
+                    {k === "interno" ? "Deadline interno" : "Deadline USCIS"}
+                  </button>
+                ))}
+              </div>
+              <div className="rgChips rgChipsSmall" role="group" aria-label="Origen">
+                {(["todos", "vawa", "nonvawa", "decision"] as const).map((k) => (
+                  <button
+                    key={k}
+                    className={mgmOrigin === k ? "active" : ""}
+                    aria-pressed={mgmOrigin === k}
+                    onClick={() => setMgmOrigin(k)}
+                  >
+                    {k !== "todos" && <i className={`mgmDot mgmDot-${k}`} />}
+                    {k === "todos" ? "Todos" : MGM_ORIGIN_LABEL[k]}
+                  </button>
+                ))}
+              </div>
+              <div className="rgChips rgChipsSmall" role="group" aria-label="Vista">
+                {(["calendario", "lista"] as const).map((k) => (
+                  <button
+                    key={k}
+                    className={mgmLayout === k ? "active" : ""}
+                    aria-pressed={mgmLayout === k}
+                    onClick={() => setMgmLayout(k)}
+                  >
+                    {k === "calendario" ? "▦ Calendario" : "☰ Lista"}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <section className="calendarCard">
               <div className="calendarToolbar">
@@ -9231,26 +9395,8 @@ export default function Home() {
                   </h2>
 
                   <span>
-                    {
-                      mgmReviewCalendarEvents.filter(
-                        (event) => !event.completed
-                      ).length
-                    }{" "}
-                    pendientes
-                    {mgmReviewCalendarEvents.some(
-                      (event) => event.completed
-                    ) && (
-                      <>
-                        {" "}
-                        ·{" "}
-                        {
-                          mgmReviewCalendarEvents.filter(
-                            (event) => event.completed
-                          ).length
-                        }{" "}
-                        completadas
-                      </>
-                    )}
+                    {pendientes} pendientes
+                    {completadas > 0 && <> · {completadas} completadas</>}
                   </span>
                 </div>
 
@@ -9270,82 +9416,127 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="calendarWeekHeader">
-                {weekDays.map((day) => (
-                  <div key={day}>{day}</div>
-                ))}
-              </div>
+              {mgmLayout === "calendario" ? (
+                <>
+                  <div className="calendarWeekHeader">
+                    {weekDays.map((day) => (
+                      <div key={day}>{day}</div>
+                    ))}
+                  </div>
 
-              <div className="calendarGrid">
-                {mgmReviewCalendarDays.map((day) => {
-                  const isCurrentMonth =
-                    day.getMonth() ===
-                    mgmReviewCalendarMonth.getMonth();
-                  const isToday = sameDay(day, new Date());
-                  const dayEvents =
-                    mgmReviewCalendarEvents.filter(
-                      (event) => sameDay(event.date, day)
-                    );
+                  <div className="calendarGrid">
+                    {mgmReviewCalendarDays.map((day) => {
+                      const isCurrentMonth =
+                        day.getMonth() ===
+                        mgmReviewCalendarMonth.getMonth();
+                      const isToday = sameDay(day, new Date());
+                      const dayEvents = visibles.filter(
+                        (event) => sameDay(event.date, day)
+                      );
 
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`calendarDay ${
-                        !isCurrentMonth ? "outsideMonth" : ""
-                      }`}
-                    >
-                      <div className="calendarDayNumber">
-                        <span
-                          className={
-                            isToday ? "todayNumber" : ""
-                          }
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          className={`calendarDay ${
+                            !isCurrentMonth ? "outsideMonth" : ""
+                          }`}
                         >
-                          {day.getDate()}
-                        </span>
-                      </div>
-
-                      <div className="calendarEvents">
-                        {dayEvents.map((event) => {
-                          return (
-                            <button
-                              key={`${event.origin}-${rowKey(event.row)}`}
-                              className={`calendarEvent ${
-                                event.completed
-                                  ? "calendarEventDelivered"
-                                  : event.origin === "vawa"
-                                  ? "calendarEventVawa"
-                                  : "calendarEventNonVawa"
-                              }`}
-                              onClick={() =>
-                                openMgmReviewEvent(event)
+                          <div className="calendarDayNumber">
+                            <span
+                              className={
+                                isToday ? "todayNumber" : ""
                               }
                             >
-                              <strong>{event.client}</strong>
+                              {day.getDate()}
+                            </span>
+                          </div>
 
-                              {event.completed ? (
-                                <span className="deliveredEventLabel">
-                                  ✓ Entregado
-                                </span>
-                              ) : (
-                                <span>
-                                  {event.origin === "vawa"
-                                    ? isGeneral && event.row.__celula
-                                      ? `VAWA · ${vistaLabel(event.row.__celula as Celula)}`
-                                      : "VAWA"
-                                    : "NON-VAWA"}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          <div className="calendarEvents">
+                            {dayEvents.map((event) => (
+                              <button
+                                key={`${event.origin}-${rowKey(event.row)}`}
+                                className={`calendarEvent ${eventClass(event)}`}
+                                onClick={() =>
+                                  openMgmReviewEvent(event)
+                                }
+                              >
+                                <strong>{event.client}</strong>
+
+                                {event.completed ? (
+                                  <span className="deliveredEventLabel">
+                                    ✓ Entregado
+                                  </span>
+                                ) : (
+                                  <span>
+                                    {originLabel(event)}
+                                    {event.decision?.forms.length
+                                      ? ` · ${event.decision.forms.join(", ")}`
+                                      : ""}
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="mgmList">
+                  {!monthEvents.length && (
+                    <div className="emptyState">Sin casos este mes.</div>
+                  )}
+                  {monthEvents.map((event) => {
+                    const dias = diasA(event.date);
+                    const detalle = event.decision
+                      ? [event.decision.forms.join(", "), event.decision.status].filter(Boolean).join(" · ")
+                      : event.origin === "vawa"
+                      ? [event.row["DUE DATE/NO DUE DATE"], event.row["STATUS"]].filter(Boolean).join(" · ")
+                      : [event.row["TIPO"], event.row["GENERAL STATUS"]].filter(Boolean).join(" · ");
+                    return (
+                      <button
+                        key={`${event.origin}-${rowKey(event.row)}`}
+                        className={`mgmRow ${eventClass(event)}`}
+                        onClick={() => openMgmReviewEvent(event)}
+                      >
+                        <span className="mgmRowDate">
+                          <strong>{fmtDate(event.date)}</strong>
+                          <small>{fechaLabel}</small>
+                        </span>
+                        <span className="mgmRowMain">
+                          <strong>{event.client}</strong>
+                          <small>
+                            {originLabel(event)}
+                            {detalle && ` · ${detalle}`}
+                          </small>
+                        </span>
+                        <span className="mgmRowOther">
+                          <small>{otraLabel}</small>
+                          <span>{fmtDate(otraFecha(event))}</span>
+                        </span>
+                        <span
+                          className={`mgmRowDias ${
+                            event.completed ? "mgmOk" : dias < 0 ? "mgmLate" : dias <= 3 ? "mgmSoon" : ""
+                          }`}
+                        >
+                          {event.completed
+                            ? "✓ Entregado"
+                            : dias < 0
+                            ? `Vencido ${-dias} d`
+                            : dias === 0
+                            ? "Hoy"
+                            : `En ${dias} d`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           </>
-        )}
+          );
+        })()}
       </main>
 
       {deliveryDetail && (
