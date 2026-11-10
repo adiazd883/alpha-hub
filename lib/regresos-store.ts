@@ -82,8 +82,60 @@ const PREVIOUS_NAMES: Record<string, string[]> = {
  * Quien tenga acceso al hub y aún no esté en la lista se
  * agrega solo, para que siempre pueda ver lo suyo.
  */
+/*
+ * Una sola vez: si en la lista quedó una persona capturada a mano
+ * (sin correo) con el nombre anterior y en la misma célula, se une
+ * con la persona del hub. Sus regresos pasan al id de la persona
+ * del hub y la duplicada se quita, para que los análisis muestren
+ * el nombre actual también en los registros pasados.
+ */
+const MERGE_FLAG_KEY = "hub:regresos-merge-names-v1";
+
+async function mergePreviousNames(stored: Person[]): Promise<Person[]> {
+  if (await redis(["GET", MERGE_FLAG_KEY])) return stored;
+
+  let roster = [...stored];
+  const rename = new Map<string, string>(); // id viejo → id del hub
+  for (const [email, oldNames] of Object.entries(PREVIOUS_NAMES)) {
+    const role = USERS[email];
+    if (!role) continue;
+    const celula = celulasFor(email, role)[0];
+    const legacy = roster.filter(
+      (p) => !p.email && p.celula === celula && oldNames.includes(p.name.trim())
+    );
+    if (!legacy.length) continue;
+    const canonical = roster.find((p) => p.email?.toLowerCase() === email);
+    if (!canonical) {
+      // No había persona del hub: la capturada a mano se vuelve esa persona.
+      const [first, ...rest] = legacy;
+      roster = roster.map((p) =>
+        p.id === first.id ? { ...p, email, name: USER_NAMES[email] || p.name } : p
+      );
+      rest.forEach((p) => rename.set(p.id, first.id));
+    } else {
+      legacy.forEach((p) => rename.set(p.id, canonical.id));
+    }
+    roster = roster.filter((p) => !rename.has(p.id));
+  }
+
+  if (rename.size) {
+    const regresos = await listRegresos();
+    for (const r of regresos) {
+      const para = rename.get(r.para) || r.para;
+      const de = rename.get(r.de) || r.de;
+      if (para !== r.para || de !== r.de) await saveRegreso({ ...r, para, de });
+    }
+  }
+  if (roster.length !== stored.length || rename.size || roster.some((p, i) => p !== stored[i])) {
+    await saveRoster(roster);
+  }
+  await redis(["SET", MERGE_FLAG_KEY, new Date().toISOString()]);
+  return roster;
+}
+
 export async function getRoster(): Promise<Person[]> {
-  const stored = await getJson<Person[]>(ROSTER_KEY);
+  const raw = await getJson<Person[]>(ROSTER_KEY);
+  const stored = raw ? await mergePreviousNames(raw) : raw;
   if (!stored) return seedRoster();
   const known = new Set(stored.map((p) => p.email).filter(Boolean));
   const missing = seedRoster().filter((p) => !known.has(p.email));
