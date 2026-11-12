@@ -25,6 +25,7 @@ import {
   getRegistro,
   listRegistros,
   mxDate,
+  registrosDe,
   nameOf,
   newId,
   saveRegistro,
@@ -94,9 +95,12 @@ export async function GET(req: NextRequest) {
       : [];
     // Clientes de GMC (pestañas GMC, NON VAWA y OTHER) o de Atty (calendario).
     const vista = req.nextUrl.searchParams.get("celula");
+    // Recarga después de guardar: los clientes ya los tiene la página.
+    const sinClientes = req.nextUrl.searchParams.get("clientes") === "0";
     const unicos = (list: string[]) => [...new Set(list.map((c) => c.trim().toUpperCase()).filter(Boolean))];
-    const clientesExtra =
-      vista === "gmc" && session.gmc
+    const clientesExtra = sinClientes
+      ? []
+      : vista === "gmc" && session.gmc
         ? await loadGmc()
             .then((d) => unicos(d.items.map((i) => i.cliente)))
             .catch(() => [] as string[])
@@ -130,8 +134,8 @@ export async function POST(req: NextRequest) {
   const action = str(body.action, 20);
 
   try {
-    const all = await listRegistros();
-    const own = all.filter((r) => r.email === session.email);
+    // Solo los registros de quien guarda (no el histórico de todos).
+    const own = await registrosDe(session.email);
     const running = own.find((r) => !r.fin);
 
     if (action === "stop") {
@@ -139,7 +143,7 @@ export async function POST(req: NextRequest) {
       const done = { ...running, fin: new Date().toISOString() };
       // Menos de un minuto: se inició por error, no se guarda.
       if (Date.parse(done.fin) - Date.parse(done.inicio) < 60000) {
-        await deleteRegistro(done.id);
+        await deleteRegistro(done);
         return NextResponse.json({ discarded: true });
       }
       await saveRegistro(done);
@@ -152,7 +156,7 @@ export async function POST(req: NextRequest) {
       if (!me.isAdmin && daysBack(mxDate(item.inicio)) > MAX_DAYS_BACK) {
         return fail("Solo puedes modificar registros de hoy o de ayer");
       }
-      await deleteRegistro(item.id);
+      await deleteRegistro(item);
       return NextResponse.json({ ok: true });
     }
 
@@ -223,9 +227,9 @@ export async function POST(req: NextRequest) {
 
     // Sin traslapes con otros registros de la misma persona.
     const nowIso = new Date().toISOString();
-    const clash = all.find(
+    const ownerRows = owner === session.email ? own : await registrosDe(owner);
+    const clash = ownerRows.find(
       (r) =>
-        r.email === owner &&
         r.id !== existing?.id &&
         r.inicio < (fin || nowIso) &&
         (r.fin || nowIso) > inicio
