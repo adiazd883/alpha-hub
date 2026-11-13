@@ -15,7 +15,8 @@ export type RendicionNote = {
 const keyOf = (week: string) => `hub:rendicion-notes:${week}`;
 
 export const isWeek = (v: unknown): v is string =>
-  typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  // Semana (lunes "YYYY-MM-DD") o mes ("YYYY-MM").
+  typeof v === "string" && /^\d{4}-\d{2}(-\d{2})?$/.test(v);
 
 // El campo empieza con la célula: "alpha|cvl|12345".
 export const celulaOfField = (field: string) => field.split("|")[0];

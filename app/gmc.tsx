@@ -984,8 +984,23 @@ type AccountRow = { item: GmcItem; expected: string; done: string | null };
 function GmcAccountability({ items }: { items: GmcItem[] }) {
   // Se puede llegar hasta la semana en curso para ver cómo van.
   const lastWeek = iso(mondayOf(new Date()));
-  const [weekStart, setWeekStart] = useState(iso(addDays(mondayOf(new Date()), -7)));
-  const weekEnd = iso(addDays(parse(weekStart), 6));
+  const [weekSel, setWeekStart] = useState(iso(addDays(mondayOf(new Date()), -7)));
+  // Por semana o por mes (mes completo, hasta el mes en curso).
+  const [porMes, setPorMes] = useState(false);
+  const thisMonth = iso(new Date()).slice(0, 7);
+  const [mes, setMes] = useState(thisMonth);
+  const finDeMes = (ym: string) => {
+    const [y, m] = ym.split("-").map(Number);
+    return iso(new Date(y, m, 0));
+  };
+  const moverMes = (n: number) => {
+    const [y, m] = mes.split("-").map(Number);
+    const next = iso(new Date(y, m - 1 + n, 1)).slice(0, 7);
+    if (next <= thisMonth) setMes(next);
+  };
+  const weekStart = porMes ? `${mes}-01` : weekSel;
+  const weekEnd = porMes ? finDeMes(mes) : iso(addDays(parse(weekSel), 6));
+  const periodo = porMes ? "mes" : "semana";
 
   const byPerson = new Map<string, Map<Category, { meta: AccountRow[]; advanced: AccountRow[] }>>();
   items.forEach((item) => {
@@ -1040,21 +1055,68 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
     <>
       <section className="accountabilityWeekCard">
         <div className="accountabilityWeekInfo">
-          <p className="eyebrow">SEMANA AUDITADA</p>
+          <div className="accountabilityPeriodToggle" role="tablist" aria-label="Periodo">
+            {([false, true] as const).map((m) => (
+              <button
+                key={String(m)}
+                type="button"
+                role="tab"
+                aria-selected={porMes === m}
+                className={porMes === m ? "active" : ""}
+                onClick={() => {
+                  if (m && !porMes) setMes(weekSel.slice(0, 7));
+                  setPorMes(m);
+                }}
+              >
+                {m ? "Mes" : "Semana"}
+              </button>
+            ))}
+          </div>
+          <p className="eyebrow">{porMes ? "MES AUDITADO" : "SEMANA AUDITADA"}</p>
           <h2>
-            Semana {isoWeek(parse(weekStart))}
-            {weekStart === lastWeek && <span className="accountabilityRunningTag"> · en curso</span>}
+            {porMes ? `${MONTHS[Number(mes.slice(5)) - 1]} ${mes.slice(0, 4)}` : `Semana ${isoWeek(parse(weekStart))}`}
+            {(porMes ? mes === thisMonth : weekStart === lastWeek) && (
+              <span className="accountabilityRunningTag"> · en curso</span>
+            )}
           </h2>
           <span>
             {fmt(weekStart)} – {fmt(weekEnd)}
           </span>
         </div>
 
+        {porMes ? (
+          <div className="accountabilityWeekControls">
+            <button type="button" className="accountabilityArrowButton" onClick={() => moverMes(-1)} title="Mes anterior">
+              ‹
+            </button>
+            <label className="accountabilityDateFilter">
+              <span>IR A MES</span>
+              <input
+                type="month"
+                value={mes}
+                max={thisMonth}
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  setMes(e.target.value > thisMonth ? thisMonth : e.target.value);
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              className="accountabilityArrowButton"
+              onClick={() => moverMes(1)}
+              disabled={mes >= thisMonth}
+              title="Mes siguiente"
+            >
+              ›
+            </button>
+          </div>
+        ) : (
         <div className="accountabilityWeekControls">
           <button
             type="button"
             className="accountabilityArrowButton"
-            onClick={() => setWeekStart(iso(addDays(parse(weekStart), -7)))}
+            onClick={() => setWeekStart(iso(addDays(parse(weekSel), -7)))}
             title="Semana anterior"
           >
             ‹
@@ -1063,7 +1125,7 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
             <span>IR A SEMANA</span>
             <input
               type="date"
-              value={weekStart}
+              value={weekSel}
               max={iso(addDays(parse(lastWeek), 6))}
               onChange={(e) => {
                 if (!e.target.value) return;
@@ -1075,13 +1137,14 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
           <button
             type="button"
             className="accountabilityArrowButton"
-            onClick={() => setWeekStart(iso(addDays(parse(weekStart), 7)))}
-            disabled={weekStart >= lastWeek}
+            onClick={() => setWeekStart(iso(addDays(parse(weekSel), 7)))}
+            disabled={weekSel >= lastWeek}
             title="Semana siguiente"
           >
             ›
           </button>
         </div>
+        )}
 
         <div className="accountabilityGlobalSummary">
           <div>
@@ -1126,7 +1189,7 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
                       <span>META</span>
                       <strong>{person.meta}</strong>
                       <small>
-                        {person.backlog} backlog + {person.scheduled} semana
+                        {person.backlog} backlog + {person.scheduled} {periodo}
                       </small>
                     </div>
                     <div>
@@ -1182,7 +1245,7 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
                   })}
                   {!person.rows.length && (
                     <div className="accountabilityNoRows">
-                      Solo tiene entregas adelantadas esta semana.
+                      Solo tiene entregas adelantadas {porMes ? "este mes" : "esta semana"}.
                     </div>
                   )}
                 </div>
@@ -1193,7 +1256,7 @@ function GmcAccountability({ items }: { items: GmcItem[] }) {
 
         {!people.length && (
           <div className="emptyState accountabilityEmptyState">
-            No hay metas ni entregas para la semana seleccionada.
+            No hay metas ni entregas para {porMes ? "el mes seleccionado" : "la semana seleccionada"}.
           </div>
         )}
       </div>

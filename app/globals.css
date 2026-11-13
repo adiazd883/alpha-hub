@@ -9163,3 +9163,30 @@ button {
   vertical-align: middle;
 }
 .calendarEvent .mgmDot { width: 6px; height: 6px; margin-right: 4px; }
+
+/* Rendición de cuentas: Semana / Mes */
+.accountabilityPeriodToggle {
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 2px;
+  border: 1px solid #e0e5ed;
+  border-radius: 8px;
+  background: #f4f6f9;
+}
+
+.accountabilityPeriodToggle button {
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b778a;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.accountabilityPeriodToggle button.active {
+  background: white;
+  color: #2d3a51;
+  box-shadow: 0 1px 3px rgba(25, 39, 67, 0.12);
+}
