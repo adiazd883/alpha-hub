@@ -1859,8 +1859,19 @@ export default function Home() {
     setHistoryStage,
   ] = useState<TeamCalendar>("draft");
 
+  // Rendición por semana o por mes.
   const [
-    accountabilityWeekStart,
+    accountabilityPeriod,
+    setAccountabilityPeriod,
+  ] = useState<"semana" | "mes">("semana");
+
+  const [
+    accountabilityMonth,
+    setAccountabilityMonth,
+  ] = useState(() => monthInputValue(new Date()));
+
+  const [
+    accountabilityWeekSel,
     setAccountabilityWeekStart,
   ] = useState(() =>
     addDays(
@@ -3704,15 +3715,44 @@ export default function Home() {
      RENDICIÓN DE CUENTAS
      ========================= */
 
+  const accountabilityByMonth =
+    accountabilityPeriod === "mes";
+
+  // Inicio y fin del periodo auditado (semana o mes completo).
+  const accountabilityWeekStart =
+    useMemo(() => {
+      if (!accountabilityByMonth) return accountabilityWeekSel;
+      const [y, m] = accountabilityMonth.split("-").map(Number);
+      return new Date(y, m - 1, 1);
+    }, [accountabilityByMonth, accountabilityMonth, accountabilityWeekSel]);
+
   const accountabilityWeekEnd =
     useMemo(
       () =>
-        addDays(
-          accountabilityWeekStart,
-          6
-        ),
-      [accountabilityWeekStart]
+        accountabilityByMonth
+          ? new Date(
+              accountabilityWeekStart.getFullYear(),
+              accountabilityWeekStart.getMonth() + 1,
+              0
+            )
+          : addDays(
+              accountabilityWeekStart,
+              6
+            ),
+      [accountabilityByMonth, accountabilityWeekStart]
     );
+
+  const currentAccountabilityMonth =
+    monthInputValue(new Date());
+
+  const moveAccountabilityMonth = (n: number) => {
+    const [y, m] = accountabilityMonth.split("-").map(Number);
+    const next = monthInputValue(new Date(y, m - 1 + n, 1));
+    if (next <= currentAccountabilityMonth) setAccountabilityMonth(next);
+  };
+
+  const accountabilityPeriodText =
+    accountabilityByMonth ? "mes" : "semana";
 
   // Hasta la semana en curso, para ver cómo van los avances.
   const latestCompletedWeekStart =
@@ -3722,8 +3762,10 @@ export default function Home() {
     );
 
   const isCurrentAccountabilityWeek =
-    accountabilityWeekStart.getTime() >=
-    startOfWeek(new Date()).getTime();
+    accountabilityByMonth
+      ? accountabilityMonth >= currentAccountabilityMonth
+      : accountabilityWeekStart.getTime() >=
+        startOfWeek(new Date()).getTime();
 
   const accountabilityVisibleStages =
     useMemo(() => {
@@ -4201,8 +4243,11 @@ export default function Home() {
     );
   }
 
+  // Notas: por semana (lunes) o por mes ("YYYY-MM").
   const accountabilityWeekKey =
-    dateInputValue(accountabilityWeekStart);
+    accountabilityByMonth
+      ? accountabilityMonth
+      : dateInputValue(accountabilityWeekStart);
 
   // Notas de la semana auditada (memoria del hub).
   useEffect(() => {
@@ -8002,7 +8047,7 @@ export default function Home() {
             <header className="pageHeader accountabilityPageHeader">
               <div>
                 <p className="eyebrow">
-                  WEEKLY ACCOUNTABILITY
+                  {accountabilityByMonth ? "MONTHLY" : "WEEKLY"} ACCOUNTABILITY
                 </p>
 
                 <h1>
@@ -8010,7 +8055,7 @@ export default function Home() {
                 </h1>
 
                 <p>
-                  Meta real de la semana vs entregas completadas. Carátulas no se consideran.
+                  Meta real de la {accountabilityPeriodText} vs entregas completadas. Carátulas no se consideran.
                 </p>
               </div>
 
@@ -8026,12 +8071,35 @@ export default function Home() {
 
             <section className="accountabilityWeekCard">
               <div className="accountabilityWeekInfo">
+                <div className="accountabilityPeriodToggle" role="tablist" aria-label="Periodo">
+                  {(["semana", "mes"] as const).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      role="tab"
+                      aria-selected={accountabilityPeriod === p}
+                      className={accountabilityPeriod === p ? "active" : ""}
+                      onClick={() => {
+                        // Al pasar a mes, el mes de la semana que se veía.
+                        if (p === "mes" && !accountabilityByMonth) {
+                          setAccountabilityMonth(monthInputValue(accountabilityWeekSel));
+                        }
+                        setAccountabilityPeriod(p);
+                      }}
+                    >
+                      {p === "semana" ? "Semana" : "Mes"}
+                    </button>
+                  ))}
+                </div>
+
                 <p className="eyebrow">
-                  SEMANA AUDITADA
+                  {accountabilityByMonth ? "MES AUDITADO" : "SEMANA AUDITADA"}
                 </p>
 
                 <h2>
-                  Semana {getIsoWeekNumber(accountabilityWeekStart)}
+                  {accountabilityByMonth
+                    ? `${monthNames[accountabilityWeekStart.getMonth()]} ${accountabilityWeekStart.getFullYear()}`
+                    : `Semana ${getIsoWeekNumber(accountabilityWeekStart)}`}
                   {isCurrentAccountabilityWeek && (
                     <span className="accountabilityRunningTag"> · en curso</span>
                   )}
@@ -8042,6 +8110,45 @@ export default function Home() {
                 </span>
               </div>
 
+              {accountabilityByMonth ? (
+                <div className="accountabilityWeekControls">
+                  <button
+                    type="button"
+                    className="accountabilityArrowButton"
+                    onClick={() => moveAccountabilityMonth(-1)}
+                    title="Mes anterior"
+                  >
+                    ‹
+                  </button>
+
+                  <label className="accountabilityDateFilter">
+                    <span>IR A MES</span>
+                    <input
+                      type="month"
+                      value={accountabilityMonth}
+                      max={currentAccountabilityMonth}
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        setAccountabilityMonth(
+                          e.target.value > currentAccountabilityMonth
+                            ? currentAccountabilityMonth
+                            : e.target.value
+                        );
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className="accountabilityArrowButton"
+                    onClick={() => moveAccountabilityMonth(1)}
+                    disabled={accountabilityMonth >= currentAccountabilityMonth}
+                    title="Mes siguiente"
+                  >
+                    ›
+                  </button>
+                </div>
+              ) : (
               <div className="accountabilityWeekControls">
                 <button
                   type="button"
@@ -8114,6 +8221,7 @@ export default function Home() {
                   ›
                 </button>
               </div>
+              )}
 
               <div className="accountabilityGlobalSummary">
                 <div>
@@ -8201,7 +8309,7 @@ export default function Home() {
                                   <span>META</span>
                                   <strong>{stage.meta}</strong>
                                   <small>
-                                    {stage.backlog} backlog + {stage.scheduled} semana
+                                    {stage.backlog} backlog + {stage.scheduled} {accountabilityPeriodText}
                                   </small>
                                 </div>
 
@@ -8357,7 +8465,7 @@ export default function Home() {
 
                               {!stage.rows.length && !stage.advancedRows.length && (
                                 <div className="accountabilityNoRows">
-                                  No hubo casos dentro de la meta de esta semana.
+                                  No hubo casos dentro de la meta de {accountabilityByMonth ? "este mes" : "esta semana"}.
                                 </div>
                               )}
                             </div>
@@ -8371,7 +8479,7 @@ export default function Home() {
 
               {!accountabilityData.collaborators.length && (
                 <div className="emptyState accountabilityEmptyState">
-                  No hay metas ni entregas para la semana seleccionada.
+                  No hay metas ni entregas para {accountabilityByMonth ? "el mes seleccionado" : "la semana seleccionada"}.
                 </div>
               )}
             </div>
