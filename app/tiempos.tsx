@@ -64,6 +64,26 @@ const mins = (r: Registro, nowMs = Date.now()) =>
   Math.max(0, Math.round(((r.fin ? Date.parse(r.fin) : nowMs) - Date.parse(r.inicio)) / 60000));
 const hhmm = (m: number) => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`;
 
+// Aplica a la página lo que respondió el servidor al guardar.
+function aplicar(d: Data, body: Record<string, unknown>, json: { item?: Registro; discarded?: boolean }): Data {
+  const quitar = (rows: Registro[], id: unknown) => rows.filter((r) => r.id !== id);
+  const poner = (rows: Registro[], it: Registro) => [...quitar(rows, it.id), it];
+  if (body.action === "delete") {
+    return { ...d, mine: quitar(d.mine, body.id), team: quitar(d.team, body.id) };
+  }
+  if (json.discarded) {
+    const corriendo = d.mine.find((r) => !r.fin);
+    return corriendo ? { ...d, mine: quitar(d.mine, corriendo.id), team: quitar(d.team, corriendo.id) } : d;
+  }
+  const it = json.item;
+  if (!it) return d;
+  return {
+    ...d,
+    mine: it.email === d.me.email ? poner(d.mine, it) : d.mine,
+    team: d.me.canSeeTeam ? poner(d.team, it) : d.team,
+  };
+}
+
 function mondayOf(date: string) {
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
@@ -100,14 +120,16 @@ export default function EstudioTiempos({
   const onlyTeam = !!data && !data.me.canRegister;
   const [, setTick] = useState(0);
 
-  async function load() {
-    setLoading(true);
+  // ligera: recarga después de guardar, sin volver a pedir los
+  // clientes a las Sheets (se quedan los que ya había).
+  async function load(ligera = false) {
+    if (!ligera) setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/tiempos?celula=${celula}`, { cache: "no-store" });
+      const res = await fetch(`/api/tiempos?celula=${celula}${ligera ? "&clientes=0" : ""}`, { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "No se pudo cargar el estudio de tiempos");
-      setData(json);
+      setData((prev) => (ligera && prev ? { ...json, clientesExtra: prev.clientesExtra } : json));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -119,11 +141,14 @@ export default function EstudioTiempos({
     load();
   }, []);
 
-  // El cronómetro avanza cada segundo.
+  const running = data?.mine.find((r) => !r.fin) || null;
+
+  // El cronómetro avanza cada segundo (solo si hay uno corriendo).
   useEffect(() => {
+    if (!running) return;
     const t = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [!!running]);
 
   useEffect(() => {
     if (!notice) return;
@@ -152,16 +177,16 @@ export default function EstudioTiempos({
   async function act(body: Record<string, unknown>, msg: string) {
     setError("");
     try {
-      await send(body);
+      const json = await send(body);
       setNotice(msg);
       setEditing(null);
-      await load();
+      // Se refleja al instante; la recarga completa va en segundo plano.
+      setData((prev) => (prev ? aplicar(prev, body, json) : prev));
+      load(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar");
     }
   }
-
-  const running = data?.mine.find((r) => !r.fin) || null;
 
   return (
     <div className="rgPage tmPage">
@@ -172,7 +197,7 @@ export default function EstudioTiempos({
           <p>Registra en qué actividad trabajas y para qué cliente. Puedes registrar hoy o ayer.</p>
         </div>
         <div className="cmHeaderActions">
-          <button className="refreshButton" onClick={load}>
+          <button className="refreshButton" onClick={() => load()}>
             ↻ Refresh
           </button>
           {data?.me.canSeeTeam && (

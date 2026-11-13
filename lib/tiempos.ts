@@ -572,12 +572,39 @@ export async function getRegistro(id: string) {
   return raw ? conNombreActual(JSON.parse(raw) as Registro) : null;
 }
 
-export async function saveRegistro(r: Registro) {
-  await redis(["HSET", KEY, r.id, JSON.stringify(r)]);
+/*
+ * Índice por persona (ids de sus registros), para que guardar no
+ * tenga que leer el histórico de todo el equipo. Se arma la primera
+ * vez que se necesita; si quedara un id viejo, HMGET lo trae vacío
+ * y se ignora.
+ */
+const idxKey = (email: string) => `${KEY}:idx:${email}`;
+const idxReady = (email: string) => `${KEY}:idx-ok:${email}`;
+
+export async function registrosDe(email: string): Promise<Registro[]> {
+  if (!(await redis(["EXISTS", idxReady(email)]))) {
+    const own = (await listRegistros()).filter((r) => r.email === email);
+    if (own.length) await redis(["SADD", idxKey(email), ...own.map((r) => r.id)]);
+    await redis(["SET", idxReady(email), "1"]);
+    return own;
+  }
+  const ids: string[] = (await redis(["SMEMBERS", idxKey(email)])) || [];
+  if (!ids.length) return [];
+  const raw: (string | null)[] = (await redis(["HMGET", KEY, ...ids])) || [];
+  return raw
+    .filter((v): v is string => !!v)
+    .map((v) => conNombreActual(JSON.parse(v) as Registro))
+    .filter((r) => r.email === email);
 }
 
-export async function deleteRegistro(id: string) {
-  await redis(["HDEL", KEY, id]);
+export async function saveRegistro(r: Registro) {
+  await redis(["HSET", KEY, r.id, JSON.stringify(r)]);
+  await redis(["SADD", idxKey(r.email), r.id]);
+}
+
+export async function deleteRegistro(r: Pick<Registro, "id" | "email">) {
+  await redis(["HDEL", KEY, r.id]);
+  await redis(["SREM", idxKey(r.email), r.id]);
 }
 
 export const newId = () => randomUUID();
