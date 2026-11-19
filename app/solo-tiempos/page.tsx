@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import EstudioTiempos from "../tiempos";
+import ReporteTiempos from "../reporte-tiempos";
 import type { TiemposCelula } from "@/lib/tiempos";
 
 /*
@@ -52,6 +53,7 @@ export default function SoloTiempos() {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState<Vista | null>(null);
+  const [tab, setTab] = useState<"tiempos" | "reporte">("tiempos");
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -98,8 +100,27 @@ export default function SoloTiempos() {
           <strong>Estudio de Tiempos</strong>
         </div>
 
+        <nav className="soloTiemposTabs" role="tablist">
+          <button
+            role="tab"
+            aria-selected={tab === "tiempos"}
+            className={tab === "tiempos" ? "active" : ""}
+            onClick={() => setTab("tiempos")}
+          >
+            Registros
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "reporte"}
+            className={tab === "reporte" ? "active" : ""}
+            onClick={() => setTab("reporte")}
+          >
+            Reporte por cliente
+          </button>
+        </nav>
+
         <div className="soloTiemposRight">
-          {vistas.length > 1 && (
+          {tab === "tiempos" && vistas.length > 1 && (
             <select
               className="soloTiemposVista"
               value={vista ?? ""}
@@ -126,7 +147,11 @@ export default function SoloTiempos() {
       </header>
 
       <main className="soloTiemposMain">
-        {vista && <EstudioTiempos key={vista} celula={celulaDe(vista)} clientes={[]} />}
+        {tab === "reporte" ? (
+          <ReporteTiempos />
+        ) : (
+          vista && <EstudioTiempos key={vista} celula={celulaDe(vista)} clientes={[]} />
+        )}
       </main>
     </div>
   );
