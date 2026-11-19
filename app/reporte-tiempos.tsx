@@ -30,11 +30,11 @@ type ClienteDetalle = {
 };
 const DETALLE = data.detalle as Record<string, ClienteDetalle>;
 
-// Colores por área (gris neutro + acentos sobrios).
+// Paleta minimalista: una sola familia pizarra, de oscuro a claro.
 const AREA_COLOR: Record<string, string> = {
-  Paralegales: "#6b7fd7",
-  Psicólogos: "#52a98b",
-  "Analistas de evidencia": "#c58a3d",
+  Paralegales: "#334155",
+  Psicólogos: "#64748b",
+  "Analistas de evidencia": "#aab4c4",
 };
 
 function StatTile({ value, label }: { value: string; label: string }) {
@@ -57,9 +57,7 @@ function SubareaSplit() {
             key={s.sub}
             style={{ width: `${pct}%`, background: AREA_COLOR[s.sub] || "#9aa4b5" }}
             title={`${s.sub}: ${s.pct}`}
-          >
-            {pct >= 12 ? `${s.sub.split(" ")[0]} ${s.pct}` : ""}
-          </span>
+          />
         );
       })}
     </div>
