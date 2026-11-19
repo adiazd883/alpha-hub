@@ -9430,3 +9430,24 @@ button {
   .repModalAct { grid-template-columns: 1.3fr auto; }
   .repModalAct .repBarTrack { display: none; }
 }
+
+/* Reporte: vista "Tiempo por entrega" (KPIs de paralegales) */
+.repEntregas { border: 1px solid #e6eaf0; border-radius: 11px; overflow: hidden; background: white; }
+.repEntHead {
+  display: flex; justify-content: space-between; padding: 9px 14px;
+  background: #f4f6f9; color: #7a8698; font-weight: 700; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.repEntGroup { border-top: 1px solid #eef1f7; padding: 4px 0; }
+.repEntGroup:first-of-type { border-top: 0; }
+.repEntKpi {
+  display: flex; align-items: center; gap: 9px; padding: 9px 14px 5px;
+  font-size: 13.5px; color: #2d3a51;
+}
+.repEntKpi strong { font-weight: 700; }
+.repEntKpi em { margin-left: auto; font-style: normal; font-weight: 700; }
+.repEntAct {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 4px 14px 4px 34px; font-size: 12.5px; color: #56637a;
+}
+.repEntAct span:last-child { color: #3c4960; white-space: nowrap; }

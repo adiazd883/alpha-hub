@@ -23,12 +23,54 @@ type Act = {
 const num = (s: string | number | null | undefined) =>
   typeof s === "number" ? s : parseFloat(String(s ?? "").replace(",", ".")) || 0;
 
+type Entrega = {
+  kpi: string;
+  horas: number;
+  actividades: { act: string; horas: number; sesiones?: number }[];
+};
 type ClienteDetalle = {
-  areas: { area: string; horas: number; actividades: { act: string; horas: number; sesiones: number }[] }[];
+  areas: {
+    area: string;
+    horas: number;
+    actividades: { act: string; horas: number; sesiones: number }[];
+    entregas?: Entrega[];
+  }[];
   dias: number;
   registros: number;
 };
 const DETALLE = data.detalle as Record<string, ClienteDetalle>;
+const PL_ENTREGAS = (data as unknown as { paralegalEntregas?: Entrega[] }).paralegalEntregas;
+
+// Vista "Tiempo por entrega": KPIs de paralegales (Draft, Ensamble
+// para CVL, MGM review) con sus actividades homologadas.
+function EntregasCard({ entregas, color, detalle }: { entregas: Entrega[]; color: string; detalle?: boolean }) {
+  return (
+    <div className="repEntregas">
+      <div className="repEntHead">
+        <span>Tiempo por entrega</span>
+        <span>Horas</span>
+      </div>
+      {entregas.map((e) => (
+        <div key={e.kpi} className="repEntGroup">
+          <div className="repEntKpi">
+            <span className="repDot" style={{ background: color }} />
+            <strong>{e.kpi}</strong>
+            <em>{e.horas} h</em>
+          </div>
+          {e.actividades.map((a) => (
+            <div key={a.act} className="repEntAct">
+              <span>{a.act}</span>
+              <span>
+                {a.horas} h
+                {detalle && a.sesiones != null ? ` · ${a.sesiones} ses.` : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // Paleta minimalista: una sola familia pizarra, de oscuro a claro.
 const AREA_COLOR: Record<string, string> = {
@@ -85,36 +127,40 @@ function AreaCard({ area }: { area: (typeof data.areas)[number] }) {
         <StatTile value={area.kpis.sesiones} label="Sesiones por cliente" />
       </div>
 
-      <div className="repActTable">
-        <div className="repActHead">
-          <span>Actividad</span>
-          <span>% del tiempo del área</span>
-          <span className="repColNum">Clientes</span>
-          <span className="repColNum">Horas</span>
-          <span className="repColNum">Sesiones</span>
-          <span className="repColNum">Min/ses.</span>
-        </div>
-        {acts.map((a) => (
-          <div key={a.act} className={`repActRow ${a.otras ? "repActOtras" : ""}`}>
-            <span className="repActName">{a.act}</span>
-            <span className="repBarCell">
-              <span className="repBarTrack">
-                <span
-                  className="repBarFill"
-                  style={{ width: `${((a.pct || 0) / maxPct) * 100}%`, background: color }}
-                />
-              </span>
-              <em>{a.pct}%</em>
-            </span>
-            <span className="repColNum">{a.otras ? "—" : `${a.clientesPct}%`}</span>
-            <span className="repColNum">
-              {a.otras ? "—" : <>{a.horas} h{a.rango && <small> · {a.rango[0]}–{a.rango[1]}</small>}</>}
-            </span>
-            <span className="repColNum">{a.otras ? "—" : a.sesiones}</span>
-            <span className="repColNum">{a.otras ? "—" : `${a.durMin} min`}</span>
+      {area.nombre === "Paralegales" && PL_ENTREGAS ? (
+        <EntregasCard entregas={PL_ENTREGAS} color={color} />
+      ) : (
+        <div className="repActTable">
+          <div className="repActHead">
+            <span>Actividad</span>
+            <span>% del tiempo del área</span>
+            <span className="repColNum">Clientes</span>
+            <span className="repColNum">Horas</span>
+            <span className="repColNum">Sesiones</span>
+            <span className="repColNum">Min/ses.</span>
           </div>
-        ))}
-      </div>
+          {acts.map((a) => (
+            <div key={a.act} className={`repActRow ${a.otras ? "repActOtras" : ""}`}>
+              <span className="repActName">{a.act}</span>
+              <span className="repBarCell">
+                <span className="repBarTrack">
+                  <span
+                    className="repBarFill"
+                    style={{ width: `${((a.pct || 0) / maxPct) * 100}%`, background: color }}
+                  />
+                </span>
+                <em>{a.pct}%</em>
+              </span>
+              <span className="repColNum">{a.otras ? "—" : `${a.clientesPct}%`}</span>
+              <span className="repColNum">
+                {a.otras ? "—" : <>{a.horas} h{a.rango && <small> · {a.rango[0]}–{a.rango[1]}</small>}</>}
+              </span>
+              <span className="repColNum">{a.otras ? "—" : a.sesiones}</span>
+              <span className="repColNum">{a.otras ? "—" : `${a.durMin} min`}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {etapas && entregables && (
         <div className="repExtra">
@@ -180,6 +226,9 @@ function ClienteDetalleModal({ n, onClose }: { n: number; onClose: () => void })
                 <span className="repDot" style={{ background: AREA_COLOR[a.area] || "#9aa4b5" }} />
                 {a.area}<em>{a.horas} h</em>
               </h4>
+              {a.entregas ? (
+                <EntregasCard entregas={a.entregas} color={AREA_COLOR[a.area] || "#9aa4b5"} detalle />
+              ) : (
               <div className="repModalActs">
                 {a.actividades.map((ac) => {
                   const maxH = Math.max(...a.actividades.map((x) => x.horas), 0.1);
@@ -194,6 +243,7 @@ function ClienteDetalleModal({ n, onClose }: { n: number; onClose: () => void })
                   );
                 })}
               </div>
+              )}
             </div>
           ))}
         </div>
