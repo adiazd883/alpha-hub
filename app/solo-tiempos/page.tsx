@@ -19,23 +19,39 @@ type Me = {
   atty?: boolean;
 };
 
+// "General" = equipo y lista de TODAS las áreas juntas. Lo ven los
+// roles que abarcan todo (Admin, Manager, Coordinator); para ellos es
+// la vista por defecto y adentro pueden filtrar por área.
+type Vista = TiemposCelula | "general";
+
+const VER_TODO = ["ADMIN", "MANAGER", "COORDINATOR"];
+
 const LABEL: Record<string, string> = {
+  general: "General (todas)",
   alpha: "Alpha",
   gamma: "Gamma",
   gmc: "GMC",
   atty: "Atty",
 };
 
-const vistasDe = (me: Me): TiemposCelula[] => [
-  ...me.celulas,
-  ...(me.gmc ? (["gmc"] as const) : []),
-  ...(me.atty ? (["atty"] as const) : []),
-];
+const vistasDe = (me: Me): Vista[] => {
+  const areas: TiemposCelula[] = [
+    ...me.celulas,
+    ...(me.gmc ? (["gmc"] as const) : []),
+    ...(me.atty ? (["atty"] as const) : []),
+  ];
+  const verTodo = !!me.role && VER_TODO.includes(me.role);
+  return verTodo ? ["general", ...areas] : areas;
+};
+
+// "General" corre el componente sobre una célula cualquiera; el
+// equipo/lista ya traen todas las áreas para estos roles.
+const celulaDe = (v: Vista): TiemposCelula => (v === "general" ? "alpha" : v);
 
 export default function SoloTiempos() {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState<TiemposCelula | null>(null);
+  const [vista, setVista] = useState<Vista | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -87,7 +103,7 @@ export default function SoloTiempos() {
             <select
               className="soloTiemposVista"
               value={vista ?? ""}
-              onChange={(e) => setVista(e.target.value as TiemposCelula)}
+              onChange={(e) => setVista(e.target.value as Vista)}
               aria-label="Vista"
             >
               {vistas.map((v) => (
@@ -110,7 +126,7 @@ export default function SoloTiempos() {
       </header>
 
       <main className="soloTiemposMain">
-        {vista && <EstudioTiempos key={vista} celula={vista} clientes={[]} />}
+        {vista && <EstudioTiempos key={vista} celula={celulaDe(vista)} clientes={[]} />}
       </main>
     </div>
   );
