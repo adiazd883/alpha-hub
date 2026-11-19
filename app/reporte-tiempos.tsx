@@ -23,6 +23,13 @@ type Act = {
 const num = (s: string | number | null | undefined) =>
   typeof s === "number" ? s : parseFloat(String(s ?? "").replace(",", ".")) || 0;
 
+type ClienteDetalle = {
+  areas: { area: string; horas: number; actividades: { act: string; horas: number; sesiones: number }[] }[];
+  dias: number;
+  registros: number;
+};
+const DETALLE = data.detalle as Record<string, ClienteDetalle>;
+
 // Colores por área (gris neutro + acentos sobrios).
 const AREA_COLOR: Record<string, string> = {
   Paralegales: "#6b7fd7",
@@ -151,9 +158,56 @@ function AreaCard({ area }: { area: (typeof data.areas)[number] }) {
 
 type Orden = "n" | "total" | "dias";
 
+function ClienteDetalleModal({ n, onClose }: { n: number; onClose: () => void }) {
+  const cli = data.clientes.find((c) => c.n === n);
+  const det = DETALLE[String(n)];
+  if (!cli || !det) return null;
+  return (
+    <div className="repModalBack" onClick={onClose}>
+      <section className="repModal" role="dialog" aria-label={cli.cliente} onClick={(e) => e.stopPropagation()}>
+        <header className="repModalHead">
+          <div>
+            <p className="eyebrow">{cli.equipo}</p>
+            <h3>{cli.cliente}</h3>
+            <span>
+              Total {cli.total} h · {det.dias} días · {det.registros} registros · PL {cli.pl} · PS {cli.ps} · AN {cli.an} h
+            </span>
+          </div>
+          <button className="rgBtn rgBtnGhost" onClick={onClose}>Cerrar</button>
+        </header>
+        <div className="repModalBody">
+          {det.areas.map((a) => (
+            <div key={a.area} className="repModalArea">
+              <h4>
+                <span className="repDot" style={{ background: AREA_COLOR[a.area] || "#9aa4b5" }} />
+                {a.area}<em>{a.horas} h</em>
+              </h4>
+              <div className="repModalActs">
+                {a.actividades.map((ac) => {
+                  const maxH = Math.max(...a.actividades.map((x) => x.horas), 0.1);
+                  return (
+                    <div key={ac.act} className="repModalAct">
+                      <span className="repModalActName">{ac.act}</span>
+                      <span className="repBarTrack">
+                        <span className="repBarFill" style={{ width: `${(ac.horas / maxH) * 100}%`, background: AREA_COLOR[a.area] }} />
+                      </span>
+                      <span className="repModalActNum">{ac.horas} h · {ac.sesiones} ses.</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function TablaClientes() {
   const [orden, setOrden] = useState<Orden>("total");
   const [equipo, setEquipo] = useState<"todos" | "Alpha" | "Gamma">("todos");
+  const [sel, setSel] = useState<number | null>(null);
 
   const rows = useMemo(() => {
     const base = data.clientes.filter((c) => equipo === "todos" || c.equipo === equipo);
@@ -168,8 +222,12 @@ function TablaClientes() {
 
   return (
     <section className="repClientes">
+      {sel !== null && <ClienteDetalleModal n={sel} onClose={() => setSel(null)} />}
       <div className="repClientesTop">
-        <h3>Detalle por cliente ({data.clientes.length})</h3>
+        <div>
+          <h3>Detalle por cliente ({data.clientes.length})</h3>
+          <p className="repHint">Doble clic en un cliente para ver su desglose de actividades.</p>
+        </div>
         <div className="repClientesCtrl">
           <select value={equipo} onChange={(e) => setEquipo(e.target.value as typeof equipo)}>
             <option value="todos">Ambos equipos</option>
@@ -195,7 +253,12 @@ function TablaClientes() {
         {rows.map((c) => {
           const pl = num(c.pl), ps = num(c.ps), an = num(c.an), tot = num(c.total) || 1;
           return (
-            <div key={c.n} className="repCliRow">
+            <div
+              key={c.n}
+              className="repCliRow repCliClickable"
+              onDoubleClick={() => setSel(c.n)}
+              title="Doble clic para ver el detalle del cliente"
+            >
               <span className="repCliName" title={c.cliente}>{c.cliente}</span>
               <span className="repColNum repCliTeam">{c.equipo}</span>
               <span className="repCliBar" title={`PL ${c.pl} · PS ${c.ps} · AN ${c.an} h`}>
