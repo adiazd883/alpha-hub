@@ -1792,6 +1792,45 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.3,
+       "actividades": [
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 3.7,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.7,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -1931,6 +1970,19 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "MGM review",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -2059,6 +2111,60 @@
        "act": "Forms",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 8.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.0,
+         "sesiones": 4
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.0,
+         "sesiones": 6
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 3.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.5,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.7,
+         "sesiones": 10
+        }
+       ]
       }
      ]
     },
@@ -2209,6 +2315,50 @@
        "horas": 0.6,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 15.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 5.9,
+         "sesiones": 7
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 5.8,
+         "sesiones": 8
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.4,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -2347,6 +2497,13 @@
        "act": "Follow up",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.0,
+       "actividades": []
       }
      ]
     },
@@ -2492,6 +2649,19 @@
        "horas": 0.4,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "MGM review",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -2565,6 +2735,29 @@
        "act": "Forms",
        "horas": 0.4,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 4
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.4,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.6,
+       "actividades": []
       }
      ]
     },
@@ -2705,6 +2898,45 @@
        "horas": 0.8,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.7,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.1,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -2843,6 +3075,60 @@
        "act": "Primer contacto",
        "horas": 0.0,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 4.1,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.2,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.5,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.4,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -3038,6 +3324,30 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -3161,6 +3471,60 @@
        "act": "Estudio de caso",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.1,
+         "sesiones": 5
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.9,
+         "sesiones": 4
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.0,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.8,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.2,
+         "sesiones": 5
+        }
+       ]
       }
      ]
     },
@@ -3291,6 +3655,29 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 2.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -3409,6 +3796,44 @@
        "act": "Llenado de non-cooperations letters",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 16.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 4.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 3.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 2.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.4,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -3558,6 +3983,34 @@
        "act": "Material de apoyo",
        "horas": 0.9,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.1,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.5,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -3723,6 +4176,60 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 10.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.1,
+         "sesiones": 4
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 6.1,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.2,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.7,
+         "sesiones": 5
+        }
+       ]
+      }
      ]
     },
     {
@@ -3872,6 +4379,35 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.5,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.5,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -4015,6 +4551,40 @@
        "act": "Assembling for CVL",
        "horas": 1.2,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 6.3,
+         "sesiones": 4
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.7,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.2,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.9,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -4210,6 +4780,50 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 8.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 4.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.7,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -4358,6 +4972,50 @@
        "act": "Intento de contacto",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.0,
+         "sesiones": 4
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.7,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.1,
+         "sesiones": 6
+        }
+       ]
       }
      ]
     },
@@ -4543,6 +5201,44 @@
        "horas": 0.2,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 16.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.4,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 10.3,
+         "sesiones": 10
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -4671,6 +5367,40 @@
        "act": "Envío de formas y DCL",
        "horas": 0.3,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.6,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -4816,6 +5546,35 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 3.0,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.0,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -4919,6 +5678,34 @@
        "act": "Intento de contacto",
        "horas": 0.1,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -5078,6 +5865,45 @@
        "act": "Assembling for CVL",
        "horas": 0.4,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 12.5,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 5.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 5.3,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.4,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.1,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -5263,6 +6089,39 @@
        "horas": 1.0,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 11.1,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 3.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 2.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -5396,6 +6255,44 @@
        "act": "Forms",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 14.2,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 7.9,
+         "sesiones": 16
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 4.3,
+         "sesiones": 8
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.1,
+       "actividades": []
       }
      ]
     },
@@ -5535,6 +6432,30 @@
        "act": "UPD packet",
        "horas": 1.1,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -5694,6 +6615,50 @@
        "act": "Intento de contacto",
        "horas": 0.8,
        "sesiones": 4
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 8.8,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.6,
+         "sesiones": 9
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.6,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.9,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.0,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -5874,6 +6839,30 @@
        "horas": 0.7,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -6048,6 +7037,60 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 19.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 9.7,
+         "sesiones": 17
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 4.9,
+         "sesiones": 6
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.9,
+         "sesiones": 6
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.5,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.7,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -6211,6 +7254,40 @@
        "act": "Follow up",
        "horas": 0.5,
        "sesiones": 4
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 5.9,
+         "sesiones": 5
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.3,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.0,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -6396,6 +7473,55 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.1,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 6.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 6.7,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -6575,6 +7701,39 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 2.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -6734,6 +7893,55 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.2,
+         "sesiones": 4
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 2.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.9,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.1,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 5.3,
+         "sesiones": 13
+        }
+       ]
+      }
      ]
     },
     {
@@ -6848,6 +8056,29 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 6.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.4,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -6926,6 +8157,40 @@
        "act": "Llamada Affidavit",
        "horas": 1.4,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.1,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.0,
+         "sesiones": 5
+        }
+       ]
       }
      ]
     },
@@ -7186,6 +8451,55 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 8.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.0,
+         "sesiones": 6
+        }
+       ]
+      }
      ]
     },
     {
@@ -7325,6 +8639,34 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 2.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -7419,6 +8761,29 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 3.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.4,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -7497,6 +8862,19 @@
        "act": "Follow up",
        "horas": 0.3,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 8
+        }
+       ]
       }
      ]
     },
@@ -7677,6 +9055,45 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.6,
+       "actividades": [
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.1,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -7806,6 +9223,30 @@
        "horas": 0.7,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -7934,6 +9375,50 @@
        "act": "Material de apoyo",
        "horas": 0.4,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.8,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -8074,6 +9559,60 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 20.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 6.2,
+         "sesiones": 8
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 8.6,
+         "sesiones": 11
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.1,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.9,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -8213,6 +9752,34 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 8.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 7.7,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.9,
+       "actividades": []
+      }
      ]
     },
     {
@@ -8321,6 +9888,34 @@
        "act": "Follow up",
        "horas": 0.0,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 5.7,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.5,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -8450,6 +10045,40 @@
        "act": "Seguimiento con TL",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.8,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 5.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 5.4,
+         "sesiones": 7
+        }
+       ]
       }
      ]
     },
@@ -8594,6 +10223,50 @@
        "act": "Búsqueda de evidencia externa",
        "horas": 0.5,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 2.6,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.5,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -8814,6 +10487,55 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 19.5,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 8.3,
+         "sesiones": 6
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 5.7,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.8,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.1,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.6,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -8978,6 +10700,40 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.1,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.8,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.8,
+         "sesiones": 5
+        }
+       ]
+      }
      ]
     },
     {
@@ -9107,6 +10863,24 @@
        "horas": 0.4,
        "sesiones": 3
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 5.9,
+         "sesiones": 15
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.4,
+       "actividades": []
+      }
      ]
     },
     {
@@ -9210,6 +10984,40 @@
        "act": "Intento de contacto",
        "horas": 0.5,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 2.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.1,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -9324,6 +11132,35 @@
        "act": "Follow up",
        "horas": 0.4,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.2,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -9453,6 +11290,35 @@
        "act": "Intento de contacto",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -9598,6 +11464,45 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 8.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.7,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 7.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 7.0,
+         "sesiones": 6
+        }
+       ]
+      }
      ]
     },
     {
@@ -9671,6 +11576,24 @@
        "act": "Estudio de caso",
        "horas": 0.7,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -9780,6 +11703,35 @@
        "act": "Follow up",
        "horas": 0.3,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.1,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -9899,6 +11851,19 @@
        "act": "Assembling Draft",
        "horas": 1.7,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.7,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -10038,6 +12003,60 @@
        "act": "Assembling for AAA",
        "horas": 1.1,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 22.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 7.4,
+         "sesiones": 7
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 7.3,
+         "sesiones": 9
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 2.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 1.7,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -10222,6 +12241,29 @@
        "act": "Seguimiento con TL",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.1,
+       "actividades": []
       }
      ]
     },
@@ -10412,6 +12454,35 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.9,
+         "sesiones": 5
+        }
+       ]
+      }
      ]
     },
     {
@@ -10505,6 +12576,40 @@
        "act": "Llamada checklist",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 4.9,
+       "actividades": [
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.5,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -10615,6 +12720,29 @@
        "horas": 1.0,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 16.2,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 6.7,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 8.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -10678,6 +12806,30 @@
        "act": "Assembling Draft",
        "horas": 1.8,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.8,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.4,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -10808,6 +12960,39 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 7.3,
+         "sesiones": 15
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.6,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -10911,6 +13096,24 @@
        "act": "Forms",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -11020,6 +13223,39 @@
        "act": "Llamada Affidavit",
        "horas": 1.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 18.5,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 5.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 3.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 5.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -11194,6 +13430,60 @@
        "act": "Forms",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 11.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.0,
+         "sesiones": 6
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 4.5,
+         "sesiones": 9
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.3,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.0,
+         "sesiones": 9
+        }
+       ]
       }
      ]
     },
@@ -11384,6 +13674,60 @@
        "horas": 0.6,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 15.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 6.4,
+         "sesiones": 6
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.9,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 2.4,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.4,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -11563,6 +13907,50 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.2,
+         "sesiones": 4
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.5,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -11667,6 +14055,40 @@
        "horas": 0.5,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 2.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -11770,6 +14192,35 @@
        "act": "Assembling for CVL",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.0,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.1,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.4,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.4,
+         "sesiones": 6
+        }
+       ]
       }
      ]
     },
@@ -11955,6 +14406,29 @@
        "horas": 3.0,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.2,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 3.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 3.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -12043,6 +14517,45 @@
        "act": "Material de apoyo",
        "horas": 1.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 9.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 2.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 4.3,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 4.3,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -12218,6 +14731,34 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 3.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -12377,6 +14918,55 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 18.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 9.7,
+         "sesiones": 20
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 4.9,
+         "sesiones": 10
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 2.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.4,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.9,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -12520,6 +15110,55 @@
        "act": "Primer contacto",
        "horas": 0.5,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 11.8,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 4.5,
+         "sesiones": 6
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 4.5,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.7,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -12665,6 +15304,40 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.1,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.7,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 5.5,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 5.5,
+         "sesiones": 11
+        }
+       ]
+      }
      ]
     },
     {
@@ -12759,6 +15432,19 @@
        "horas": 2.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.5,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -12832,6 +15518,30 @@
        "act": "Envío de formas y DCL",
        "horas": 0.4,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 1.1,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -12952,6 +15662,24 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 6.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 4.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -13051,6 +15779,44 @@
        "horas": 0.3,
        "sesiones": 3
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 23.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 5.5,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 2.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 6.6,
+         "sesiones": 4
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 6.2,
+         "sesiones": 4
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.1,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -13144,6 +15910,45 @@
        "act": "Forms",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 2.9,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.2,
+         "sesiones": 7
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.8,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 3.2,
+         "sesiones": 5
+        }
+       ]
       }
      ]
     },
@@ -13309,6 +16114,40 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.8,
+       "actividades": [
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 6.6,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 12.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 12.2,
+         "sesiones": 16
+        }
+       ]
+      }
      ]
     },
     {
@@ -13437,6 +16276,34 @@
        "act": "Revisión / edición de documento IA",
        "horas": 0.4,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 4.5,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.6,
+         "sesiones": 9
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.5,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 3.6,
+       "actividades": []
       }
      ]
     },
@@ -13592,6 +16459,50 @@
        "horas": 0.2,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.6,
+         "sesiones": 6
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.5,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.2,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -13746,6 +16657,34 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.1,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 4.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -13865,6 +16804,50 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 4.6,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.8,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.0,
+         "sesiones": 8
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.3,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.3,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -13978,6 +16961,34 @@
        "act": "Forms",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 6.6,
+         "sesiones": 19
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -14153,6 +17164,34 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 2.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.9,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -14241,6 +17280,30 @@
        "act": "UPD packet",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Análisis de evidencia",
+         "horas": 1.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -14371,6 +17434,35 @@
        "horas": 0.4,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 2.3,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -14494,6 +17586,29 @@
        "act": "Intento de contacto",
        "horas": 0.1,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 12.7,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 2.8,
+         "sesiones": 3
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 5.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 4.3,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -14653,6 +17768,50 @@
        "act": "Búsqueda de evidencia externa",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 10.0,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 3.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 2.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 3.9,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -14818,6 +17977,39 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 7.4,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 1.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 2.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión / edición de documento IA",
+         "horas": 2.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -14936,6 +18128,29 @@
        "act": "Seguimiento con TL",
        "horas": 0.4,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 13.1,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 9.5,
+         "sesiones": 7
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada Affidavit",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -15151,6 +18366,50 @@
        "horas": 0.7,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Draft",
+       "horas": 10.8,
+       "actividades": [
+        {
+         "act": "Assembling Draft",
+         "horas": 5.3,
+         "sesiones": 4
+        },
+        {
+         "act": "Análisis de evidencia",
+         "horas": 2.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Estudio de caso",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Forms, carátula y contacto",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Ensamble para CVL",
+       "horas": 0.7,
+       "actividades": []
+      },
+      {
+       "kpi": "MGM review",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Final Assembling",
+         "horas": 5.3,
+         "sesiones": 5
+        }
+       ]
+      }
      ]
     },
     {
@@ -15269,5 +18528,52 @@
    "dias": 20,
    "registros": 59
   }
- }
+ },
+ "paralegalEntregas": [
+  {
+   "kpi": "Draft",
+   "horas": 7.3,
+   "actividades": [
+    {
+     "act": "Assembling Draft",
+     "horas": 2.8
+    },
+    {
+     "act": "Análisis de evidencia",
+     "horas": 1.7
+    },
+    {
+     "act": "Llamada Affidavit",
+     "horas": 0.8
+    },
+    {
+     "act": "Estudio de caso",
+     "horas": 0.6
+    },
+    {
+     "act": "Revisión / edición de documento IA",
+     "horas": 0.6
+    },
+    {
+     "act": "Forms, carátula y contacto",
+     "horas": 0.7
+    }
+   ]
+  },
+  {
+   "kpi": "Ensamble para CVL",
+   "horas": 0.5,
+   "actividades": []
+  },
+  {
+   "kpi": "MGM review",
+   "horas": 1.6,
+   "actividades": [
+    {
+     "act": "Final Assembling",
+     "horas": 1.6
+    }
+   ]
+  }
+ ]
 }
