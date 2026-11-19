@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { USERS } from "@/lib/auth";
+import { appOrigin } from "@/lib/app-url";
 import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
@@ -26,8 +27,8 @@ export async function GET(req: Request) {
       throw new Error("Missing Google OAuth environment variables");
     }
 
-    const redirectUri =
-      "https://alpha-hub-ten.vercel.app/api/auth/callback/google";
+    const origin = appOrigin(req);
+    const redirectUri = `${origin}/api/auth/callback/google`;
 
     const oauth2Client = new google.auth.OAuth2(
       clientId,
@@ -68,7 +69,7 @@ export async function GET(req: Request) {
     }
 
     const response = NextResponse.redirect(
-      new URL("/", "https://alpha-hub-ten.vercel.app")
+      new URL("/", origin)
     );
 
     response.cookies.set(

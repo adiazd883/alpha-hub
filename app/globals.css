@@ -9190,3 +9190,69 @@ button {
   color: #2d3a51;
   box-shadow: 0 1px 3px rgba(25, 39, 67, 0.12);
 }
+
+/* Plataforma de Estudio de Tiempos aparte (TIEMPOS_ONLY) */
+.soloTiemposApp {
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.soloTiemposBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 22px;
+  background: white;
+  border-bottom: 1px solid #e1e6ed;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.soloTiemposBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #2d3a51;
+  font-size: 15px;
+}
+
+.soloTiemposRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.soloTiemposVista {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #dfe5ed;
+  border-radius: 8px;
+  background: white;
+  color: #3c4960;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.soloTiemposUser {
+  color: #8c97a8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.soloTiemposMain {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 22px 48px;
+}
+
+@media (max-width: 640px) {
+  .soloTiemposBar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .soloTiemposUser {
+    display: none;
+  }
+}
