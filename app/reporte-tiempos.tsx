@@ -40,6 +40,11 @@ type ClienteDetalle = {
 };
 const DETALLE = data.detalle as Record<string, ClienteDetalle>;
 const PL_ENTREGAS = (data as unknown as { paralegalEntregas?: Entrega[] }).paralegalEntregas;
+const PS_ENTREGAS = (data as unknown as { psicologoEntregas?: Entrega[] }).psicologoEntregas;
+const ENTREGAS_SECCION: Record<string, Entrega[] | undefined> = {
+  Paralegales: PL_ENTREGAS,
+  Psicólogos: PS_ENTREGAS,
+};
 
 // Vista "Tiempo por entrega": KPIs de paralegales (Draft, Ensamble
 // para CVL, MGM review) con sus actividades homologadas.
@@ -127,8 +132,8 @@ function AreaCard({ area }: { area: (typeof data.areas)[number] }) {
         <StatTile value={area.kpis.sesiones} label="Sesiones por cliente" />
       </div>
 
-      {area.nombre === "Paralegales" && PL_ENTREGAS ? (
-        <EntregasCard entregas={PL_ENTREGAS} color={color} />
+      {ENTREGAS_SECCION[area.nombre] ? (
+        <EntregasCard entregas={ENTREGAS_SECCION[area.nombre]!} color={color} />
       ) : (
         <div className="repActTable">
           <div className="repActHead">
