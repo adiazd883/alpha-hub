@@ -1887,6 +1887,83 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.8,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.4,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 1.5,
+         "sesiones": 5
+        }
+       ]
+      }
      ]
     },
     {
@@ -1998,6 +2075,30 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.4,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.4,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -2181,6 +2282,19 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -2390,6 +2504,57 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.1,
+         "sesiones": 6
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.2,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 5.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -2546,6 +2711,73 @@
        "horas": 0.7,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.4,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.9,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.7,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 2.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.4,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.9,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 2.9,
+         "sesiones": 11
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.0,
+         "sesiones": 4
+        }
+       ]
+      }
      ]
     },
     {
@@ -2678,6 +2910,30 @@
        "horas": 0.0,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -2784,6 +3040,46 @@
        "act": "Plan seguimiento",
        "horas": 0.6,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.7,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.6,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -2947,6 +3243,19 @@
        "act": "Llamada de exploración de abuso",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -3196,6 +3505,82 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 11.4,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 6.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 5.4,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 7.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.0,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 4.5,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 1.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -3378,6 +3763,51 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.8,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -3562,6 +3992,51 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 1.0,
+         "sesiones": 4
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.1,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -3693,6 +4168,30 @@
        "act": "Llamada de solicitud de información",
        "horas": 1.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 1.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 2.1,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -3901,6 +4400,88 @@
        "horas": 0.1,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.4,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.8,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.8,
+         "sesiones": 3
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.9,
+         "sesiones": 4
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -4047,6 +4628,62 @@
        "act": "Llenado de nueva carátula",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.8,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.8,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -4276,6 +4913,78 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 2.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.7,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 3.4,
+         "sesiones": 7
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.5,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 3.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 3.2,
+         "sesiones": 6
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -4448,6 +5157,73 @@
        "act": "Llamada de seguimiento",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -4651,6 +5427,98 @@
        "act": "Revisión de evidencia recolectada",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.8,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 3.4,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 8.6,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 6.2,
+         "sesiones": 7
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 6.9,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 3.8,
+         "sesiones": 6
+        },
+        {
+         "act": "Edición witness",
+         "horas": 1.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.2,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.0,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -4870,6 +5738,67 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 2.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 6.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 5.4,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -5083,6 +6012,88 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 7.9,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 6.5,
+         "sesiones": 5
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.4,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 2.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 0.4,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -5285,6 +6296,73 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 3.3,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 3.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 9.1,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 9.1,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 3.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -5458,6 +6536,88 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.7,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.7,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.4,
+         "sesiones": 6
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.2,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.4,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 2.2,
+         "sesiones": 6
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -5605,6 +6765,57 @@
        "act": "Revisión de evidencia recolectada",
        "horas": 0.8,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 2.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 2.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 2.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.4,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -5762,6 +6973,94 @@
        "act": "Estudio de caso",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.1,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.2,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.7,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.7,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -5960,6 +7259,82 @@
        "act": "Primer contacto",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 8.0,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 6.5,
+         "sesiones": 5
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 6.1,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -6168,6 +7543,72 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 3.9,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.3,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 11.2,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 5.9,
+         "sesiones": 4
+        },
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 5.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -6334,6 +7775,62 @@
        "act": "Revisión y edición de draft IA",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.0,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.8,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -6512,6 +8009,77 @@
        "act": "Llamada de exploración de abuso",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Primer contacto",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -6741,6 +8309,114 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.8,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.8,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.7,
+         "sesiones": 3
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -6893,6 +8569,51 @@
        "act": "Edición witness",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -7142,6 +8863,77 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 2.4,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 6.0,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 4.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.2,
+         "sesiones": 4
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 4.2,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 1.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 1.0,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -7304,6 +9096,30 @@
        "act": "Llamada de solicitud de información",
        "horas": 1.2,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 1.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.3,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -7578,6 +9394,83 @@
        "horas": 0.4,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.6,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 7.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.8,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.5,
+         "sesiones": 4
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -7815,6 +9708,104 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.5,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 6.2,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 3.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.6,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 5.4,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 2.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 2.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 0.7,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.0,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -7968,6 +9959,40 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.7,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -8104,6 +10129,46 @@
        "act": "Revisión de evidencia recolectada",
        "horas": 1.0,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 4.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 4.6,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.2,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -8282,6 +10347,103 @@
        "act": "Seguimiento con TL",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.7,
+         "sesiones": 4
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 6.2,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.5,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 4.7,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 3.1,
+         "sesiones": 6
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 1.3,
+         "sesiones": 4
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 1.0,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -8551,6 +10713,72 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.4,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 1.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.8,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.5,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.6,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.6,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -8713,6 +10941,67 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 1.9,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -8814,6 +11103,52 @@
        "act": "Llamada de exploración de abuso",
        "horas": 1.5,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.9,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 2.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -8931,6 +11266,88 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.1,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.7,
+         "sesiones": 3
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.0,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.6,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.8,
+         "sesiones": 5
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 2.8,
+         "sesiones": 4
+        },
+        {
+         "act": "Intento de contacto",
+         "horas": 0.2,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -9155,6 +11572,83 @@
        "horas": 0.3,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.7,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -9292,6 +11786,67 @@
        "act": "Traducción y lectura de DCL",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.1,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 2.7,
+         "sesiones": 8
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.7,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.4,
+         "sesiones": 6
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -9476,6 +12031,83 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 3.0,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.9,
+         "sesiones": 5
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.9,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.1,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -9638,6 +12270,46 @@
        "act": "Llamada de exploración de abuso",
        "horas": 0.0,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -9826,6 +12498,73 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 6.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 2.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 2.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -9968,6 +12707,78 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.2,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -10095,6 +12906,24 @@
        "act": "Edición witness",
        "horas": 0.6,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 4.7,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 4.1,
+         "sesiones": 4
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -10344,6 +13173,88 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.0,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.1,
+         "sesiones": 3
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 0.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -10587,6 +13498,77 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.1,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.1,
+         "sesiones": 6
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.6,
+         "sesiones": 6
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.2,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -10760,6 +13742,35 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -10901,6 +13912,35 @@
        "act": "Revisión de evidencia recolectada",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -11064,6 +14104,84 @@
        "act": "Plan seguimiento",
        "horas": 0.0,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.9,
+         "sesiones": 4
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.1,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.0,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -11233,6 +14351,98 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.7,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.8,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.1,
+         "sesiones": 4
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -11370,6 +14580,78 @@
        "act": "Edición witness",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.4,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.2,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -11544,6 +14826,79 @@
        "horas": 0.8,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.9,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 5.5,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.8,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 2.1,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.8,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -11635,6 +14990,67 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.4,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.8,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.7,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.7,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.9,
+         "sesiones": 5
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.3,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -11794,6 +15210,83 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 1.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.9,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -11910,6 +15403,67 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.1,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 5.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -12103,6 +15657,72 @@
        "act": "Llamada de seguimiento",
        "horas": 0.1,
        "sesiones": 3
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Primer contacto",
+         "horas": 2.0,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.7,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.2,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -12336,6 +15956,98 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.9,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 7.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 5.5,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.9,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.8,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.1,
+         "sesiones": 6
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.9,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.4,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -12499,6 +16211,30 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -12657,6 +16393,78 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.7,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 6.6,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 3.7,
+         "sesiones": 8
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.3,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 11.5,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 9.1,
+         "sesiones": 14
+        },
+        {
+         "act": "Edición witness",
+         "horas": 2.3,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.9,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -12774,6 +16582,57 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 2.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.8,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -12861,6 +16720,57 @@
        "act": "Llamada de seguimiento",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -13019,6 +16929,52 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.2,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -13136,7 +17092,8 @@
        "horas": 0.3,
        "sesiones": 2
       }
-     ]
+     ],
+     "entregas": []
     },
     {
      "area": "Analistas de evidencia",
@@ -13327,6 +17284,72 @@
        "act": "Extraer DCL del Filed Copy",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 6.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 5.4,
+         "sesiones": 4
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.8,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.8,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 7.6,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 5.0,
+         "sesiones": 12
+        },
+        {
+         "act": "Edición witness",
+         "horas": 2.4,
+         "sesiones": 4
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.4,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -13530,6 +17553,56 @@
        "act": "Llamada witness",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 3.0,
+         "sesiones": 6
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 9.6,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 8.1,
+         "sesiones": 6
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.5,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.9,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 2.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -13784,6 +17857,88 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 3.5,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 3.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.9,
+         "sesiones": 7
+        },
+        {
+         "act": "Edición witness",
+         "horas": 1.3,
+         "sesiones": 6
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.8,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -13987,6 +18142,56 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.1,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.0,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -14104,6 +18309,30 @@
        "act": "Llamada de exploración de abuso",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -14298,6 +18527,114 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.1,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 1.4,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 5.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.1,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.9,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.6,
+         "sesiones": 5
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.4,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Intento de contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -14460,6 +18797,51 @@
        "horas": 0.0,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.5,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 1.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -14607,6 +18989,77 @@
        "act": "Intento de contacto",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 6.9,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 5.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.3,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.0,
+         "sesiones": 1
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Intento de contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -14835,6 +19288,88 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.6,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 2.8,
+         "sesiones": 4
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 1.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.0,
+         "sesiones": 5
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.6,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.9,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.9,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.1,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.9,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -15002,6 +19537,45 @@
        "act": "Búsqueda de evidencia externa",
        "horas": 0.3,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 1.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.6,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.6,
+         "sesiones": 3
+        }
+       ]
       }
      ]
     },
@@ -15196,6 +19770,62 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.1,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.0,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -15354,6 +19984,24 @@
        "horas": 0.8,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.5,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.7,
+         "sesiones": 4
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -15470,6 +20118,52 @@
        "act": "Llamada de seguimiento",
        "horas": 0.2,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 4.0,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 4.0,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.2,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 2.8,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 2.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 4.4,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 4.4,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -15599,6 +20293,72 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.0,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.7,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.6,
+         "sesiones": 5
+        }
+       ]
+      }
      ]
     },
     {
@@ -15710,6 +20470,51 @@
        "act": "Llamada de seguimiento",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.1,
+       "actividades": [
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 3.0,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.8,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.4,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.4,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -15842,6 +20647,46 @@
        "act": "Primer contacto",
        "horas": 0.5,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.2,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.7,
+         "sesiones": 1
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Edición witness",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -15985,6 +20830,56 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.5,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -16209,6 +21104,67 @@
        "horas": 0.4,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.8,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 1.5,
+         "sesiones": 5
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 1.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 6.3,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 3.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 2.0,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada witness",
+         "horas": 0.7,
+         "sesiones": 6
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.5,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.5,
+         "sesiones": 3
+        }
+       ]
+      }
      ]
     },
     {
@@ -16335,6 +21291,57 @@
        "act": "Llamada de solicitud de información",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.2,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 2.9,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 2.9,
+         "sesiones": 4
+        }
+       ]
       }
      ]
     },
@@ -16539,6 +21546,57 @@
        "horas": 0.9,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.6,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.1,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.7,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.7,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 1.7,
+         "sesiones": 7
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.1,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -16716,6 +21774,57 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 3.8,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 4.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 4.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -16868,6 +21977,41 @@
        "act": "Estudio de caso",
        "horas": 0.8,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.1,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.1,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.1,
+         "sesiones": 2
+        }
+       ]
       }
      ]
     },
@@ -17046,6 +22190,61 @@
        "horas": 0.2,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.3,
+       "actividades": [
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 2.3,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 11.1,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 9.9,
+         "sesiones": 10
+        },
+        {
+         "act": "Llenado de nueva carátula",
+         "horas": 1.2,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 5.2,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 2.2,
+         "sesiones": 3
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 1.4,
+         "sesiones": 2
+        },
+        {
+         "act": "Edición witness",
+         "horas": 1.3,
+         "sesiones": 3
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -17218,6 +22417,46 @@
        "horas": 0.8,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.5,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 4.5,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.8,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.8,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.8,
+         "sesiones": 2
+        }
+       ]
+      }
      ]
     },
     {
@@ -17361,6 +22600,88 @@
        "horas": 0.5,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 9.9,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 4.7,
+         "sesiones": 5
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 2.6,
+         "sesiones": 4
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 1.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de solicitud de información",
+         "horas": 0.6,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.6,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 7.4,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 5.7,
+         "sesiones": 5
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 1.8,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.5,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 1.0,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 1.0,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -17498,6 +22819,56 @@
        "act": "Primer contacto",
        "horas": 0.1,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.9,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 0.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 8.8,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 8.1,
+         "sesiones": 4
+        },
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -17665,6 +23036,77 @@
        "act": "Mensajes follow up / notas MyCase",
        "horas": 0.2,
        "sesiones": 2
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 5.7,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 4.4,
+         "sesiones": 3
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.5,
+         "sesiones": 3
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.7,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 2.7,
+         "sesiones": 4
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 3.2,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 2.7,
+         "sesiones": 7
+        },
+        {
+         "act": "Edición witness",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.2,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 1.4,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 1.4,
+         "sesiones": 5
+        }
+       ]
       }
      ]
     },
@@ -17854,6 +23296,79 @@
        "horas": 0.1,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.4,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 0.5,
+       "actividades": [
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.4,
+         "sesiones": 4
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.3,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.4,
+       "actividades": [
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.4,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 0.6,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 0.6,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.7,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.7,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -18041,6 +23556,57 @@
        "horas": 0.3,
        "sesiones": 2
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 1.1,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 1.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.6,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.3,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 1.9,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 1.9,
+         "sesiones": 2
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.8,
+       "actividades": [
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.8,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -18222,6 +23788,103 @@
        "act": "Revisión y edición de draft IA",
        "horas": 0.0,
        "sesiones": 1
+      }
+     ],
+     "entregas": [
+      {
+       "kpi": "Análisis de submissions previas",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Estudio de caso",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 4.1,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 3.4,
+         "sesiones": 5
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.3,
+         "sesiones": 2
+        },
+        {
+         "act": "Primer contacto",
+         "horas": 0.2,
+         "sesiones": 2
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.1,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 2.2,
+       "actividades": [
+        {
+         "act": "Llamada y edición de DCL",
+         "horas": 2.1,
+         "sesiones": 2
+        },
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 4.3,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 2.2,
+         "sesiones": 5
+        },
+        {
+         "act": "Edición witness",
+         "horas": 1.0,
+         "sesiones": 5
+        },
+        {
+         "act": "Trabajando estrategia del caso",
+         "horas": 0.8,
+         "sesiones": 2
+        },
+        {
+         "act": "Mensajes follow up / notas MyCase",
+         "horas": 0.3,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Llamadas de seguimiento",
+       "horas": 1.6,
+       "actividades": [
+        {
+         "act": "Plan seguimiento",
+         "horas": 1.6,
+         "sesiones": 4
+        },
+        {
+         "act": "Intento de contacto",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
       }
      ]
     },
@@ -18451,6 +24114,62 @@
        "horas": 0.0,
        "sesiones": 1
       }
+     ],
+     "entregas": [
+      {
+       "kpi": "Entrevista de abuso",
+       "horas": 2.0,
+       "actividades": [
+        {
+         "act": "Llamada de exploración de abuso",
+         "horas": 1.6,
+         "sesiones": 3
+        },
+        {
+         "act": "Revisión de evidencia recolectada",
+         "horas": 0.4,
+         "sesiones": 1
+        },
+        {
+         "act": "Llamada de seguimiento",
+         "horas": 0.0,
+         "sesiones": 1
+        }
+       ]
+      },
+      {
+       "kpi": "Edición de DOE generada con IA",
+       "horas": 3.5,
+       "actividades": [
+        {
+         "act": "Revisión y edición de draft IA",
+         "horas": 3.5,
+         "sesiones": 3
+        }
+       ]
+      },
+      {
+       "kpi": "Testimonios de respaldo",
+       "horas": 0.9,
+       "actividades": [
+        {
+         "act": "Llamada witness",
+         "horas": 0.9,
+         "sesiones": 5
+        }
+       ]
+      },
+      {
+       "kpi": "Quality Control",
+       "horas": 0.3,
+       "actividades": [
+        {
+         "act": "Llenado de pre-carátula",
+         "horas": 0.3,
+         "sesiones": 1
+        }
+       ]
+      }
      ]
     },
     {
@@ -18572,6 +24291,108 @@
     {
      "act": "Final Assembling",
      "horas": 1.6
+    }
+   ]
+  }
+ ],
+ "psicologoEntregas": [
+  {
+   "kpi": "Análisis de submissions previas",
+   "horas": 0.7,
+   "actividades": [
+    {
+     "act": "Estudio de caso",
+     "horas": 0.7
+    }
+   ]
+  },
+  {
+   "kpi": "Entrevista de abuso",
+   "horas": 2.9,
+   "actividades": [
+    {
+     "act": "Llamada de exploración de abuso",
+     "horas": 1.4
+    },
+    {
+     "act": "Llamada de solicitud de información",
+     "horas": 0.5
+    },
+    {
+     "act": "Revisión de evidencia recolectada",
+     "horas": 0.5
+    },
+    {
+     "act": "Llamada de seguimiento",
+     "horas": 0.4
+    },
+    {
+     "act": "Primer contacto",
+     "horas": 0.2
+    }
+   ]
+  },
+  {
+   "kpi": "Edición de DOE generada con IA",
+   "horas": 3.2,
+   "actividades": [
+    {
+     "act": "Revisión y edición de draft IA",
+     "horas": 2.6
+    },
+    {
+     "act": "Llamada y edición de DCL",
+     "horas": 0.5
+    },
+    {
+     "act": "Llenado de nueva carátula",
+     "horas": 0.2
+    }
+   ]
+  },
+  {
+   "kpi": "Testimonios de respaldo",
+   "horas": 1.8,
+   "actividades": [
+    {
+     "act": "Llamada witness",
+     "horas": 0.7
+    },
+    {
+     "act": "Trabajando estrategia del caso",
+     "horas": 0.5
+    },
+    {
+     "act": "Edición witness",
+     "horas": 0.3
+    },
+    {
+     "act": "Mensajes follow up / notas MyCase",
+     "horas": 0.2
+    }
+   ]
+  },
+  {
+   "kpi": "Llamadas de seguimiento",
+   "horas": 0.3,
+   "actividades": [
+    {
+     "act": "Plan seguimiento",
+     "horas": 0.2
+    },
+    {
+     "act": "Intento de contacto",
+     "horas": 0.1
+    }
+   ]
+  },
+  {
+   "kpi": "Quality Control",
+   "horas": 0.5,
+   "actividades": [
+    {
+     "act": "Llenado de pre-carátula",
+     "horas": 0.5
     }
    ]
   }
